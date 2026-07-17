@@ -60,7 +60,7 @@ test("ww installer creates WorkWire and a visible launcher for a fresh Linux hom
     desktopEntry,
     new RegExp(`\\nExec="${escapeRegExp(canonicalLauncherPath)}" %U\\n`),
   );
-  assert.match(desktopEntry, /\nStartupWMClass=WorkWire\n/);
+  assert.match(desktopEntry, /\nStartupWMClass=workwire\n/);
 });
 
 test("ww installer adds a desktop shortcut only when requested", async (context) => {

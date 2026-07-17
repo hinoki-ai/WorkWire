@@ -1,0 +1,298 @@
+{
+  "benchmark": "active-service-transfer-lifecycle-soak",
+  "scopeNote": "Exercises the implemented HTTP service, client, streaming upload/download, listing, reconnect, and shutdown paths. Recovery jobs/SSE/inventory do not exist yet.",
+  "conditions": {
+    "requestedDurationSeconds": 5,
+    "maximumIterations": 200,
+    "sampleEvery": 10,
+    "restartEvery": 25,
+    "payloadBytes": 65536
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T07:02:13.168Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "results": {
+    "actualDurationMs": 795.685,
+    "iterations": 200,
+    "restartCycles": 8,
+    "transferredBytes": 5242880,
+    "samples": [
+      {
+        "iteration": 0,
+        "elapsedMs": 71.223,
+        "rssBytes": 79532032,
+        "heapUsedBytes": 7604840,
+        "externalBytes": 4885254,
+        "arrayBuffersBytes": 68965,
+        "activeHandles": 3,
+        "activeRequests": 0,
+        "fileDescriptors": 25
+      },
+      {
+        "iteration": 10,
+        "elapsedMs": 151.011,
+        "rssBytes": 95068160,
+        "heapUsedBytes": 8701544,
+        "externalBytes": 4623580,
+        "arrayBuffersBytes": 77063,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 20,
+        "elapsedMs": 185.575,
+        "rssBytes": 82055168,
+        "heapUsedBytes": 8846384,
+        "externalBytes": 4632538,
+        "arrayBuffersBytes": 77293,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 30,
+        "elapsedMs": 230.054,
+        "rssBytes": 83263488,
+        "heapUsedBytes": 9234968,
+        "externalBytes": 4635901,
+        "arrayBuffersBytes": 77523,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 40,
+        "elapsedMs": 260.051,
+        "rssBytes": 83394560,
+        "heapUsedBytes": 9286024,
+        "externalBytes": 4634088,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 50,
+        "elapsedMs": 297.066,
+        "rssBytes": 84049920,
+        "heapUsedBytes": 9481880,
+        "externalBytes": 4636276,
+        "arrayBuffersBytes": 77412,
+        "activeHandles": 4,
+        "activeRequests": 0,
+        "fileDescriptors": 25
+      },
+      {
+        "iteration": 60,
+        "elapsedMs": 328.641,
+        "rssBytes": 84180992,
+        "heapUsedBytes": 9596248,
+        "externalBytes": 4625585,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 70,
+        "elapsedMs": 357.474,
+        "rssBytes": 84574208,
+        "heapUsedBytes": 9620792,
+        "externalBytes": 4634003,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 80,
+        "elapsedMs": 392.853,
+        "rssBytes": 85753856,
+        "heapUsedBytes": 9681920,
+        "externalBytes": 4636276,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 90,
+        "elapsedMs": 420.335,
+        "rssBytes": 86278144,
+        "heapUsedBytes": 9717256,
+        "externalBytes": 4634003,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 100,
+        "elapsedMs": 453.056,
+        "rssBytes": 86409216,
+        "heapUsedBytes": 9760632,
+        "externalBytes": 4636276,
+        "arrayBuffersBytes": 77412,
+        "activeHandles": 4,
+        "activeRequests": 0,
+        "fileDescriptors": 25
+      },
+      {
+        "iteration": 110,
+        "elapsedMs": 479.442,
+        "rssBytes": 86409216,
+        "heapUsedBytes": 9779792,
+        "externalBytes": 4633777,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 120,
+        "elapsedMs": 507.221,
+        "rssBytes": 86540288,
+        "heapUsedBytes": 9787304,
+        "externalBytes": 4634003,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 130,
+        "elapsedMs": 539.549,
+        "rssBytes": 86802432,
+        "heapUsedBytes": 9830936,
+        "externalBytes": 4636276,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 140,
+        "elapsedMs": 563.636,
+        "rssBytes": 86802432,
+        "heapUsedBytes": 9837056,
+        "externalBytes": 4625811,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 150,
+        "elapsedMs": 591.792,
+        "rssBytes": 86802432,
+        "heapUsedBytes": 9842400,
+        "externalBytes": 4636276,
+        "arrayBuffersBytes": 77412,
+        "activeHandles": 4,
+        "activeRequests": 0,
+        "fileDescriptors": 25
+      },
+      {
+        "iteration": 160,
+        "elapsedMs": 620.686,
+        "rssBytes": 87064576,
+        "heapUsedBytes": 9862416,
+        "externalBytes": 4633777,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 170,
+        "elapsedMs": 644.579,
+        "rssBytes": 87195648,
+        "heapUsedBytes": 9874008,
+        "externalBytes": 4634003,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 180,
+        "elapsedMs": 675.116,
+        "rssBytes": 87195648,
+        "heapUsedBytes": 9899600,
+        "externalBytes": 4636276,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 190,
+        "elapsedMs": 701.067,
+        "rssBytes": 87195648,
+        "heapUsedBytes": 9907072,
+        "externalBytes": 4634003,
+        "arrayBuffersBytes": 77638,
+        "activeHandles": 6,
+        "activeRequests": 0,
+        "fileDescriptors": 29
+      },
+      {
+        "iteration": 200,
+        "elapsedMs": 730.144,
+        "rssBytes": 87195648,
+        "heapUsedBytes": 9975040,
+        "externalBytes": 4636276,
+        "arrayBuffersBytes": 77412,
+        "activeHandles": 4,
+        "activeRequests": 0,
+        "fileDescriptors": 25
+      },
+      {
+        "iteration": 200,
+        "elapsedMs": 735.353,
+        "rssBytes": 87195648,
+        "heapUsedBytes": 9943056,
+        "externalBytes": 3816528,
+        "arrayBuffersBytes": 76621,
+        "activeHandles": 4,
+        "activeRequests": 0,
+        "fileDescriptors": 25
+      }
+    ],
+    "plateau": {
+      "sampleCount": 15,
+      "heapSlopeBytesPerIteration": 2188.593,
+      "rssSlopeBytesPerIteration": 14076.164,
+      "heapChangeBytes": 322264,
+      "rssChangeBytes": 2621440
+    },
+    "eventLoopDelayMs": {
+      "mean": 20.589,
+      "p95": 22.495,
+      "p99": 23.953,
+      "max": 23.953
+    },
+    "eventLoopUtilization": 0.906089,
+    "cpuUserMs": 1172.104,
+    "cpuSystemMs": 83.36,
+    "handlesBefore": {
+      "Socket": 1
+    },
+    "handlesAfter": {
+      "Socket": 2
+    },
+    "fdsBefore": 22,
+    "fdsAfter": 22,
+    "warnings": [],
+    "leakDetected": false
+  }
+}

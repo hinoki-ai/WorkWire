@@ -94,6 +94,58 @@ exit 0
   }
 });
 
+test("packaged WW bundle installer replaces symlinked launchers without clobbering their targets", async (context) => {
+  if (process.platform !== "linux") {
+    context.skip("linux-only bundle installer");
+    return;
+  }
+
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "ww-bundle-install-"));
+  try {
+    const homeDir = path.join(tempRoot, "home");
+    const fakeBinDir = path.join(tempRoot, "fake-bin");
+    const bundleDir = await createBundleFixture(tempRoot);
+
+    await fs.mkdir(fakeBinDir, { recursive: true });
+    await writeExecutable(
+      path.join(fakeBinDir, "systemctl"),
+      "#!/usr/bin/env bash\nset -euo pipefail\nif [[ \"${1:-}\" == \"--user\" && \"${2:-}\" == \"is-active\" ]]; then exit 1; fi\nexit 0\n",
+    );
+
+    const repoLauncherPath = path.join(homeDir, "repo", "scripts", "launch-workwire.sh");
+    const repoLauncherContents = "#!/usr/bin/env bash\necho repo launcher\n";
+    await fs.mkdir(path.dirname(repoLauncherPath), { recursive: true });
+    await writeExecutable(repoLauncherPath, repoLauncherContents);
+
+    const binDir = path.join(homeDir, ".local", "bin");
+    await fs.mkdir(binDir, { recursive: true });
+    await fs.symlink(repoLauncherPath, path.join(binDir, "ww"));
+    await fs.symlink(repoLauncherPath, path.join(binDir, "workwire"));
+
+    await execFileAsync("bash", ["./install-ww.sh"], {
+      cwd: bundleDir,
+      env: {
+        ...process.env,
+        HOME: homeDir,
+        XDG_DATA_HOME: path.join(homeDir, ".local", "share"),
+        XDG_CONFIG_HOME: path.join(homeDir, ".config"),
+        PATH: `${fakeBinDir}:${process.env.PATH || ""}`,
+      },
+      maxBuffer: 4_000_000,
+    });
+
+    assert.equal(await fs.readFile(repoLauncherPath, "utf8"), repoLauncherContents);
+    for (const linkName of ["ww", "workwire"]) {
+      const launcherPath = path.join(binDir, linkName);
+      const stats = await fs.lstat(launcherPath);
+      assert.equal(stats.isSymbolicLink(), false);
+      assert.match(await fs.readFile(launcherPath, "utf8"), /export WW_PORTAL_PATH=/);
+    }
+  } finally {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test("packaged WW bundle installer restores the previous install on post-swap failure", async (context) => {
   if (process.platform !== "linux") {
     context.skip("linux-only bundle installer");

@@ -15,6 +15,7 @@ import {
   normalizePort,
   parsePeerSpec,
   rememberPeer,
+  resolveWwPortalEnvironmentRoot,
   resolveWwPortalRoot,
   saveWwConfig,
   updateWwConfig,
@@ -675,6 +676,7 @@ export async function runServeCommand({
   serviceLog(`WW service ready for ${serviceInfo.name}`);
   serviceLog(`Config: ${WW_CONFIG_PATH}`);
   serviceLog(`Portal: ${serviceInfo.rootPath}`);
+  serviceLog(`Portal environment: ${resolveWwPortalEnvironmentRoot(serviceInfo.rootPath)}`);
   serviceLog("URLs:");
   for (const url of serviceInfo.urls) {
     serviceLog(`- ${url}`);
@@ -883,10 +885,13 @@ export async function runWwCli({
       requireCompatibility: true,
     }).catch(() => null);
     if (localService?.peer?.host && localService.compatible === false) {
-      const restarted = await restartLocalServiceImpl({
-        localService,
-        stderr,
-      }).catch(() => false);
+      let restarted = false;
+      try {
+        restarted = await restartLocalServiceImpl({
+          localService,
+          stderr,
+        });
+      } catch {}
       if (restarted) {
         stderr.write(`Restarted ${WW_SYSTEMD_USER_UNIT_NAME} to load WW ${WW_APP_VERSION}.\n`);
         for (let attempt = 0; attempt < 8; attempt += 1) {

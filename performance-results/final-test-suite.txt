@@ -1,0 +1,752 @@
+
+> workwire@0.1.0 test
+> node --test test/*.test.mjs
+
+TAP version 13
+# Subtest: extractElectronAppArgv drops the dev app path argument
+ok 1 - extractElectronAppArgv drops the dev app path argument
+  ---
+  duration_ms: 5.237238
+  type: 'test'
+  ...
+# Subtest: extractElectronAppArgv keeps packaged flags intact
+ok 2 - extractElectronAppArgv keeps packaged flags intact
+  ---
+  duration_ms: 0.357149
+  type: 'test'
+  ...
+# Subtest: extractElectronAppArgv keeps packaged subcommands intact
+ok 3 - extractElectronAppArgv keeps packaged subcommands intact
+  ---
+  duration_ms: 0.46753
+  type: 'test'
+  ...
+# Subtest: ww systemd user unit keeps the background service running on login failures and writes to the journal
+ok 4 - ww systemd user unit keeps the background service running on login failures and writes to the journal
+  ---
+  duration_ms: 5.123454
+  type: 'test'
+  ...
+# Subtest: ww fallback supervisor restarts ww serve and appends to the shared WW log
+ok 5 - ww fallback supervisor restarts ww serve and appends to the shared WW log
+  ---
+  duration_ms: 0.981261
+  type: 'test'
+  ...
+# Subtest: ww fallback desktop entry starts the supervisor on login without showing a launcher
+ok 6 - ww fallback desktop entry starts the supervisor on login without showing a launcher
+  ---
+  duration_ms: 0.498364
+  type: 'test'
+  ...
+# Subtest: ww autostart paths respect the XDG base directories
+ok 7 - ww autostart paths respect the XDG base directories
+  ---
+  duration_ms: 1.291673
+  type: 'test'
+  ...
+# Subtest: ww beacon computes LAN broadcast targets plus global broadcast
+ok 8 - ww beacon computes LAN broadcast targets plus global broadcast
+  ---
+  duration_ms: 12.954267
+  type: 'test'
+  ...
+# Subtest: ww beacon ignores non-user interfaces by default
+ok 9 - ww beacon ignores non-user interfaces by default
+  ---
+  duration_ms: 2.865456
+  type: 'test'
+  ...
+# Subtest: ww beacon normalizes a received peer payload
+ok 10 - ww beacon normalizes a received peer payload
+  ---
+  duration_ms: 1.640405
+  type: 'test'
+  ...
+# Subtest: ww beacon ignores peers advertising an incompatible protocol version
+ok 11 - ww beacon ignores peers advertising an incompatible protocol version
+  ---
+  duration_ms: 0.427154
+  type: 'test'
+  ...
+# Subtest: packaged WW bundle installer provisions launcher, portal, and systemd user service
+ok 12 - packaged WW bundle installer provisions launcher, portal, and systemd user service
+  ---
+  duration_ms: 162.874163
+  type: 'test'
+  ...
+# Subtest: packaged WW bundle installer replaces symlinked launchers without clobbering their targets
+ok 13 - packaged WW bundle installer replaces symlinked launchers without clobbering their targets
+  ---
+  duration_ms: 128.223163
+  type: 'test'
+  ...
+# Subtest: packaged WW bundle installer restores the previous install on post-swap failure
+ok 14 - packaged WW bundle installer restores the previous install on post-swap failure
+  ---
+  duration_ms: 132.379201
+  type: 'test'
+  ...
+# Subtest: packaged WW bundle installer refuses destructive install roots
+ok 15 - packaged WW bundle installer refuses destructive install roots
+  ---
+  duration_ms: 26.041158
+  type: 'test'
+  ...
+# Subtest: ww compatibility accepts matching app and protocol versions
+ok 16 - ww compatibility accepts matching app and protocol versions
+  ---
+  duration_ms: 6.212497
+  type: 'test'
+  ...
+# Subtest: ww compatibility reports protocol and app version mismatches with installer guidance
+ok 17 - ww compatibility reports protocol and app version mismatches with installer guidance
+  ---
+  duration_ms: 1.119093
+  type: 'test'
+  ...
+# Subtest: ww config defaults are local-first and tokenized
+ok 18 - ww config defaults are local-first and tokenized
+  ---
+  duration_ms: 4.900522
+  type: 'test'
+  ...
+# Subtest: ww config paths respect explicit standalone env overrides
+ok 19 - ww config paths respect explicit standalone env overrides
+  ---
+  duration_ms: 0.609431
+  type: 'test'
+  ...
+# Subtest: ww portal environment lives inside the portal root
+ok 20 - ww portal environment lives inside the portal root
+  ---
+  duration_ms: 0.382458
+  type: 'test'
+  ...
+# Subtest: ww ensureWwPortalRoot creates the portal environment directory
+ok 21 - ww ensureWwPortalRoot creates the portal environment directory
+  ---
+  duration_ms: 34.695373
+  type: 'test'
+  ...
+# Subtest: ww trust ids are stable and non-empty for non-empty tokens
+ok 22 - ww trust ids are stable and non-empty for non-empty tokens
+  ---
+  duration_ms: 2.134717
+  type: 'test'
+  ...
+# Subtest: ww config normalization repairs invalid values
+ok 23 - ww config normalization repairs invalid values
+  ---
+  duration_ms: 2.931194
+  type: 'test'
+  ...
+# Subtest: ww peer parser accepts host and host:port
+ok 24 - ww peer parser accepts host and host:port
+  ---
+  duration_ms: 5.230613
+  type: 'test'
+  ...
+# Subtest: ww rememberPeer stores the active peer at the front of recents
+ok 25 - ww rememberPeer stores the active peer at the front of recents
+  ---
+  duration_ms: 1.163552
+  type: 'test'
+  ...
+# Subtest: ww rememberPeer can pin a machine identity before a host is known
+ok 26 - ww rememberPeer can pin a machine identity before a host is known
+  ---
+  duration_ms: 2.273834
+  type: 'test'
+  ...
+# Subtest: ww rememberPeer replaces stale DHCP host entries for the same pinned machine
+ok 27 - ww rememberPeer replaces stale DHCP host entries for the same pinned machine
+  ---
+  duration_ms: 4.009024
+  type: 'test'
+  ...
+# Subtest: ww loadWwConfig normalizes the canonical persisted state
+ok 28 - ww loadWwConfig normalizes the canonical persisted state
+  ---
+  duration_ms: 32.864003
+  type: 'test'
+  ...
+# Subtest: ww saveWwConfig writes only the zero-config state model
+ok 29 - ww saveWwConfig writes only the zero-config state model
+  ---
+  duration_ms: 20.446386
+  type: 'test'
+  ...
+# Subtest: ww config transactions serialize concurrent writers without losing changes
+ok 30 - ww config transactions serialize concurrent writers without losing changes
+  ---
+  duration_ms: 80.276255
+  type: 'test'
+  ...
+# Subtest: ww discovery enumerates the local /24 while excluding this machine
+ok 31 - ww discovery enumerates the local /24 while excluding this machine
+  ---
+  duration_ms: 11.211591
+  type: 'test'
+  ...
+# Subtest: ww discovery ignores non-user interfaces by default
+ok 32 - ww discovery ignores non-user interfaces by default
+  ---
+  duration_ms: 8.065488
+  type: 'test'
+  ...
+# Subtest: ww discovery keeps only reachable WW peers from scan responses
+ok 33 - ww discovery keeps only reachable WW peers from scan responses
+  ---
+  duration_ms: 11.59415
+  type: 'test'
+  ...
+# Subtest: ww discovery advertises local build info and preserves compatibility metadata
+ok 34 - ww discovery advertises local build info and preserves compatibility metadata
+  ---
+  duration_ms: 1.993675
+  type: 'test'
+  ...
+# Subtest: ww discovery deduplicates the same machine across DHCP host changes
+ok 35 - ww discovery deduplicates the same machine across DHCP host changes
+  ---
+  duration_ms: 3.264049
+  type: 'test'
+  ...
+# Subtest: ww local endpoint hides internal portal folders from root listings and transfer manifests
+ok 36 - ww local endpoint hides internal portal folders from root listings and transfer manifests
+  ---
+  duration_ms: 46.216375
+  type: 'test'
+  ...
+# Subtest: ww local endpoint preserves valid spaces while blocking internal rename and copy destinations
+ok 37 - ww local endpoint preserves valid spaces while blocking internal rename and copy destinations
+  ---
+  duration_ms: 15.992541
+  type: 'test'
+  ...
+# Subtest: ww local endpoint hides and blocks transient upload artifacts at every depth
+ok 38 - ww local endpoint hides and blocks transient upload artifacts at every depth
+  ---
+  duration_ms: 17.575017
+  type: 'test'
+  ...
+# Subtest: ww local endpoint rejects direct access to internal portal folders
+ok 39 - ww local endpoint rejects direct access to internal portal folders
+  ---
+  duration_ms: 6.528086
+  type: 'test'
+  ...
+# Subtest: ww local endpoint blocks symlink escapes and portal-root mutation
+ok 40 - ww local endpoint blocks symlink escapes and portal-root mutation
+  ---
+  duration_ms: 10.240613
+  type: 'test'
+  ...
+# Subtest: ww local endpoint keeps the previous destination intact when an upload fails
+ok 41 - ww local endpoint keeps the previous destination intact when an upload fails
+  ---
+  duration_ms: 20.358665
+  type: 'test'
+  ...
+# Subtest: ww upload atomically replaces a directory only after the full file arrives
+ok 42 - ww upload atomically replaces a directory only after the full file arrives
+  ---
+  duration_ms: 22.083017
+  type: 'test'
+  ...
+# Subtest: ww installer creates WorkWire and a visible launcher for a fresh Linux home
+ok 43 - ww installer creates WorkWire and a visible launcher for a fresh Linux home
+  ---
+  duration_ms: 902.581867
+  type: 'test'
+  ...
+# Subtest: ww installer adds a desktop shortcut only when requested
+ok 44 - ww installer adds a desktop shortcut only when requested
+  ---
+  duration_ms: 422.418051
+  type: 'test'
+  ...
+# Subtest: WW LAN manifest and landing page expose the self-contained Linux artifacts
+ok 45 - WW LAN manifest and landing page expose the self-contained Linux artifacts
+  ---
+  duration_ms: 7.352444
+  type: 'test'
+  ...
+# Subtest: served install script injects the request base URL once
+ok 46 - served install script injects the request base URL once
+  ---
+  duration_ms: 1.713166
+  type: 'test'
+  ...
+# Subtest: install-ww-from-lan downloads the self-contained WW bundle and runs its install hook
+ok 47 - install-ww-from-lan downloads the self-contained WW bundle and runs its install hook
+  ---
+  duration_ms: 225.94843
+  type: 'test'
+  ...
+# Subtest: install-ww-from-lan aborts on checksum mismatch before replacing the staged bundle
+ok 48 - install-ww-from-lan aborts on checksum mismatch before replacing the staged bundle
+  ---
+  duration_ms: 87.122514
+  type: 'test'
+  ...
+# Subtest: ww launch intent parser keeps only desktop flags
+ok 49 - ww launch intent parser keeps only desktop flags
+  ---
+  duration_ms: 8.740696
+  type: 'test'
+  ...
+# Subtest: ww launch intent captures peer relink state
+ok 50 - ww launch intent captures peer relink state
+  ---
+  duration_ms: 1.480299
+  type: 'test'
+  ...
+# Subtest: ww peer launch suppression only arms for skip-peer-launch handoffs
+ok 51 - ww peer launch suppression only arms for skip-peer-launch handoffs
+  ---
+  duration_ms: 1.029068
+  type: 'test'
+  ...
+# Subtest: ww peer launch suppression matches the intended peer only
+ok 52 - ww peer launch suppression matches the intended peer only
+  ---
+  duration_ms: 0.811914
+  type: 'test'
+  ...
+# Subtest: ww launcher builds the local electron desktop command
+ok 53 - ww launcher builds the local electron desktop command
+  ---
+  duration_ms: 11.824786
+  type: 'test'
+  ...
+# Subtest: ww launcher spawns the desktop app with inherited stdio
+ok 54 - ww launcher spawns the desktop app with inherited stdio
+  ---
+  duration_ms: 1.761493
+  type: 'test'
+  ...
+# Subtest: ww launcher refreshes the Linux WorkWire desktop entry before launch
+ok 55 - ww launcher refreshes the Linux WorkWire desktop entry before launch
+  ---
+  duration_ms: 0.713423
+  type: 'test'
+  ...
+# Subtest: ww launcher recognizes help flags
+ok 56 - ww launcher recognizes help flags
+  ---
+  duration_ms: 0.732092
+  type: 'test'
+  ...
+# Subtest: ww public help hides manual peer and token workflows
+ok 57 - ww public help hides manual peer and token workflows
+  ---
+  duration_ms: 1.17843
+  type: 'test'
+  ...
+# Subtest: ww pairing profile replaces shared trust without replacing this PC identity
+ok 58 - ww pairing profile replaces shared trust without replacing this PC identity
+  ---
+  duration_ms: 48.201912
+  type: 'test'
+  ...
+# Subtest: ww launcher prints help without launching Electron
+ok 59 - ww launcher prints help without launching Electron
+  ---
+  duration_ms: 1.734579
+  type: 'test'
+  ...
+# Subtest: ww launcher prints engineering help only when explicitly requested
+ok 60 - ww launcher prints engineering help only when explicitly requested
+  ---
+  duration_ms: 0.554358
+  type: 'test'
+  ...
+# Subtest: ww launcher expands --remote into peer and remote path arguments
+ok 61 - ww launcher expands --remote into peer and remote path arguments
+  ---
+  duration_ms: 2.49997
+  type: 'test'
+  ...
+# Subtest: ww launcher attaches to the local background service when it is already running
+ok 62 - ww launcher attaches to the local background service when it is already running
+  ---
+  duration_ms: 3.292984
+  type: 'test'
+  ...
+# Subtest: ww launcher accepts a synchronous background-service restart before attaching
+ok 63 - ww launcher accepts a synchronous background-service restart before attaching
+  ---
+  duration_ms: 254.050577
+  type: 'test'
+  ...
+# Subtest: ww launcher refuses to attach to a stale local background service when restart is unavailable
+ok 64 - ww launcher refuses to attach to a stale local background service when restart is unavailable
+  ---
+  duration_ms: 2.033668
+  type: 'test'
+  ...
+# Subtest: ww launcher refuses to attach to a local background service on the wrong portal path
+ok 65 - ww launcher refuses to attach to a local background service on the wrong portal path
+  ---
+  duration_ms: 0.978767
+  type: 'test'
+  ...
+# Subtest: ww launcher builds local background-service attach args
+ok 66 - ww launcher builds local background-service attach args
+  ---
+  duration_ms: 0.734061
+  type: 'test'
+  ...
+# Subtest: ww launcher builds peer desktop args from a launch request
+ok 67 - ww launcher builds peer desktop args from a launch request
+  ---
+  duration_ms: 1.315208
+  type: 'test'
+  ...
+# Subtest: ww serve keeps the background service running while it opens the desktop app
+ok 68 - ww serve keeps the background service running while it opens the desktop app
+  ---
+  duration_ms: 22.346631
+  type: 'test'
+  ...
+# Subtest: ww serve keeps duplicate peer launch requests pending while one handoff is already scheduled
+ok 69 - ww serve keeps duplicate peer launch requests pending while one handoff is already scheduled
+  ---
+  duration_ms: 18.230347
+  type: 'test'
+  ...
+# Subtest: WorkWire uses one Linux desktop ID for Electron and the pinned launcher
+ok 70 - WorkWire uses one Linux desktop ID for Electron and the pinned launcher
+  ---
+  duration_ms: 9.751455
+  type: 'test'
+  ...
+# Subtest: ww mirror scans only canonical user content
+ok 71 - ww mirror scans only canonical user content
+  ---
+  duration_ms: 31.772581
+  type: 'test'
+  ...
+# Subtest: ww mirror plans deterministic copies, deletions, and conflicts
+ok 72 - ww mirror plans deterministic copies, deletions, and conflicts
+  ---
+  duration_ms: 1.927305
+  type: 'test'
+  ...
+# Subtest: ww mirror elects one stable leader and creates deterministic conflict names
+ok 73 - ww mirror elects one stable leader and creates deterministic conflict names
+  ---
+  duration_ms: 1.858766
+  type: 'test'
+  ...
+# Subtest: ww mirror follows a refreshed peer route and preserves simultaneous edits
+ok 74 - ww mirror follows a refreshed peer route and preserves simultaneous edits
+  ---
+  duration_ms: 504.025271
+  type: 'test'
+  ...
+# Subtest: ww network rejects malformed IPv4 octets
+ok 75 - ww network rejects malformed IPv4 octets
+  ---
+  duration_ms: 5.514662
+  type: 'test'
+  ...
+# Subtest: ww network selects the same-subnet user LAN address for a peer
+ok 76 - ww network selects the same-subnet user LAN address for a peer
+  ---
+  duration_ms: 5.251829
+  type: 'test'
+  ...
+# Subtest: ww linux build config packages a dedicated runtime
+ok 77 - ww linux build config packages a dedicated runtime
+  ---
+  duration_ms: 8.313648
+  type: 'test'
+  ...
+# Subtest: ww npm commands use the standalone launcher layout
+ok 78 - ww npm commands use the standalone launcher layout
+  ---
+  duration_ms: 0.822234
+  type: 'test'
+  ...
+# Subtest: ww linux build config only includes WW runtime surfaces
+ok 79 - ww linux build config only includes WW runtime surfaces
+  ---
+  duration_ms: 0.625683
+  type: 'test'
+  ...
+# Subtest: ww performance diagnostics are disabled by default
+ok 80 - ww performance diagnostics are disabled by default
+  ---
+  duration_ms: 252.089405
+  type: 'test'
+  ...
+# Subtest: ww performance diagnostics are structured and redact sensitive fields
+ok 81 - ww performance diagnostics are structured and redact sensitive fields
+  ---
+  duration_ms: 293.553218
+  type: 'test'
+  ...
+# Subtest: ww release info fingerprints the WW runtime and keeps file-safe artifact names
+ok 82 - ww release info fingerprints the WW runtime and keeps file-safe artifact names
+  ---
+  duration_ms: 5.072824
+  type: 'test'
+  ...
+# Subtest: ww release identity survives Electron's packaged metadata rewrite
+ok 83 - ww release identity survives Electron's packaged metadata rewrite
+  ---
+  duration_ms: 29.123611
+  type: 'test'
+  ...
+# Subtest: ww artifact-version sanitization normalizes build metadata for filenames
+ok 84 - ww artifact-version sanitization normalizes build metadata for filenames
+  ---
+  duration_ms: 0.655127
+  type: 'test'
+  ...
+# Subtest: packaged ww desktop launch spec relaunches the self-contained ww executable
+ok 85 - packaged ww desktop launch spec relaunches the self-contained ww executable
+  ---
+  duration_ms: 8.729581
+  type: 'test'
+  ...
+# Subtest: packaged ww runtime routes headless subcommands without opening the desk
+ok 86 - packaged ww runtime routes headless subcommands without opening the desk
+  ---
+  duration_ms: 0.71991
+  type: 'test'
+  ...
+# Subtest: packaged ww runtime routes pairing profiles without opening the desk
+ok 87 - packaged ww runtime routes pairing profiles without opening the desk
+  ---
+  duration_ms: 0.461132
+  type: 'test'
+  ...
+# Subtest: packaged ww runtime keeps desktop argument normalization
+ok 88 - packaged ww runtime keeps desktop argument normalization
+  ---
+  duration_ms: 0.958047
+  type: 'test'
+  ...
+# Subtest: ww search precomputes accent-insensitive names and paths
+ok 89 - ww search precomputes accent-insensitive names and paths
+  ---
+  duration_ms: 18.37851
+  type: 'test'
+  ...
+# Subtest: ww search keeps exact, prefix, word-prefix, substring, path, and fuzzy ranking stable
+ok 90 - ww search keeps exact, prefix, word-prefix, substring, path, and fuzzy ranking stable
+  ---
+  duration_ms: 5.616089
+  type: 'test'
+  ...
+# Subtest: ww search gives folders precedence only for otherwise equivalent relevance
+ok 91 - ww search gives folders precedence only for otherwise equivalent relevance
+  ---
+  duration_ms: 1.031862
+  type: 'test'
+  ...
+# Subtest: ww search does not flood short queries with unrelated fuzzy matches
+ok 92 - ww search does not flood short queries with unrelated fuzzy matches
+  ---
+  duration_ms: 0.695805
+  type: 'test'
+  ...
+# Subtest: ww asynchronous search preserves ranking and abandons stale generations
+ok 93 - ww asynchronous search preserves ranking and abandons stale generations
+  ---
+  duration_ms: 127.00995
+  type: 'test'
+  ...
+# Subtest: ww asynchronous indexing normalizes once and releases stale listings
+ok 94 - ww asynchronous indexing normalizes once and releases stale listings
+  ---
+  duration_ms: 34.759112
+  type: 'test'
+  ...
+# Subtest: ww 10,000-entry search has a generous catastrophic-regression guard
+ok 95 - ww 10,000-entry search has a generous catastrophic-regression guard
+  ---
+  duration_ms: 179.003597
+  type: 'test'
+  ...
+# Subtest: ww service supports remote CRUD over loopback
+ok 96 - ww service supports remote CRUD over loopback
+  ---
+  duration_ms: 210.576746
+  type: 'test'
+  ...
+# Subtest: ww service accepts peer desktop launch requests
+ok 97 - ww service accepts peer desktop launch requests
+  ---
+  duration_ms: 13.460123
+  type: 'test'
+  ...
+# Subtest: ww service exposes LAN discovery without auth
+ok 98 - ww service exposes LAN discovery without auth
+  ---
+  duration_ms: 8.802155
+  type: 'test'
+  ...
+# Subtest: ww discovery advertises the request-local reachable host
+ok 99 - ww discovery advertises the request-local reachable host
+  ---
+  duration_ms: 14.38884
+  type: 'test'
+  ...
+# Subtest: ww service info keeps portal metadata behind auth without echoing secrets
+ok 100 - ww service info keeps portal metadata behind auth without echoing secrets
+  ---
+  duration_ms: 8.732269
+  type: 'test'
+  ...
+# Subtest: ww local machine explorer browses outside the portal and imports selections into it
+ok 101 - ww local machine explorer browses outside the portal and imports selections into it
+  ---
+  duration_ms: 18.521195
+  type: 'test'
+  ...
+# Subtest: ww service does not expose whole-machine browsing to remote clients
+ok 102 - ww service does not expose whole-machine browsing to remote clients
+  ---
+  duration_ms: 9.596332
+  type: 'test'
+  ...
+# Subtest: ww service rejects mismatched connect negotiation with LAN installer guidance
+ok 103 - ww service rejects mismatched connect negotiation with LAN installer guidance
+  ---
+  duration_ms: 7.599174
+  type: 'test'
+  ...
+# Subtest: ww client treats older peers without connect negotiation as incompatible
+ok 104 - ww client treats older peers without connect negotiation as incompatible
+  ---
+  duration_ms: 0.968638
+  type: 'test'
+  ...
+# Subtest: ww service pairs the first authenticated machine and rejects other pinned peers
+ok 105 - ww service pairs the first authenticated machine and rejects other pinned peers
+  ---
+  duration_ms: 20.830991
+  type: 'test'
+  ...
+# Subtest: ww service recovers from a configured port collision by rebinding to an open port
+ok 106 - ww service recovers from a configured port collision by rebinding to an open port
+  ---
+  duration_ms: 8.988088
+  type: 'test'
+  ...
+# Subtest: ww transfer engine copies folders, resolves conflicts, and supports move
+ok 107 - ww transfer engine copies folders, resolves conflicts, and supports move
+  ---
+  duration_ms: 84.665728
+  type: 'test'
+  ...
+# Subtest: ww move reports a source-delete failure without losing the copied destination
+ok 108 - ww move reports a source-delete failure without losing the copied destination
+  ---
+  duration_ms: 11.810574
+  type: 'test'
+  ...
+# Subtest: ww overwrite keeps the old destination when the incoming stream fails
+ok 109 - ww overwrite keeps the old destination when the incoming stream fails
+  ---
+  duration_ms: 11.365686
+  type: 'test'
+  ...
+# Subtest: ww remote upload honors slow-receiver backpressure without buffering the file
+ok 110 - ww remote upload honors slow-receiver backpressure without buffering the file
+  ---
+  duration_ms: 918.866635
+  type: 'test'
+  ...
+# Subtest: ww aborts a large download cleanly and keeps control requests responsive
+ok 111 - ww aborts a large download cleanly and keeps control requests responsive
+  ---
+  duration_ms: 25.261516
+  type: 'test'
+  ...
+# Subtest: ww transfer coalesces tiny-chunk progress while preserving exact output
+ok 112 - ww transfer coalesces tiny-chunk progress while preserving exact output
+  ---
+  duration_ms: 627.306133
+  type: 'test'
+  ...
+# Subtest: ww trash keeps deleted files for five days and restores their original path
+ok 113 - ww trash keeps deleted files for five days and restores their original path
+  ---
+  duration_ms: 38.328829
+  type: 'test'
+  ...
+# Subtest: ww trash does not overwrite a replacement when restoring
+ok 114 - ww trash does not overwrite a replacement when restoring
+  ---
+  duration_ms: 13.285414
+  type: 'test'
+  ...
+# Subtest: ww trash permanently purges entries after the retention window
+ok 115 - ww trash permanently purges entries after the retention window
+  ---
+  duration_ms: 7.81719
+  type: 'test'
+  ...
+# Subtest: ww desktop shell exposes the two-pane workspace with a narrow center action rail
+ok 116 - ww desktop shell exposes the two-pane workspace with a narrow center action rail
+  ---
+  duration_ms: 312.80609
+  type: 'test'
+  ...
+# Subtest: ww renderer keeps dual-pane compare, auto-link, and keyboard behaviors without modal flow
+ok 117 - ww renderer keeps dual-pane compare, auto-link, and keyboard behaviors without modal flow
+  ---
+  duration_ms: 1.506657
+  type: 'test'
+  ...
+# Subtest: ww desk enforces a restrictive content policy and keeps tokens out of renderer state
+ok 118 - ww desk enforces a restrictive content policy and keeps tokens out of renderer state
+  ---
+  duration_ms: 49.347968
+  type: 'test'
+  ...
+# Subtest: ww desk clamps both panes to the portal environment instead of the raw portal root
+ok 119 - ww desk clamps both panes to the portal environment instead of the raw portal root
+  ---
+  duration_ms: 0.477514
+  type: 'test'
+  ...
+# Subtest: ww desk suppresses stale refreshes and sends incremental high-frequency state
+ok 120 - ww desk suppresses stale refreshes and sends incremental high-frequency state
+  ---
+  duration_ms: 0.306623
+  type: 'test'
+  ...
+# Subtest: ww machine explorer is local, copy-only, and routes selections into the local portal pane
+ok 121 - ww machine explorer is local, copy-only, and routes selections into the local portal pane
+  ---
+  duration_ms: 0.381722
+  type: 'test'
+  ...
+# Subtest: ww default peer recovery copy stays non-technical even when pairing or version checks fail
+ok 122 - ww default peer recovery copy stays non-technical even when pairing or version checks fail
+  ---
+  duration_ms: 0.402451
+  type: 'test'
+  ...
+# Subtest: ww stylesheet defines the simplified workspace rail treatments
+ok 123 - ww stylesheet defines the simplified workspace rail treatments
+  ---
+  duration_ms: 1.119667
+  type: 'test'
+  ...
+1..123
+# tests 123
+# suites 0
+# pass 123
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4255.409041

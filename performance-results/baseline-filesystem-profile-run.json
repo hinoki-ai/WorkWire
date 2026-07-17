@@ -1,0 +1,90 @@
+{
+  "benchmark": "filesystem-directory-listing",
+  "implementation": "real ext4/tmp filesystem entries through lib/ww-fs.mjs listDirectory",
+  "conditions": {
+    "sizes": [
+      10000
+    ],
+    "repeats": 2,
+    "preparationConcurrency": 64,
+    "cacheState": "cold first read followed by warm repetitions"
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T06:31:17.184Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "results": [
+    {
+      "entryCount": 10000,
+      "coldDurationMs": 933.896,
+      "coldCount": 10000,
+      "warm": {
+        "durationsMs": [
+          894.429905,
+          889.5450819999996
+        ],
+        "duration": {
+          "samples": 2,
+          "min": 889.545,
+          "median": 891.987,
+          "p95": 894.186,
+          "max": 894.43,
+          "mean": 891.987,
+          "standardDeviation": 2.442,
+          "coefficientOfVariation": 0.003
+        },
+        "outputs": [
+          10000,
+          10000
+        ],
+        "resources": {
+          "memoryStartBytes": {
+            "rss": 144977920,
+            "heapTotal": 43270144,
+            "heapUsed": 6976528,
+            "external": 1935591,
+            "arrayBuffers": 16835
+          },
+          "peakMemoryBytes": {
+            "rss": 160305152,
+            "heapTotal": 46940160,
+            "heapUsed": 24306560,
+            "external": 2941831,
+            "arrayBuffers": 997235
+          },
+          "memoryEndBytes": {
+            "rss": 160305152,
+            "heapTotal": 46940160,
+            "heapUsed": 20089424,
+            "external": 2941831,
+            "arrayBuffers": 17035
+          },
+          "rssStartBytes": 144977920,
+          "peakRssBytes": 160305152,
+          "rssEndBytes": 160305152,
+          "userCpuMs": 1780.892,
+          "systemCpuMs": 228.17,
+          "maxRssDeltaKiB": 12640,
+          "voluntaryContextSwitches": 28047,
+          "involuntaryContextSwitches": 30,
+          "eventLoopUtilization": 0.945862,
+          "eventLoopDelay": {
+            "minMs": 9.028,
+            "meanMs": 17.135,
+            "p50Ms": 10.002,
+            "p95Ms": 10.658,
+            "p99Ms": 14.442,
+            "maxMs": 525.599
+          }
+        }
+      }
+    }
+  ]
+}

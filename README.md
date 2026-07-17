@@ -2,7 +2,7 @@
 
 WorkWire keeps two Linux WorkWire roots synchronized over a trusted LAN and provides a two-pane Electron desk for browsing and manual transfers.
 
-The repository root is the development portal. WorkWire mirrors ordinary files and source changes while reserving local control/build trees such as `.workwire/`, `.git/`, `link/`, `dist/`, `runtime/`, and `node_modules/`.
+The repository root is the development portal. WorkWire mirrors ordinary files and source changes while reserving local control/build trees such as `.workwire/`, `.git/`, `link/`, `dist/`, `runtime/`, and `node_modules/`. The desktop desk shows only the portal environment (`Portal/` inside the root); the rest of the root is backend-only and never appears in the frontend.
 
 ## Start
 

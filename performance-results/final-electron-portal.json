@@ -1,0 +1,960 @@
+{
+  "benchmark": "electron-portal-interaction",
+  "conditions": {
+    "sizes": [
+      100,
+      1000,
+      10000,
+      50000
+    ],
+    "repeats": 5,
+    "reloads": 20,
+    "soakCycles": 20,
+    "soakEntries": 10000,
+    "queriesPerCycle": 50,
+    "ipcMessages": 1000,
+    "window": "hidden 1440x980 Chromium renderer, background throttling disabled",
+    "syntheticData": "renderer-local construction to exclude IPC payload generation"
+  },
+  "versions": {
+    "node": "24.18.0",
+    "acorn": "8.16.0",
+    "ada": "3.4.4",
+    "amaro": "1.1.9",
+    "ares": "1.34.6",
+    "brotli": "1.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.4.2",
+    "merve": "1.2.2",
+    "modules": "148",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.69.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "0.0.0",
+    "simdjson": "4.6.4",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.1",
+    "tz": "2025c",
+    "undici": "7.28.0",
+    "unicode": "17.0",
+    "uv": "1.52.1",
+    "uvwasi": "0.0.23",
+    "v8": "15.0.245.15-electron.0",
+    "zlib": "1.3.2.1-motley",
+    "zstd": "1.6.0",
+    "electron": "43.1.1",
+    "chrome": "150.0.7871.114"
+  },
+  "results": [
+    {
+      "entriesPerPane": 100,
+      "constructionMs": {
+        "samples": 5,
+        "min": 0.1,
+        "median": 0.2,
+        "p95": 0.56,
+        "max": 0.6,
+        "mean": 0.28
+      },
+      "initialRenderMs": {
+        "samples": 5,
+        "min": 14.1,
+        "median": 15,
+        "p95": 31.76,
+        "max": 35.8,
+        "mean": 19.04
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 5,
+        "min": 11,
+        "median": 13,
+        "p95": 23,
+        "max": 25,
+        "mean": 15.4
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 5,
+            "min": 8.8,
+            "median": 9.1,
+            "p95": 16.96,
+            "max": 18.9,
+            "mean": 10.98
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 5,
+            "min": 8.7,
+            "median": 8.9,
+            "p95": 9.88,
+            "max": 10,
+            "mean": 9.16
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 5,
+            "min": 6.4,
+            "median": 7.3,
+            "p95": 8.62,
+            "max": 8.9,
+            "mean": 7.42
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 5,
+            "min": 6.4,
+            "median": 7.4,
+            "p95": 7.76,
+            "max": 7.8,
+            "mean": 7.22
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 5,
+            "min": 7.2,
+            "median": 8.4,
+            "p95": 11.42,
+            "max": 11.8,
+            "mean": 9.02
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 5,
+        "min": 8.1,
+        "median": 8.4,
+        "p95": 9.44,
+        "max": 9.6,
+        "mean": 8.62
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 5,
+        "mean": 0.146
+      },
+      "workspaceSwitchMs": {
+        "samples": 5,
+        "min": 0.7,
+        "median": 0.8,
+        "p95": 1.18,
+        "max": 1.2,
+        "mean": 0.92
+      },
+      "rendererHeap": {
+        "usedBytes": 2521926,
+        "totalBytes": 5219194,
+        "localRows": 34,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 0,
+        "durationMs": {
+          "samples": 0,
+          "min": 0,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "mean": 0
+        }
+      }
+    },
+    {
+      "entriesPerPane": 1000,
+      "constructionMs": {
+        "samples": 5,
+        "min": 1,
+        "median": 1,
+        "p95": 2.12,
+        "max": 2.3,
+        "mean": 1.34
+      },
+      "initialRenderMs": {
+        "samples": 5,
+        "min": 19.2,
+        "median": 19.6,
+        "p95": 20.68,
+        "max": 20.8,
+        "mean": 19.86
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 5,
+        "min": 11,
+        "median": 12,
+        "p95": 12.8,
+        "max": 13,
+        "mean": 11.8
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 5,
+            "min": 10.9,
+            "median": 11,
+            "p95": 12.78,
+            "max": 13.2,
+            "mean": 11.42
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 5,
+            "min": 9.8,
+            "median": 10.2,
+            "p95": 12.06,
+            "max": 12.3,
+            "mean": 10.7
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 5,
+            "min": 7.5,
+            "median": 8.2,
+            "p95": 9.8,
+            "max": 9.9,
+            "mean": 8.58
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 5,
+            "min": 8.6,
+            "median": 9.3,
+            "p95": 10.18,
+            "max": 10.3,
+            "mean": 9.34
+          },
+          "visibleResults": 3
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 5,
+            "min": 12.1,
+            "median": 12.7,
+            "p95": 13,
+            "max": 13,
+            "mean": 12.6
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 5,
+        "min": 8,
+        "median": 9.7,
+        "p95": 12.06,
+        "max": 12.6,
+        "mean": 9.7
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 3.2,
+        "mean": 0.136
+      },
+      "workspaceSwitchMs": {
+        "samples": 5,
+        "min": 0.1,
+        "median": 0.8,
+        "p95": 0.96,
+        "max": 1,
+        "mean": 0.68
+      },
+      "rendererHeap": {
+        "usedBytes": 8681637,
+        "totalBytes": 18760177,
+        "localRows": 34,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 0,
+        "durationMs": {
+          "samples": 0,
+          "min": 0,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "mean": 0
+        }
+      }
+    },
+    {
+      "entriesPerPane": 10000,
+      "constructionMs": {
+        "samples": 5,
+        "min": 5.6,
+        "median": 13.1,
+        "p95": 21.28,
+        "max": 22.3,
+        "mean": 13.02
+      },
+      "initialRenderMs": {
+        "samples": 5,
+        "min": 18.6,
+        "median": 20.8,
+        "p95": 28.84,
+        "max": 30.1,
+        "mean": 22.54
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 5,
+        "min": 225,
+        "median": 246,
+        "p95": 261.6,
+        "max": 263,
+        "mean": 244.2
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 5,
+            "min": 10.8,
+            "median": 11.2,
+            "p95": 16.26,
+            "max": 17.5,
+            "mean": 12.34
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 5,
+            "min": 12.2,
+            "median": 13.6,
+            "p95": 14.2,
+            "max": 14.3,
+            "mean": 13.48
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 5,
+            "min": 12.3,
+            "median": 13,
+            "p95": 15.92,
+            "max": 16.1,
+            "mean": 13.9
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 5,
+            "min": 14,
+            "median": 16.2,
+            "p95": 17.04,
+            "max": 17.1,
+            "mean": 16.04
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 5,
+            "min": 17.6,
+            "median": 19.5,
+            "p95": 19.58,
+            "max": 19.6,
+            "mean": 19.02
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 5,
+        "min": 12.4,
+        "median": 12.8,
+        "p95": 20.36,
+        "max": 22.1,
+        "mean": 14.7
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 2.3,
+        "mean": 0.114
+      },
+      "workspaceSwitchMs": {
+        "samples": 5,
+        "min": 0.2,
+        "median": 0.6,
+        "p95": 0.86,
+        "max": 0.9,
+        "mean": 0.6
+      },
+      "rendererHeap": {
+        "usedBytes": 56986301,
+        "totalBytes": 124642261,
+        "localRows": 10,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 1,
+        "durationMs": {
+          "samples": 1,
+          "min": 52,
+          "median": 52,
+          "p95": 52,
+          "max": 52,
+          "mean": 52
+        }
+      }
+    },
+    {
+      "entriesPerPane": 50000,
+      "constructionMs": {
+        "samples": 5,
+        "min": 27.4,
+        "median": 47.2,
+        "p95": 59.64,
+        "max": 60.3,
+        "mean": 46.98
+      },
+      "initialRenderMs": {
+        "samples": 5,
+        "min": 17.1,
+        "median": 18.4,
+        "p95": 46.98,
+        "max": 53.5,
+        "mean": 25.64
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 5,
+        "min": 1155,
+        "median": 1196,
+        "p95": 1230.6,
+        "max": 1237,
+        "mean": 1194.2
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 5,
+            "min": 21.8,
+            "median": 23.1,
+            "p95": 31.1,
+            "max": 32.4,
+            "mean": 25.22
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 5,
+            "min": 32,
+            "median": 34.3,
+            "p95": 37.8,
+            "max": 38.4,
+            "mean": 34.88
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 5,
+            "min": 31.5,
+            "median": 33.4,
+            "p95": 35.96,
+            "max": 36.2,
+            "mean": 33.62
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 5,
+            "min": 40.4,
+            "median": 40.6,
+            "p95": 43.46,
+            "max": 43.8,
+            "mean": 41.48
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 5,
+            "min": 52.3,
+            "median": 52.6,
+            "p95": 55.58,
+            "max": 56.2,
+            "mean": 53.32
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 5,
+        "min": 10.8,
+        "median": 11.5,
+        "p95": 33.06,
+        "max": 38.1,
+        "mean": 16.92
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 2,
+        "mean": 0.106
+      },
+      "workspaceSwitchMs": {
+        "samples": 5,
+        "min": 0.2,
+        "median": 0.8,
+        "p95": 1.46,
+        "max": 1.6,
+        "mean": 0.82
+      },
+      "rendererHeap": {
+        "usedBytes": 82772945,
+        "totalBytes": 172534025,
+        "localRows": 10,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 10,
+        "durationMs": {
+          "samples": 10,
+          "min": 56,
+          "median": 59.5,
+          "p95": 79.65,
+          "max": 81,
+          "mean": 64.7
+        }
+      }
+    }
+  ],
+  "ipcBurst": {
+    "messages": 1000,
+    "operationPayloadBytes": 277,
+    "fullSnapshotBytes": 17997086,
+    "fullToIncrementalSizeRatio": 64971.43,
+    "mainSendDurationMs": 31.109,
+    "endToEndDurationMs": 61.593,
+    "messagesPerSecond": 16235.684
+  },
+  "soak": {
+    "cycles": 20,
+    "entriesPerPane": 10000,
+    "searchQueries": 1000,
+    "samples": [
+      {
+        "cycle": 0,
+        "usedHeapBytes": 30430172,
+        "totalHeapBytes": 112169824,
+        "rows": 68,
+        "workingSetKiB": 461108
+      },
+      {
+        "cycle": 1,
+        "usedHeapBytes": 12521351,
+        "totalHeapBytes": 73988731,
+        "rows": 68,
+        "workingSetKiB": 457548
+      },
+      {
+        "cycle": 2,
+        "usedHeapBytes": 12446985,
+        "totalHeapBytes": 73464505,
+        "rows": 68,
+        "workingSetKiB": 252824
+      },
+      {
+        "cycle": 3,
+        "usedHeapBytes": 12486195,
+        "totalHeapBytes": 66124535,
+        "rows": 68,
+        "workingSetKiB": 252520
+      },
+      {
+        "cycle": 4,
+        "usedHeapBytes": 12419325,
+        "totalHeapBytes": 64551733,
+        "rows": 68,
+        "workingSetKiB": 253536
+      },
+      {
+        "cycle": 5,
+        "usedHeapBytes": 12472031,
+        "totalHeapBytes": 62978931,
+        "rows": 68,
+        "workingSetKiB": 252936
+      },
+      {
+        "cycle": 6,
+        "usedHeapBytes": 12478681,
+        "totalHeapBytes": 67435441,
+        "rows": 68,
+        "workingSetKiB": 253180
+      },
+      {
+        "cycle": 7,
+        "usedHeapBytes": 12486515,
+        "totalHeapBytes": 65862639,
+        "rows": 68,
+        "workingSetKiB": 253896
+      },
+      {
+        "cycle": 8,
+        "usedHeapBytes": 12432717,
+        "totalHeapBytes": 64027693,
+        "rows": 68,
+        "workingSetKiB": 253080
+      },
+      {
+        "cycle": 9,
+        "usedHeapBytes": 12453047,
+        "totalHeapBytes": 66124907,
+        "rows": 68,
+        "workingSetKiB": 252776
+      },
+      {
+        "cycle": 10,
+        "usedHeapBytes": 12453505,
+        "totalHeapBytes": 65338537,
+        "rows": 68,
+        "workingSetKiB": 253532
+      },
+      {
+        "cycle": 11,
+        "usedHeapBytes": 12423035,
+        "totalHeapBytes": 61406439,
+        "rows": 68,
+        "workingSetKiB": 252660
+      },
+      {
+        "cycle": 12,
+        "usedHeapBytes": 12462981,
+        "totalHeapBytes": 66911525,
+        "rows": 68,
+        "workingSetKiB": 252892
+      },
+      {
+        "cycle": 13,
+        "usedHeapBytes": 12462763,
+        "totalHeapBytes": 66125155,
+        "rows": 68,
+        "workingSetKiB": 253700
+      },
+      {
+        "cycle": 14,
+        "usedHeapBytes": 12440821,
+        "totalHeapBytes": 63765921,
+        "rows": 68,
+        "workingSetKiB": 253132
+      },
+      {
+        "cycle": 15,
+        "usedHeapBytes": 12544811,
+        "totalHeapBytes": 66125279,
+        "rows": 68,
+        "workingSetKiB": 252820
+      },
+      {
+        "cycle": 16,
+        "usedHeapBytes": 12458133,
+        "totalHeapBytes": 69795357,
+        "rows": 68,
+        "workingSetKiB": 253680
+      },
+      {
+        "cycle": 17,
+        "usedHeapBytes": 12483231,
+        "totalHeapBytes": 66125403,
+        "rows": 68,
+        "workingSetKiB": 253128
+      },
+      {
+        "cycle": 18,
+        "usedHeapBytes": 12440089,
+        "totalHeapBytes": 65601177,
+        "rows": 68,
+        "workingSetKiB": 252684
+      },
+      {
+        "cycle": 19,
+        "usedHeapBytes": 12395411,
+        "totalHeapBytes": 60358359,
+        "rows": 68,
+        "workingSetKiB": 253572
+      }
+    ],
+    "plateau": {
+      "usedHeapSlopeBytesPerCycle": -1303.952,
+      "workingSetSlopeKiBPerCycle": -6.18,
+      "usedHeapChangeBytes": -83270,
+      "workingSetChangeKiB": 392
+    },
+    "longTasks": {
+      "count": 1,
+      "durationMs": {
+        "samples": 1,
+        "min": 61,
+        "median": 61,
+        "p95": 61,
+        "max": 61,
+        "mean": 61
+      }
+    }
+  },
+  "longTasks": {
+    "count": 11,
+    "durationMs": {
+      "samples": 11,
+      "min": 52,
+      "median": 59,
+      "p95": 79.5,
+      "max": 81,
+      "mean": 63.545
+    }
+  },
+  "reloadLifecycle": {
+    "beforeReloadHeap": {
+      "usedHeapBytes": 1917064,
+      "totalHeapBytes": 45059540
+    },
+    "beforeReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 138795,
+        "memoryWorkingSetKiB": 213832
+      },
+      {
+        "type": "GPU",
+        "pid": 138831,
+        "memoryWorkingSetKiB": 106720
+      },
+      {
+        "type": "Utility",
+        "pid": 138834,
+        "memoryWorkingSetKiB": 89296
+      },
+      {
+        "type": "Tab",
+        "pid": 138947,
+        "memoryWorkingSetKiB": 250984
+      }
+    ],
+    "samples": [
+      {
+        "reload": 1,
+        "usedHeapBytes": 1641221,
+        "totalHeapBytes": 45056045,
+        "workingSetKiB": 262300
+      },
+      {
+        "reload": 2,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 279816
+      },
+      {
+        "reload": 3,
+        "usedHeapBytes": 1641416,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 305396
+      },
+      {
+        "reload": 4,
+        "usedHeapBytes": 1641152,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 326920
+      },
+      {
+        "reload": 5,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 344080
+      },
+      {
+        "reload": 6,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 369988
+      },
+      {
+        "reload": 7,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 390772
+      },
+      {
+        "reload": 8,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 418664
+      },
+      {
+        "reload": 9,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 438248
+      },
+      {
+        "reload": 10,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 456776
+      },
+      {
+        "reload": 11,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 476916
+      },
+      {
+        "reload": 12,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 506432
+      },
+      {
+        "reload": 13,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 499956
+      },
+      {
+        "reload": 14,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 502880
+      },
+      {
+        "reload": 15,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 500560
+      },
+      {
+        "reload": 16,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 505472
+      },
+      {
+        "reload": 17,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 496788
+      },
+      {
+        "reload": 18,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 490368
+      },
+      {
+        "reload": 19,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 494516
+      },
+      {
+        "reload": 20,
+        "usedHeapBytes": 1641376,
+        "totalHeapBytes": 45056180,
+        "workingSetKiB": 501280
+      }
+    ],
+    "plateau": {
+      "usedHeapSlopeBytesPerReload": 0,
+      "workingSetSlopeKiBPerReload": 451.879,
+      "usedHeapChangeBytes": 0,
+      "workingSetChangeKiB": 24364
+    },
+    "afterReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 138795,
+        "memoryWorkingSetKiB": 214908
+      },
+      {
+        "type": "GPU",
+        "pid": 138831,
+        "memoryWorkingSetKiB": 106868
+      },
+      {
+        "type": "Utility",
+        "pid": 138834,
+        "memoryWorkingSetKiB": 89316
+      },
+      {
+        "type": "Tab",
+        "pid": 138947,
+        "memoryWorkingSetKiB": 501992
+      }
+    ]
+  }
+}

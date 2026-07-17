@@ -38,14 +38,17 @@ test("ww local endpoint hides internal portal folders from root listings and tra
       path: rootPath,
       includeHidden: true,
     });
-    assert.deepEqual(listing.items.map((entry) => entry.name), ["docs"]);
+    assert.deepEqual(
+      listing.items.map((entry) => entry.name).sort(),
+      ["Portal", "docs"],
+    );
 
     const manifest = await endpoint.buildManifest({
       path: rootPath,
     });
     assert.deepEqual(
-      manifest.directories.map((entry) => toPortalRelative(rootPath, entry.path)),
-      [".", "docs"],
+      manifest.directories.map((entry) => toPortalRelative(rootPath, entry.path)).sort(),
+      [".", "Portal", "docs"],
     );
     assert.deepEqual(
       manifest.files.map((entry) => entry.relativePath),

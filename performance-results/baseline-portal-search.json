@@ -1,0 +1,1294 @@
+{
+  "benchmark": "portal-search",
+  "implementation": "actual renderer ranking functions in jsdom; optional full two-pane DOM render",
+  "conditions": {
+    "repeats": 5,
+    "sizes": [
+      100,
+      1000,
+      10000,
+      50000
+    ],
+    "renderSizes": [
+      100,
+      1000
+    ],
+    "dropdownLimit": 10,
+    "cacheState": "warm after one explicit warmup"
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T06:26:55.921Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "results": [
+    {
+      "entriesPerPane": 100,
+      "queries": [
+        {
+          "query": "single-character",
+          "value": "r",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            1.7360380000000077,
+            1.0650530000000344,
+            1.0477990000001682,
+            1.0787880000000314,
+            1.067446000000018
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 1.048,
+            "median": 1.067,
+            "p95": 1.605,
+            "max": 1.736,
+            "mean": 1.199,
+            "standardDeviation": 0.269,
+            "coefficientOfVariation": 0.224
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 179671040,
+            "peakRssBytes": 179802112,
+            "rssEndBytes": 179802112,
+            "userCpuMs": 23.389,
+            "systemCpuMs": 1.124,
+            "maxRssDeltaKiB": 128,
+            "voluntaryContextSwitches": 4,
+            "involuntaryContextSwitches": 0,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": null,
+              "meanMs": null,
+              "p50Ms": 0.001,
+              "p95Ms": 0.001,
+              "p99Ms": 0.001,
+              "maxMs": 0
+            }
+          }
+        },
+        {
+          "query": "common",
+          "value": "quarterly report",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            2.8143730000001597,
+            2.3458459999999377,
+            1.774375000000191,
+            1.5375460000000203,
+            1.486496999999872
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 1.486,
+            "median": 1.774,
+            "p95": 2.721,
+            "max": 2.814,
+            "mean": 1.992,
+            "standardDeviation": 0.512,
+            "coefficientOfVariation": 0.257
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 179933184,
+            "peakRssBytes": 179933184,
+            "rssEndBytes": 179933184,
+            "userCpuMs": 39.412,
+            "systemCpuMs": 0,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 7,
+            "involuntaryContextSwitches": 1,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": null,
+              "meanMs": null,
+              "p50Ms": 0.001,
+              "p95Ms": 0.001,
+              "p99Ms": 0.001,
+              "maxMs": 0
+            }
+          }
+        },
+        {
+          "query": "rare-exact",
+          "value": "needle-exact-final",
+          "matchedTopResults": 0,
+          "durationsMs": [
+            4.768706999999949,
+            3.773730999999998,
+            3.1367660000000797,
+            3.3679540000000543,
+            3.3583220000000438
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 3.137,
+            "median": 3.368,
+            "p95": 4.57,
+            "max": 4.769,
+            "mean": 3.681,
+            "standardDeviation": 0.581,
+            "coefficientOfVariation": 0.158
+          },
+          "outputs": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "resources": {
+            "rssStartBytes": 179933184,
+            "peakRssBytes": 179933184,
+            "rssEndBytes": 179933184,
+            "userCpuMs": 50.838,
+            "systemCpuMs": 0,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 7,
+            "involuntaryContextSwitches": 3,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 10.764,
+              "meanMs": 10.768,
+              "p50Ms": 10.772,
+              "p95Ms": 10.772,
+              "p99Ms": 10.772,
+              "maxMs": 10.772
+            }
+          }
+        },
+        {
+          "query": "multi-token",
+          "value": "project alpha resume",
+          "matchedTopResults": 1,
+          "durationsMs": [
+            3.425232000000051,
+            3.17163800000003,
+            4.851572000000033,
+            3.0339500000000044,
+            2.8791479999999865
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 2.879,
+            "median": 3.172,
+            "p95": 4.566,
+            "max": 4.852,
+            "mean": 3.472,
+            "standardDeviation": 0.713,
+            "coefficientOfVariation": 0.205
+          },
+          "outputs": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "resources": {
+            "rssStartBytes": 179933184,
+            "peakRssBytes": 180719616,
+            "rssEndBytes": 180719616,
+            "userCpuMs": 46.786,
+            "systemCpuMs": 0.864,
+            "maxRssDeltaKiB": 768,
+            "voluntaryContextSwitches": 9,
+            "involuntaryContextSwitches": 0,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 11.665,
+              "meanMs": 11.67,
+              "p50Ms": 11.674,
+              "p95Ms": 11.674,
+              "p99Ms": 11.674,
+              "maxMs": 11.674
+            }
+          }
+        },
+        {
+          "query": "typo-tolerant",
+          "value": "reprot",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            2.084569999999985,
+            2.113736000000017,
+            1.7430090000000291,
+            2.404657000000043,
+            2.534168000000136
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 1.743,
+            "median": 2.114,
+            "p95": 2.508,
+            "max": 2.534,
+            "mean": 2.176,
+            "standardDeviation": 0.276,
+            "coefficientOfVariation": 0.127
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 180719616,
+            "peakRssBytes": 180719616,
+            "rssEndBytes": 180719616,
+            "userCpuMs": 30.529,
+            "systemCpuMs": 0,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 7,
+            "involuntaryContextSwitches": 0,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 9.265,
+              "meanMs": 9.269,
+              "p50Ms": 9.273,
+              "p95Ms": 9.273,
+              "p99Ms": 9.273,
+              "maxMs": 9.273
+            }
+          }
+        }
+      ],
+      "rapidEdits": {
+        "durationsMs": [
+          12.98677900000007,
+          11.178579000000127,
+          9.811305999999831,
+          9.735267000000022,
+          7.213539999999966
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 7.214,
+          "median": 9.811,
+          "p95": 12.625,
+          "max": 12.987,
+          "mean": 10.185,
+          "standardDeviation": 1.898,
+          "coefficientOfVariation": 0.186
+        },
+        "outputs": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "resources": {
+          "rssStartBytes": 180719616,
+          "peakRssBytes": 190418944,
+          "rssEndBytes": 190418944,
+          "userCpuMs": 110.154,
+          "systemCpuMs": 2.592,
+          "maxRssDeltaKiB": 9472,
+          "voluntaryContextSwitches": 19,
+          "involuntaryContextSwitches": 9,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 9.88,
+            "meanMs": 10.413,
+            "p50Ms": 10.002,
+            "p95Ms": 11.362,
+            "p99Ms": 11.362,
+            "maxMs": 11.362
+          }
+        }
+      },
+      "fullTwoPaneRender": {
+        "durationsMs": [
+          236.329162,
+          183.24802699999987,
+          137.7684159999999
+        ],
+        "duration": {
+          "samples": 3,
+          "min": 137.768,
+          "median": 183.248,
+          "p95": 231.021,
+          "max": 236.329,
+          "mean": 185.782,
+          "standardDeviation": 40.277,
+          "coefficientOfVariation": 0.217
+        },
+        "outputs": [
+          {
+            "localRows": 100,
+            "remoteRows": 100
+          },
+          {
+            "localRows": 100,
+            "remoteRows": 100
+          },
+          {
+            "localRows": 100,
+            "remoteRows": 100
+          }
+        ],
+        "resources": {
+          "rssStartBytes": 190418944,
+          "peakRssBytes": 229539840,
+          "rssEndBytes": 229670912,
+          "userCpuMs": 1026.064,
+          "systemCpuMs": 16.526,
+          "maxRssDeltaKiB": 38332,
+          "voluntaryContextSwitches": 199,
+          "involuntaryContextSwitches": 22,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 137.888,
+            "meanMs": 160.694,
+            "p50Ms": 138.019,
+            "p95Ms": 183.501,
+            "p99Ms": 183.501,
+            "maxMs": 183.501
+          }
+        }
+      }
+    },
+    {
+      "entriesPerPane": 1000,
+      "queries": [
+        {
+          "query": "single-character",
+          "value": "r",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            8.148497000000134,
+            7.390282999999727,
+            6.892710999999963,
+            7.1064870000000155,
+            7.173338999999942
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 6.893,
+            "median": 7.173,
+            "p95": 7.997,
+            "max": 8.148,
+            "mean": 7.342,
+            "standardDeviation": 0.433,
+            "coefficientOfVariation": 0.059
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 230719488,
+            "peakRssBytes": 230719488,
+            "rssEndBytes": 230719488,
+            "userCpuMs": 51.768,
+            "systemCpuMs": 0.139,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 12,
+            "involuntaryContextSwitches": 1,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 14.5,
+              "meanMs": 14.782,
+              "p50Ms": 14.508,
+              "p95Ms": 15.065,
+              "p99Ms": 15.065,
+              "maxMs": 15.065
+            }
+          }
+        },
+        {
+          "query": "common",
+          "value": "quarterly report",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            15.450491000000056,
+            13.270397999999659,
+            13.310964999999669,
+            10.965913,
+            11.07507700000042
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 10.966,
+            "median": 13.27,
+            "p95": 15.023,
+            "max": 15.45,
+            "mean": 12.815,
+            "standardDeviation": 1.664,
+            "coefficientOfVariation": 0.13
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 230719488,
+            "peakRssBytes": 230719488,
+            "rssEndBytes": 230719488,
+            "userCpuMs": 119.948,
+            "systemCpuMs": 0.002,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 26,
+            "involuntaryContextSwitches": 7,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 11.084,
+              "meanMs": 12.317,
+              "p50Ms": 11.239,
+              "p95Ms": 13.492,
+              "p99Ms": 13.492,
+              "maxMs": 13.492
+            }
+          }
+        },
+        {
+          "query": "rare-exact",
+          "value": "needle-exact-final",
+          "matchedTopResults": 0,
+          "durationsMs": [
+            30.408378000000084,
+            28.123098000000027,
+            27.416294000000107,
+            28.487817000000177,
+            27.470182000000023
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 27.416,
+            "median": 28.123,
+            "p95": 30.024,
+            "max": 30.408,
+            "mean": 28.381,
+            "standardDeviation": 1.091,
+            "coefficientOfVariation": 0.038
+          },
+          "outputs": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "resources": {
+            "rssStartBytes": 230981632,
+            "peakRssBytes": 230981632,
+            "rssEndBytes": 230981632,
+            "userCpuMs": 163.071,
+            "systemCpuMs": 0.12,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 18,
+            "involuntaryContextSwitches": 3,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 27.591,
+              "meanMs": 28.054,
+              "p50Ms": 27.656,
+              "p95Ms": 28.672,
+              "p99Ms": 28.672,
+              "maxMs": 28.672
+            }
+          }
+        },
+        {
+          "query": "multi-token",
+          "value": "project alpha resume",
+          "matchedTopResults": 3,
+          "durationsMs": [
+            28.292299000000185,
+            25.64559999999983,
+            26.0638170000002,
+            27.801702000000205,
+            25.781882000000223
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 25.646,
+            "median": 26.064,
+            "p95": 28.194,
+            "max": 28.292,
+            "mean": 26.717,
+            "standardDeviation": 1.105,
+            "coefficientOfVariation": 0.041
+          },
+          "outputs": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "resources": {
+            "rssStartBytes": 230981632,
+            "peakRssBytes": 230981632,
+            "rssEndBytes": 230981632,
+            "userCpuMs": 158.652,
+            "systemCpuMs": 1.089,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 21,
+            "involuntaryContextSwitches": 5,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 25.838,
+              "meanMs": 26.771,
+              "p50Ms": 26.526,
+              "p95Ms": 27.967,
+              "p99Ms": 27.967,
+              "maxMs": 27.967
+            }
+          }
+        },
+        {
+          "query": "typo-tolerant",
+          "value": "reprot",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            17.99120800000037,
+            16.484407999999803,
+            15.790030999999999,
+            15.426908000000367,
+            14.789470000000165
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 14.789,
+            "median": 15.79,
+            "p95": 17.69,
+            "max": 17.991,
+            "mean": 16.096,
+            "standardDeviation": 1.095,
+            "coefficientOfVariation": 0.068
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 230981632,
+            "peakRssBytes": 230981632,
+            "rssEndBytes": 230981632,
+            "userCpuMs": 104.459,
+            "systemCpuMs": 1.066,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 19,
+            "involuntaryContextSwitches": 3,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 14.95,
+              "meanMs": 15.792,
+              "p50Ms": 15.606,
+              "p95Ms": 16.687,
+              "p99Ms": 16.687,
+              "maxMs": 16.687
+            }
+          }
+        }
+      ],
+      "rapidEdits": {
+        "durationsMs": [
+          77.31099899999981,
+          76.53954599999997,
+          77.56894599999987,
+          77.6853329999999,
+          77.614376
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 76.54,
+          "median": 77.569,
+          "p95": 77.671,
+          "max": 77.685,
+          "mean": 77.344,
+          "standardDeviation": 0.422,
+          "coefficientOfVariation": 0.005
+        },
+        "outputs": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "resources": {
+          "rssStartBytes": 230981632,
+          "peakRssBytes": 230981632,
+          "rssEndBytes": 230981632,
+          "userCpuMs": 412.597,
+          "systemCpuMs": 0.964,
+          "maxRssDeltaKiB": 0,
+          "voluntaryContextSwitches": 76,
+          "involuntaryContextSwitches": 13,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 76.677,
+            "meanMs": 77.709,
+            "p50Ms": 77.922,
+            "p95Ms": 78.184,
+            "p99Ms": 78.184,
+            "maxMs": 78.184
+          }
+        }
+      },
+      "fullTwoPaneRender": {
+        "durationsMs": [
+          1674.9400019999998,
+          1583.9291159999993,
+          1557.457504
+        ],
+        "duration": {
+          "samples": 3,
+          "min": 1557.458,
+          "median": 1583.929,
+          "p95": 1665.839,
+          "max": 1674.94,
+          "mean": 1605.442,
+          "standardDeviation": 50.317,
+          "coefficientOfVariation": 0.031
+        },
+        "outputs": [
+          {
+            "localRows": 1000,
+            "remoteRows": 1000
+          },
+          {
+            "localRows": 1000,
+            "remoteRows": 1000
+          },
+          {
+            "localRows": 1000,
+            "remoteRows": 1000
+          }
+        ],
+        "resources": {
+          "rssStartBytes": 230981632,
+          "peakRssBytes": 599162880,
+          "rssEndBytes": 599162880,
+          "userCpuMs": 6106.381,
+          "systemCpuMs": 224.286,
+          "maxRssDeltaKiB": 359552,
+          "voluntaryContextSwitches": 1885,
+          "involuntaryContextSwitches": 244,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 1557.135,
+            "meanMs": 1573.388,
+            "p50Ms": 1558.184,
+            "p95Ms": 1589.641,
+            "p99Ms": 1589.641,
+            "maxMs": 1589.641
+          }
+        }
+      }
+    },
+    {
+      "entriesPerPane": 10000,
+      "queries": [
+        {
+          "query": "single-character",
+          "value": "r",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            76.1524530000006,
+            74.63948600000003,
+            73.67771700000048,
+            74.80254299999979,
+            74.36423099999956
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 73.678,
+            "median": 74.639,
+            "p95": 75.882,
+            "max": 76.152,
+            "mean": 74.727,
+            "standardDeviation": 0.81,
+            "coefficientOfVariation": 0.011
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 608337920,
+            "peakRssBytes": 608468992,
+            "rssEndBytes": 608468992,
+            "userCpuMs": 407.249,
+            "systemCpuMs": 0.145,
+            "maxRssDeltaKiB": 128,
+            "voluntaryContextSwitches": 214,
+            "involuntaryContextSwitches": 8,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 73.794,
+              "meanMs": 74.875,
+              "p50Ms": 74.58,
+              "p95Ms": 76.153,
+              "p99Ms": 76.153,
+              "maxMs": 76.153
+            }
+          }
+        },
+        {
+          "query": "common",
+          "value": "quarterly report",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            114.84483,
+            113.68262399999912,
+            112.98183299999982,
+            113.45923199999925,
+            111.80279599999994
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 111.803,
+            "median": 113.459,
+            "p95": 114.612,
+            "max": 114.845,
+            "mean": 113.354,
+            "standardDeviation": 0.989,
+            "coefficientOfVariation": 0.009
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 608468992,
+            "peakRssBytes": 608468992,
+            "rssEndBytes": 608468992,
+            "userCpuMs": 643.309,
+            "systemCpuMs": 0.004,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 220,
+            "involuntaryContextSwitches": 13,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 111.935,
+              "meanMs": 113.181,
+              "p50Ms": 113.181,
+              "p95Ms": 113.967,
+              "p99Ms": 113.967,
+              "maxMs": 113.967
+            }
+          }
+        },
+        {
+          "query": "rare-exact",
+          "value": "needle-exact-final",
+          "matchedTopResults": 0,
+          "durationsMs": [
+            282.6257459999997,
+            280.82142999999996,
+            301.78537700000015,
+            297.68489299999965,
+            293.06283500000063
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 280.821,
+            "median": 293.063,
+            "p95": 300.965,
+            "max": 301.785,
+            "mean": 291.196,
+            "standardDeviation": 8.232,
+            "coefficientOfVariation": 0.028
+          },
+          "outputs": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "resources": {
+            "rssStartBytes": 608600064,
+            "peakRssBytes": 608600064,
+            "rssEndBytes": 608600064,
+            "userCpuMs": 1491.748,
+            "systemCpuMs": 0.929,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 44,
+            "involuntaryContextSwitches": 45,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 281.018,
+              "meanMs": 293.601,
+              "p50Ms": 293.339,
+              "p95Ms": 302.252,
+              "p99Ms": 302.252,
+              "maxMs": 302.252
+            }
+          }
+        },
+        {
+          "query": "multi-token",
+          "value": "project alpha resume",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            259.48776499999985,
+            257.2351490000001,
+            254.75677199999882,
+            256.6905820000011,
+            255.41449300000022
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 254.757,
+            "median": 256.691,
+            "p95": 259.037,
+            "max": 259.488,
+            "mean": 256.717,
+            "standardDeviation": 1.642,
+            "coefficientOfVariation": 0.006
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 608600064,
+            "peakRssBytes": 608600064,
+            "rssEndBytes": 608600064,
+            "userCpuMs": 1323.901,
+            "systemCpuMs": 0.982,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 85,
+            "involuntaryContextSwitches": 43,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 255.328,
+              "meanMs": 256.705,
+              "p50Ms": 256.115,
+              "p95Ms": 258.081,
+              "p99Ms": 258.081,
+              "maxMs": 258.081
+            }
+          }
+        },
+        {
+          "query": "typo-tolerant",
+          "value": "reprot",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            157.932671999999,
+            154.6290140000001,
+            151.90173999999934,
+            155.13602100000026,
+            153.76916600000004
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 151.902,
+            "median": 154.629,
+            "p95": 157.373,
+            "max": 157.933,
+            "mean": 154.674,
+            "standardDeviation": 1.967,
+            "coefficientOfVariation": 0.013
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 608600064,
+            "peakRssBytes": 608600064,
+            "rssEndBytes": 608600064,
+            "userCpuMs": 841.886,
+            "systemCpuMs": 2.965,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 272,
+            "involuntaryContextSwitches": 25,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 152.044,
+              "meanMs": 154.403,
+              "p50Ms": 154.01,
+              "p95Ms": 156.762,
+              "p99Ms": 156.762,
+              "maxMs": 156.762
+            }
+          }
+        }
+      ],
+      "rapidEdits": {
+        "durationsMs": [
+          800.9215409999997,
+          765.8517350000002,
+          780.5361660000017,
+          766.0340770000003,
+          839.9108159999996
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 765.852,
+          "median": 780.536,
+          "p95": 832.113,
+          "max": 839.911,
+          "mean": 790.651,
+          "standardDeviation": 27.768,
+          "coefficientOfVariation": 0.035
+        },
+        "outputs": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "resources": {
+          "rssStartBytes": 608600064,
+          "peakRssBytes": 608862208,
+          "rssEndBytes": 608862208,
+          "userCpuMs": 4495.222,
+          "systemCpuMs": 21.965,
+          "maxRssDeltaKiB": 256,
+          "voluntaryContextSwitches": 1618,
+          "involuntaryContextSwitches": 115,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 765.985,
+            "meanMs": 788.529,
+            "p50Ms": 766.509,
+            "p95Ms": 840.958,
+            "p99Ms": 840.958,
+            "maxMs": 840.958
+          }
+        }
+      },
+      "fullTwoPaneRender": null
+    },
+    {
+      "entriesPerPane": 50000,
+      "queries": [
+        {
+          "query": "single-character",
+          "value": "r",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            387.4902780000011,
+            372.6131639999985,
+            371.89803200000097,
+            371.45090399999754,
+            368.52581999999893
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 368.526,
+            "median": 371.898,
+            "p95": 384.515,
+            "max": 387.49,
+            "mean": 374.396,
+            "standardDeviation": 6.693,
+            "coefficientOfVariation": 0.018
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 609300480,
+            "peakRssBytes": 612769792,
+            "rssEndBytes": 612769792,
+            "userCpuMs": 2048.64,
+            "systemCpuMs": 13.229,
+            "maxRssDeltaKiB": 1640,
+            "voluntaryContextSwitches": 958,
+            "involuntaryContextSwitches": 40,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 368.574,
+              "meanMs": 371.327,
+              "p50Ms": 371.72,
+              "p95Ms": 373.031,
+              "p99Ms": 373.031,
+              "maxMs": 373.031
+            }
+          }
+        },
+        {
+          "query": "common",
+          "value": "quarterly report",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            574.4536550000012,
+            566.6093560000008,
+            560.4690059999994,
+            561.800725000001,
+            560.0492410000006
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 560.049,
+            "median": 561.801,
+            "p95": 572.885,
+            "max": 574.454,
+            "mean": 564.676,
+            "standardDeviation": 5.417,
+            "coefficientOfVariation": 0.01
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 609300480,
+            "peakRssBytes": 612638720,
+            "rssEndBytes": 612638720,
+            "userCpuMs": 3017.564,
+            "systemCpuMs": 6.274,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 868,
+            "involuntaryContextSwitches": 77,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 559.94,
+              "meanMs": 562.43,
+              "p50Ms": 560.988,
+              "p95Ms": 567.28,
+              "p99Ms": 567.28,
+              "maxMs": 567.28
+            }
+          }
+        },
+        {
+          "query": "rare-exact",
+          "value": "needle-exact-final",
+          "matchedTopResults": 1,
+          "durationsMs": [
+            1394.19038,
+            1395.3775090000017,
+            1403.6938750000008,
+            1388.6970690000016,
+            1392.1126519999962
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 1388.697,
+            "median": 1394.19,
+            "p95": 1402.031,
+            "max": 1403.694,
+            "mean": 1394.814,
+            "standardDeviation": 4.985,
+            "coefficientOfVariation": 0.004
+          },
+          "outputs": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "resources": {
+            "rssStartBytes": 609300480,
+            "peakRssBytes": 611266560,
+            "rssEndBytes": 611266560,
+            "userCpuMs": 6987.591,
+            "systemCpuMs": 1.866,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 69,
+            "involuntaryContextSwitches": 219,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 1389.363,
+              "meanMs": 1395.917,
+              "p50Ms": 1393.558,
+              "p95Ms": 1405.092,
+              "p99Ms": 1405.092,
+              "maxMs": 1405.092
+            }
+          }
+        },
+        {
+          "query": "multi-token",
+          "value": "project alpha resume",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            1281.7667030000011,
+            1278.3581189999968,
+            1336.8491400000057,
+            1292.1741419999962,
+            1278.1700340000025
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 1278.17,
+            "median": 1281.767,
+            "p95": 1327.914,
+            "max": 1336.849,
+            "mean": 1293.464,
+            "standardDeviation": 22.284,
+            "coefficientOfVariation": 0.017
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 609300480,
+            "peakRssBytes": 611266560,
+            "rssEndBytes": 611266560,
+            "userCpuMs": 6481.269,
+            "systemCpuMs": 3.9,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 188,
+            "involuntaryContextSwitches": 178,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 1278.214,
+              "meanMs": 1296.826,
+              "p50Ms": 1279.263,
+              "p95Ms": 1337.983,
+              "p99Ms": 1337.983,
+              "maxMs": 1337.983
+            }
+          }
+        },
+        {
+          "query": "typo-tolerant",
+          "value": "reprot",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            770.733067000001,
+            764.4498600000006,
+            753.7731120000026,
+            757.0431080000053,
+            798.3324269999939
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 753.773,
+            "median": 764.45,
+            "p95": 792.813,
+            "max": 798.332,
+            "mean": 768.866,
+            "standardDeviation": 15.867,
+            "coefficientOfVariation": 0.021
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "rssStartBytes": 609300480,
+            "peakRssBytes": 612265984,
+            "rssEndBytes": 611049472,
+            "userCpuMs": 4304.525,
+            "systemCpuMs": 8.904,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 1011,
+            "involuntaryContextSwitches": 146,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 753.926,
+              "meanMs": 768.868,
+              "p50Ms": 757.596,
+              "p95Ms": 799.539,
+              "p99Ms": 799.539,
+              "maxMs": 799.539
+            }
+          }
+        }
+      ],
+      "rapidEdits": {
+        "durationsMs": [
+          3943.243398000006,
+          3922.3907190000027,
+          3974.4608630000002,
+          3952.0898369999995,
+          3980.8328269999984
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 3922.391,
+          "median": 3952.09,
+          "p95": 3979.558,
+          "max": 3980.833,
+          "mean": 3954.604,
+          "standardDeviation": 21.238,
+          "coefficientOfVariation": 0.005
+        },
+        "outputs": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "resources": {
+          "rssStartBytes": 608735232,
+          "peakRssBytes": 611352576,
+          "rssEndBytes": 609841152,
+          "userCpuMs": 22205.555,
+          "systemCpuMs": 119.962,
+          "maxRssDeltaKiB": 704,
+          "voluntaryContextSwitches": 7727,
+          "involuntaryContextSwitches": 855,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 3923.771,
+            "meanMs": 3958.374,
+            "p50Ms": 3953.132,
+            "p95Ms": 3982.492,
+            "p99Ms": 3982.492,
+            "maxMs": 3982.492
+          }
+        }
+      },
+      "fullTwoPaneRender": null
+    }
+  ]
+}

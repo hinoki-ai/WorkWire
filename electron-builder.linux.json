@@ -45,6 +45,7 @@
   "linux": {
     "category": "Utility",
     "icon": "desktop/assets/workwire/icon.png",
+    "syncDesktopName": true,
     "target": [
       "AppImage"
     ]

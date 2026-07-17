@@ -298,7 +298,7 @@ test("ww launcher attaches to the local background service when it is already ru
   ]);
 });
 
-test("ww launcher restarts a stale local background service before attaching", async () => {
+test("ww launcher accepts a synchronous background-service restart before attaching", async () => {
   let launchedWith = null;
   let resolveCalls = 0;
   let restartCalls = 0;
@@ -347,7 +347,7 @@ test("ww launcher restarts a stale local background service before attaching", a
         compatible: true,
       };
     },
-    restartLocalServiceImpl: async () => {
+    restartLocalServiceImpl: () => {
       restartCalls += 1;
       return true;
     },

@@ -1,0 +1,292 @@
+{
+  "benchmark": "transfer-throughput-and-memory",
+  "scopeNote": "Active Files transfer paths are measured. Recovery artifacts, range/resume, and command output are future phases and are not mocked.",
+  "conditions": {
+    "modes": [
+      "local",
+      "loopback-upload",
+      "loopback-download"
+    ],
+    "sizesBytes": [
+      402653184
+    ],
+    "repeats": 3,
+    "sourceGeneration": "sparse file with deterministic binary head/tail blocks",
+    "transport": "same-host ext4 and HTTP loopback",
+    "verification": "incremental SHA-256 after every transfer",
+    "controlProbeIntervalMs": 50
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T06:34:26.479Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "lifecycle": {
+    "handlesBefore": {
+      "Socket": 1
+    },
+    "handlesAfterStop": {
+      "Socket": 2
+    }
+  },
+  "results": [
+    {
+      "mode": "local",
+      "sizeBytes": 402653184,
+      "sizeMiB": 384,
+      "repeats": 3,
+      "transferDurationMs": {
+        "samples": 3,
+        "min": 410.674,
+        "median": 460.77,
+        "p95": 523.285,
+        "max": 530.231,
+        "mean": 467.225,
+        "standardDeviation": 49.022,
+        "coefficientOfVariation": 0.105
+      },
+      "throughputMiBPerSecond": {
+        "samples": 3,
+        "min": 724.213,
+        "median": 833.388,
+        "p95": 924.882,
+        "max": 935.048,
+        "mean": 830.883,
+        "standardDeviation": 86.091,
+        "coefficientOfVariation": 0.104
+      },
+      "progressCallbackCountTotal": 28,
+      "progressCallbacksPerTransfer": 9.333,
+      "controlPingLatencyMs": {
+        "samples": 0,
+        "min": null,
+        "median": null,
+        "p95": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null,
+        "coefficientOfVariation": null
+      },
+      "controlPingFailures": 0,
+      "verification": {
+        "exactSize": true,
+        "incrementalSha256": true,
+        "sha256": "e7057b6741b3a564a59e9ca18e0c667cb6dd91a84952a87bab247054478ce19b"
+      },
+      "resources": {
+        "memoryStartBytes": {
+          "rss": 78614528,
+          "heapTotal": 17055744,
+          "heapUsed": 7028800,
+          "external": 3702446,
+          "arrayBuffers": 67974
+        },
+        "peakMemoryBytes": {
+          "rss": 120123392,
+          "heapTotal": 17317888,
+          "heapUsed": 9680280,
+          "external": 39165942,
+          "arrayBuffers": 34475374
+        },
+        "memoryEndBytes": {
+          "rss": 119508992,
+          "heapTotal": 17317888,
+          "heapUsed": 8024464,
+          "external": 22584334,
+          "arrayBuffers": 18942342
+        },
+        "rssStartBytes": 78614528,
+        "peakRssBytes": 120123392,
+        "rssEndBytes": 119508992,
+        "userCpuMs": 5056.554,
+        "systemCpuMs": 1157.1,
+        "maxRssDeltaKiB": 7208,
+        "voluntaryContextSwitches": 41714,
+        "involuntaryContextSwitches": 124,
+        "eventLoopUtilization": 0.979294,
+        "eventLoopDelay": {
+          "minMs": 9.044,
+          "meanMs": 11.028,
+          "p50Ms": 11.469,
+          "p95Ms": 12.255,
+          "p99Ms": 12.722,
+          "maxMs": 13.115
+        }
+      }
+    },
+    {
+      "mode": "loopback-upload",
+      "sizeBytes": 402653184,
+      "sizeMiB": 384,
+      "repeats": 3,
+      "transferDurationMs": {
+        "samples": 3,
+        "min": 1327.177,
+        "median": 1345.578,
+        "p95": 1458.978,
+        "max": 1471.578,
+        "mean": 1381.444,
+        "standardDeviation": 64.175,
+        "coefficientOfVariation": 0.046
+      },
+      "throughputMiBPerSecond": {
+        "samples": 3,
+        "min": 260.944,
+        "median": 285.379,
+        "p95": 288.94,
+        "max": 289.336,
+        "mean": 278.553,
+        "standardDeviation": 12.556,
+        "coefficientOfVariation": 0.045
+      },
+      "progressCallbackCountTotal": 53,
+      "progressCallbacksPerTransfer": 17.667,
+      "controlPingLatencyMs": {
+        "samples": 81,
+        "min": 1.129,
+        "median": 1.944,
+        "p95": 5.046,
+        "max": 9.32,
+        "mean": 2.286,
+        "standardDeviation": 1.326,
+        "coefficientOfVariation": 0.58
+      },
+      "controlPingFailures": 0,
+      "verification": {
+        "exactSize": true,
+        "incrementalSha256": true,
+        "sha256": "e7057b6741b3a564a59e9ca18e0c667cb6dd91a84952a87bab247054478ce19b"
+      },
+      "resources": {
+        "memoryStartBytes": {
+          "rss": 119508992,
+          "heapTotal": 17317888,
+          "heapUsed": 7615272,
+          "external": 22584334,
+          "arrayBuffers": 67974
+        },
+        "peakMemoryBytes": {
+          "rss": 140423168,
+          "heapTotal": 27803648,
+          "heapUsed": 10320576,
+          "external": 41469822,
+          "arrayBuffers": 36776326
+        },
+        "memoryEndBytes": {
+          "rss": 139612160,
+          "heapTotal": 12861440,
+          "heapUsed": 8453576,
+          "external": 32034220,
+          "arrayBuffers": 28389300
+        },
+        "rssStartBytes": 119508992,
+        "peakRssBytes": 140423168,
+        "rssEndBytes": 139612160,
+        "userCpuMs": 8124.336,
+        "systemCpuMs": 1959.649,
+        "maxRssDeltaKiB": 19824,
+        "voluntaryContextSwitches": 66101,
+        "involuntaryContextSwitches": 193,
+        "eventLoopUtilization": 0.972731,
+        "eventLoopDelay": {
+          "minMs": 9.077,
+          "meanMs": 10.702,
+          "p50Ms": 10.093,
+          "p95Ms": 12.149,
+          "p99Ms": 12.509,
+          "maxMs": 13.173
+        }
+      }
+    },
+    {
+      "mode": "loopback-download",
+      "sizeBytes": 402653184,
+      "sizeMiB": 384,
+      "repeats": 3,
+      "transferDurationMs": {
+        "samples": 3,
+        "min": 1644.998,
+        "median": 1675.719,
+        "p95": 1752.186,
+        "max": 1760.683,
+        "mean": 1693.8,
+        "standardDeviation": 48.928,
+        "coefficientOfVariation": 0.029
+      },
+      "throughputMiBPerSecond": {
+        "samples": 3,
+        "min": 218.097,
+        "median": 229.155,
+        "p95": 233.007,
+        "max": 233.435,
+        "mean": 226.896,
+        "standardDeviation": 6.462,
+        "coefficientOfVariation": 0.028
+      },
+      "progressCallbackCountTotal": 64,
+      "progressCallbacksPerTransfer": 21.333,
+      "controlPingLatencyMs": {
+        "samples": 100,
+        "min": 1.866,
+        "median": 2.957,
+        "p95": 3.436,
+        "max": 4.365,
+        "mean": 2.832,
+        "standardDeviation": 0.479,
+        "coefficientOfVariation": 0.169
+      },
+      "controlPingFailures": 0,
+      "verification": {
+        "exactSize": true,
+        "incrementalSha256": true,
+        "sha256": "22e813781e8f550dd5b25eeccccea430b4e206d230795bfe664eb62df0169948"
+      },
+      "resources": {
+        "memoryStartBytes": {
+          "rss": 125116416,
+          "heapTotal": 12861440,
+          "heapUsed": 8272680,
+          "external": 3721086,
+          "arrayBuffers": 76166
+        },
+        "peakMemoryBytes": {
+          "rss": 147648512,
+          "heapTotal": 45105152,
+          "heapUsed": 10388128,
+          "external": 44772520,
+          "arrayBuffers": 40970630
+        },
+        "memoryEndBytes": {
+          "rss": 144146432,
+          "heapTotal": 44843008,
+          "heapUsed": 8577888,
+          "external": 20655272,
+          "arrayBuffers": 16853382
+        },
+        "rssStartBytes": 125116416,
+        "peakRssBytes": 147648512,
+        "rssEndBytes": 144146432,
+        "userCpuMs": 12256.584,
+        "systemCpuMs": 2013.35,
+        "maxRssDeltaKiB": 7056,
+        "voluntaryContextSwitches": 44788,
+        "involuntaryContextSwitches": 259,
+        "eventLoopUtilization": 0.993734,
+        "eventLoopDelay": {
+          "minMs": 9.019,
+          "meanMs": 10.558,
+          "p50Ms": 10.109,
+          "p95Ms": 12.116,
+          "p99Ms": 12.78,
+          "maxMs": 13.795
+        }
+      }
+    }
+  ]
+}

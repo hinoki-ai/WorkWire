@@ -1,0 +1,228 @@
+{
+  "benchmark": "filesystem-directory-listing",
+  "implementation": "real ext4/tmp filesystem entries through lib/ww-fs.mjs listDirectory",
+  "conditions": {
+    "sizes": [
+      100,
+      1000,
+      10000,
+      50000
+    ],
+    "repeats": 5,
+    "preparationConcurrency": 64,
+    "cacheState": "cold first read followed by warm repetitions"
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T06:27:48.179Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "results": [
+    {
+      "entryCount": 100,
+      "coldDurationMs": 26.904,
+      "coldCount": 100,
+      "warm": {
+        "durationsMs": [
+          12.128325999999987,
+          11.697738999999984,
+          10.498548,
+          12.40785600000001,
+          10.508050999999995
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 10.499,
+          "median": 11.698,
+          "p95": 12.352,
+          "max": 12.408,
+          "mean": 11.448,
+          "standardDeviation": 0.804,
+          "coefficientOfVariation": 0.07
+        },
+        "outputs": [
+          100,
+          100,
+          100,
+          100,
+          100
+        ],
+        "resources": {
+          "rssStartBytes": 67821568,
+          "peakRssBytes": 69132288,
+          "rssEndBytes": 69132288,
+          "userCpuMs": 56.395,
+          "systemCpuMs": 4.079,
+          "maxRssDeltaKiB": 0,
+          "voluntaryContextSwitches": 785,
+          "involuntaryContextSwitches": 0,
+          "eventLoopUtilization": 0.908224,
+          "eventLoopDelay": {
+            "minMs": 10.371,
+            "meanMs": 11.842,
+            "p50Ms": 11.985,
+            "p95Ms": 12.591,
+            "p99Ms": 12.591,
+            "maxMs": 12.591
+          }
+        }
+      }
+    },
+    {
+      "entryCount": 1000,
+      "coldDurationMs": 103.841,
+      "coldCount": 1000,
+      "warm": {
+        "durationsMs": [
+          103.94185700000003,
+          98.28758800000003,
+          89.15563499999996,
+          97.06814900000006,
+          106.63928800000008
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 89.156,
+          "median": 98.288,
+          "p95": 106.1,
+          "max": 106.639,
+          "mean": 99.019,
+          "standardDeviation": 6.065,
+          "coefficientOfVariation": 0.061
+        },
+        "outputs": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "resources": {
+          "rssStartBytes": 77324288,
+          "peakRssBytes": 81633280,
+          "rssEndBytes": 80621568,
+          "userCpuMs": 521.891,
+          "systemCpuMs": 63.262,
+          "maxRssDeltaKiB": 0,
+          "voluntaryContextSwitches": 7188,
+          "involuntaryContextSwitches": 44,
+          "eventLoopUtilization": 0.937272,
+          "eventLoopDelay": {
+            "minMs": 9.339,
+            "meanMs": 20.674,
+            "p50Ms": 10.011,
+            "p95Ms": 69.075,
+            "p99Ms": 69.992,
+            "maxMs": 69.992
+          }
+        }
+      }
+    },
+    {
+      "entryCount": 10000,
+      "coldDurationMs": 832.986,
+      "coldCount": 10000,
+      "warm": {
+        "durationsMs": [
+          793.8125710000004,
+          829.5770670000002,
+          822.7631330000004,
+          797.7272700000003,
+          844.3723170000003
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 793.813,
+          "median": 822.763,
+          "p95": 841.413,
+          "max": 844.372,
+          "mean": 817.65,
+          "standardDeviation": 19.223,
+          "coefficientOfVariation": 0.024
+        },
+        "outputs": [
+          10000,
+          10000,
+          10000,
+          10000,
+          10000
+        ],
+        "resources": {
+          "rssStartBytes": 146358272,
+          "peakRssBytes": 161157120,
+          "rssEndBytes": 159035392,
+          "userCpuMs": 4065.3,
+          "systemCpuMs": 460.899,
+          "maxRssDeltaKiB": 16116,
+          "voluntaryContextSwitches": 61705,
+          "involuntaryContextSwitches": 77,
+          "eventLoopUtilization": 0.957221,
+          "eventLoopDelay": {
+            "minMs": 9.38,
+            "meanMs": 21.898,
+            "p50Ms": 10.002,
+            "p95Ms": 11.182,
+            "p99Ms": 494.404,
+            "maxMs": 501.481
+          }
+        }
+      }
+    },
+    {
+      "entryCount": 50000,
+      "coldDurationMs": 4378.609,
+      "coldCount": 50000,
+      "warm": {
+        "durationsMs": [
+          4483.726279000002,
+          4462.185701999999,
+          4301.183632,
+          4385.527115000001,
+          4452.123996999995
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 4301.184,
+          "median": 4452.124,
+          "p95": 4479.418,
+          "max": 4483.726,
+          "mean": 4416.949,
+          "standardDeviation": 66.531,
+          "coefficientOfVariation": 0.015
+        },
+        "outputs": [
+          50000,
+          50000,
+          50000,
+          50000,
+          50000
+        ],
+        "resources": {
+          "rssStartBytes": 274411520,
+          "peakRssBytes": 285126656,
+          "rssEndBytes": 284815360,
+          "userCpuMs": 21728.132,
+          "systemCpuMs": 2542.492,
+          "maxRssDeltaKiB": 8888,
+          "voluntaryContextSwitches": 329108,
+          "involuntaryContextSwitches": 545,
+          "eventLoopUtilization": 0.948531,
+          "eventLoopDelay": {
+            "minMs": 9.069,
+            "meanMs": 22.426,
+            "p50Ms": 10.002,
+            "p95Ms": 10.043,
+            "p99Ms": 14.475,
+            "maxMs": 2717.909
+          }
+        }
+      }
+    }
+  ]
+}

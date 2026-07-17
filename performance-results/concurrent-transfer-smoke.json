@@ -1,0 +1,219 @@
+{
+  "benchmark": "transfer-throughput-and-memory",
+  "scopeNote": "Active Files transfer paths are measured. Recovery artifacts, range/resume, and command output are future phases and are not mocked.",
+  "conditions": {
+    "modes": [
+      "local"
+    ],
+    "sizesBytes": [
+      0
+    ],
+    "repeats": 2,
+    "concurrentTransfers": 2,
+    "concurrentSizeMiB": 8,
+    "sourceGeneration": "sparse file with deterministic binary head/tail blocks",
+    "transport": "same-host ext4 and HTTP loopback",
+    "verification": "incremental SHA-256 after every transfer",
+    "controlProbeIntervalMs": 50
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T07:06:52.630Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "lifecycle": {
+    "handlesBefore": {
+      "Socket": 1
+    },
+    "handlesAfterStop": {
+      "Socket": 1
+    }
+  },
+  "results": [
+    {
+      "mode": "local",
+      "sizeBytes": 0,
+      "sizeMiB": 0,
+      "repeats": 2,
+      "transferDurationMs": {
+        "samples": 2,
+        "min": 4.301,
+        "median": 10.259,
+        "p95": 15.621,
+        "max": 16.217,
+        "mean": 10.259,
+        "standardDeviation": 5.958,
+        "coefficientOfVariation": 0.581
+      },
+      "throughputMiBPerSecond": {
+        "samples": 2,
+        "min": 0,
+        "median": 0,
+        "p95": 0,
+        "max": 0,
+        "mean": 0,
+        "standardDeviation": 0,
+        "coefficientOfVariation": 0
+      },
+      "progressCallbackCountTotal": 8,
+      "progressCallbacksPerTransfer": 4,
+      "controlPingLatencyMs": {
+        "samples": 0,
+        "min": null,
+        "median": null,
+        "p95": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null,
+        "coefficientOfVariation": null
+      },
+      "controlPingFailures": 0,
+      "verification": {
+        "exactSize": true,
+        "incrementalSha256": true,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "resources": {
+        "memoryStartBytes": {
+          "rss": 78086144,
+          "heapTotal": 16793600,
+          "heapUsed": 6985520,
+          "external": 3702446,
+          "arrayBuffers": 67974
+        },
+        "peakMemoryBytes": {
+          "rss": 78479360,
+          "heapTotal": 16793600,
+          "heapUsed": 7818648,
+          "external": 7915494,
+          "arrayBuffers": 4273502
+        },
+        "memoryEndBytes": {
+          "rss": 78479360,
+          "heapTotal": 16793600,
+          "heapUsed": 7821424,
+          "external": 7915494,
+          "arrayBuffers": 4273502
+        },
+        "rssStartBytes": 78086144,
+        "peakRssBytes": 78479360,
+        "rssEndBytes": 78479360,
+        "userCpuMs": 20.514,
+        "systemCpuMs": 4.842,
+        "maxRssDeltaKiB": 0,
+        "voluntaryContextSwitches": 140,
+        "involuntaryContextSwitches": 0,
+        "eventLoopUtilization": 0.945897,
+        "eventLoopDelay": {
+          "minMs": 10.002,
+          "meanMs": 10.047,
+          "p50Ms": 10.011,
+          "p95Ms": 10.093,
+          "p99Ms": 10.093,
+          "maxMs": 10.093
+        }
+      }
+    },
+    {
+      "mode": "loopback-upload-concurrent-2",
+      "concurrentTransfers": 2,
+      "sizeBytesPerTransfer": 8388608,
+      "aggregateSizeBytes": 16777216,
+      "repeats": 2,
+      "transferDurationMs": {
+        "samples": 2,
+        "min": 65.049,
+        "median": 102.408,
+        "p95": 136.032,
+        "max": 139.767,
+        "mean": 102.408,
+        "standardDeviation": 37.359,
+        "coefficientOfVariation": 0.365
+      },
+      "aggregateThroughputMiBPerSecond": {
+        "samples": 2,
+        "min": 114.476,
+        "median": 180.222,
+        "p95": 239.394,
+        "max": 245.969,
+        "mean": 180.222,
+        "standardDeviation": 65.747,
+        "coefficientOfVariation": 0.365
+      },
+      "perTransferThroughputMiBPerSecond": {
+        "samples": 2,
+        "min": 57.238,
+        "median": 90.111,
+        "p95": 119.697,
+        "max": 122.984,
+        "mean": 90.111,
+        "standardDeviation": 32.873,
+        "coefficientOfVariation": 0.365
+      },
+      "progressCallbackCountTotal": 20,
+      "progressCallbacksPerTransfer": 5,
+      "controlPingLatencyMs": {
+        "samples": 3,
+        "min": 5.006,
+        "median": 5.614,
+        "p95": 5.995,
+        "max": 6.037,
+        "mean": 5.552,
+        "standardDeviation": 0.423,
+        "coefficientOfVariation": 0.076
+      },
+      "controlPingFailures": 0,
+      "verification": {
+        "exactSize": true,
+        "incrementalSha256": true,
+        "files": 2
+      },
+      "resources": {
+        "memoryStartBytes": {
+          "rss": 78954496,
+          "heapTotal": 17055744,
+          "heapUsed": 7351944,
+          "external": 26922598,
+          "arrayBuffers": 67974
+        },
+        "peakMemoryBytes": {
+          "rss": 114860032,
+          "heapTotal": 19152896,
+          "heapUsed": 10049096,
+          "external": 32750222,
+          "arrayBuffers": 29095260
+        },
+        "memoryEndBytes": {
+          "rss": 112160768,
+          "heapTotal": 19152896,
+          "heapUsed": 8612688,
+          "external": 32750222,
+          "arrayBuffers": 29095260
+        },
+        "rssStartBytes": 78954496,
+        "peakRssBytes": 114860032,
+        "rssEndBytes": 112160768,
+        "userCpuMs": 468.654,
+        "systemCpuMs": 78.334,
+        "maxRssDeltaKiB": 18888,
+        "voluntaryContextSwitches": 722,
+        "involuntaryContextSwitches": 8,
+        "eventLoopUtilization": 0.994375,
+        "eventLoopDelay": {
+          "minMs": 9.282,
+          "meanMs": 10.698,
+          "p50Ms": 10.469,
+          "p95Ms": 13.197,
+          "p99Ms": 13.238,
+          "maxMs": 13.238
+        }
+      }
+    }
+  ]
+}

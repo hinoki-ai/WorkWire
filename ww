@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+export WW_HOME_DIR="/home/hinoki/WorkWire/.workwire"
+export WW_CONFIG_DIR="/home/hinoki/WorkWire/.workwire/config"
+export WW_PORTAL_PATH="/home/hinoki/WorkWire"
+
+exec "/home/hinoki/.local/opt/workwire/ww" "$@"

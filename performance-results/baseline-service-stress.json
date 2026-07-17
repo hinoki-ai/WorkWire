@@ -1,0 +1,172 @@
+{
+  "benchmark": "file-service-and-reconnect-stress",
+  "scopeNote": "This is the active WorkWire HTTP file service; the Phase 3 recovery controller and agents do not exist yet.",
+  "conditions": {
+    "fleetSizes": [
+      1,
+      10,
+      50,
+      100
+    ],
+    "rounds": 5,
+    "listingEntries": 1000,
+    "loopback": true
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T06:28:34.348Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "results": [
+    {
+      "concurrentClients": 1,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 5,
+        "min": 3.266,
+        "median": 4.987,
+        "p95": 40.39,
+        "max": 48.801,
+        "mean": 13.727,
+        "standardDeviation": 17.571,
+        "coefficientOfVariation": 1.28
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 3.272,
+        "median": 4.993,
+        "p95": 40.436,
+        "max": 48.856,
+        "mean": 13.744,
+        "standardDeviation": 17.59,
+        "coefficientOfVariation": 1.28
+      },
+      "requests": 5
+    },
+    {
+      "concurrentClients": 10,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 50,
+        "min": 7.833,
+        "median": 12.785,
+        "p95": 23.773,
+        "max": 25.746,
+        "mean": 13.401,
+        "standardDeviation": 4.952,
+        "coefficientOfVariation": 0.37
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 10.994,
+        "median": 16.943,
+        "p95": 29.748,
+        "max": 31.98,
+        "mean": 18.826,
+        "standardDeviation": 7.367,
+        "coefficientOfVariation": 0.391
+      },
+      "requests": 50
+    },
+    {
+      "concurrentClients": 50,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 250,
+        "min": 28.786,
+        "median": 36.485,
+        "p95": 64.227,
+        "max": 72.387,
+        "mean": 39.977,
+        "standardDeviation": 10,
+        "coefficientOfVariation": 0.25
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 41.819,
+        "median": 51.038,
+        "p95": 81.138,
+        "max": 83.36,
+        "mean": 59.138,
+        "standardDeviation": 15.913,
+        "coefficientOfVariation": 0.269
+      },
+      "requests": 250
+    },
+    {
+      "concurrentClients": 100,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 500,
+        "min": 53.802,
+        "median": 66.54,
+        "p95": 83.493,
+        "max": 90.961,
+        "mean": 67.333,
+        "standardDeviation": 7.409,
+        "coefficientOfVariation": 0.11
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 82.416,
+        "median": 89.215,
+        "p95": 112.462,
+        "max": 113.078,
+        "mean": 96.403,
+        "standardDeviation": 12.593,
+        "coefficientOfVariation": 0.131
+      },
+      "requests": 500
+    },
+    {
+      "concurrentClients": 1,
+      "operation": "ping",
+      "requestLatencyMs": {
+        "samples": 20,
+        "min": 0.571,
+        "median": 0.616,
+        "p95": 0.988,
+        "max": 4.498,
+        "mean": 0.824,
+        "standardDeviation": 0.845,
+        "coefficientOfVariation": 1.026
+      },
+      "requests": 20
+    },
+    {
+      "concurrentClients": 1,
+      "operation": "list-1000",
+      "requestLatencyMs": {
+        "samples": 20,
+        "min": 47.81,
+        "median": 54.197,
+        "p95": 63.241,
+        "max": 68.001,
+        "mean": 55.314,
+        "standardDeviation": 5.512,
+        "coefficientOfVariation": 0.1
+      },
+      "requests": 20
+    },
+    {
+      "operation": "controller-stop-start-reconnect",
+      "cycles": 10,
+      "latencyMs": {
+        "samples": 10,
+        "min": 1.784,
+        "median": 2.039,
+        "p95": 21.827,
+        "max": 37.396,
+        "mean": 5.61,
+        "standardDeviation": 10.6,
+        "coefficientOfVariation": 1.889
+      }
+    }
+  ]
+}

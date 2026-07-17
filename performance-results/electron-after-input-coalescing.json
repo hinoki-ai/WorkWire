@@ -1,0 +1,229 @@
+{
+  "benchmark": "electron-portal-interaction",
+  "conditions": {
+    "sizes": [
+      1000
+    ],
+    "repeats": 3,
+    "reloads": 0,
+    "window": "hidden 1440x980 Chromium renderer, background throttling disabled",
+    "syntheticData": "renderer-local construction to exclude IPC payload generation"
+  },
+  "versions": {
+    "node": "24.18.0",
+    "acorn": "8.16.0",
+    "ada": "3.4.4",
+    "amaro": "1.1.9",
+    "ares": "1.34.6",
+    "brotli": "1.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.4.2",
+    "merve": "1.2.2",
+    "modules": "148",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.69.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "0.0.0",
+    "simdjson": "4.6.4",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.1",
+    "tz": "2025c",
+    "undici": "7.28.0",
+    "unicode": "17.0",
+    "uv": "1.52.1",
+    "uvwasi": "0.0.23",
+    "v8": "15.0.245.15-electron.0",
+    "zlib": "1.3.2.1-motley",
+    "zstd": "1.6.0",
+    "electron": "43.1.1",
+    "chrome": "150.0.7871.114"
+  },
+  "results": [
+    {
+      "entriesPerPane": 1000,
+      "constructionMs": {
+        "samples": 3,
+        "min": 0.5,
+        "median": 1.2,
+        "p95": 9.75,
+        "max": 10.7,
+        "mean": 4.133
+      },
+      "initialRenderMs": {
+        "samples": 3,
+        "min": 23.7,
+        "median": 28.1,
+        "p95": 70.94,
+        "max": 75.7,
+        "mean": 42.5
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 3,
+        "min": 0,
+        "median": 1,
+        "p95": 1,
+        "max": 1,
+        "mean": 0.667
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 3,
+            "min": 7.8,
+            "median": 8.1,
+            "p95": 19.71,
+            "max": 21,
+            "mean": 12.3
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 3,
+            "min": 7.5,
+            "median": 8.4,
+            "p95": 13.44,
+            "max": 14,
+            "mean": 9.967
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 3,
+            "min": 0.9,
+            "median": 1.3,
+            "p95": 9.76,
+            "max": 10.7,
+            "mean": 4.3
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 3,
+            "min": 2.2,
+            "median": 2.9,
+            "p95": 8.3,
+            "max": 8.9,
+            "mean": 4.667
+          },
+          "visibleResults": 3
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 3,
+            "min": 7.8,
+            "median": 8.7,
+            "p95": 12.03,
+            "max": 12.4,
+            "mean": 9.633
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 3,
+        "min": 10.1,
+        "median": 10.5,
+        "p95": 12.66,
+        "max": 12.9,
+        "mean": 11.167
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 5.5,
+        "mean": 0.145
+      },
+      "workspaceSwitchMs": {
+        "samples": 3,
+        "min": 0.8,
+        "median": 1,
+        "p95": 1.36,
+        "max": 1.4,
+        "mean": 1.067
+      },
+      "rendererHeap": {
+        "usedBytes": 10648723,
+        "totalBytes": 19636651,
+        "localRows": 34,
+        "remoteRows": 34,
+        "query": "report"
+      }
+    }
+  ],
+  "longTasks": {
+    "count": 1,
+    "durationMs": {
+      "samples": 1,
+      "min": 87,
+      "median": 87,
+      "p95": 87,
+      "max": 87,
+      "mean": 87
+    }
+  },
+  "reloadLifecycle": {
+    "beforeReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 127164,
+        "memoryWorkingSetKiB": 204800
+      },
+      {
+        "type": "GPU",
+        "pid": 127216,
+        "memoryWorkingSetKiB": 106848
+      },
+      {
+        "type": "Utility",
+        "pid": 127219,
+        "memoryWorkingSetKiB": 89024
+      },
+      {
+        "type": "Tab",
+        "pid": 127331,
+        "memoryWorkingSetKiB": 197892
+      }
+    ],
+    "afterReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 127164,
+        "memoryWorkingSetKiB": 205016
+      },
+      {
+        "type": "GPU",
+        "pid": 127216,
+        "memoryWorkingSetKiB": 106848
+      },
+      {
+        "type": "Utility",
+        "pid": 127219,
+        "memoryWorkingSetKiB": 89024
+      },
+      {
+        "type": "Tab",
+        "pid": 127331,
+        "memoryWorkingSetKiB": 197892
+      }
+    ]
+  }
+}

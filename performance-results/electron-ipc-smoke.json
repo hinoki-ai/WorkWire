@@ -1,0 +1,276 @@
+{
+  "benchmark": "electron-portal-interaction",
+  "conditions": {
+    "sizes": [
+      100
+    ],
+    "repeats": 2,
+    "reloads": 0,
+    "soakCycles": 0,
+    "soakEntries": 10000,
+    "queriesPerCycle": 50,
+    "ipcMessages": 100,
+    "window": "hidden 1440x980 Chromium renderer, background throttling disabled",
+    "syntheticData": "renderer-local construction to exclude IPC payload generation"
+  },
+  "versions": {
+    "node": "24.18.0",
+    "acorn": "8.16.0",
+    "ada": "3.4.4",
+    "amaro": "1.1.9",
+    "ares": "1.34.6",
+    "brotli": "1.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.4.2",
+    "merve": "1.2.2",
+    "modules": "148",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.69.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "0.0.0",
+    "simdjson": "4.6.4",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.1",
+    "tz": "2025c",
+    "undici": "7.28.0",
+    "unicode": "17.0",
+    "uv": "1.52.1",
+    "uvwasi": "0.0.23",
+    "v8": "15.0.245.15-electron.0",
+    "zlib": "1.3.2.1-motley",
+    "zstd": "1.6.0",
+    "electron": "43.1.1",
+    "chrome": "150.0.7871.114"
+  },
+  "results": [
+    {
+      "entriesPerPane": 100,
+      "constructionMs": {
+        "samples": 2,
+        "min": 0.2,
+        "median": 0.5,
+        "p95": 0.77,
+        "max": 0.8,
+        "mean": 0.5
+      },
+      "initialRenderMs": {
+        "samples": 2,
+        "min": 17.8,
+        "median": 32,
+        "p95": 44.78,
+        "max": 46.2,
+        "mean": 32
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 2,
+        "min": 11,
+        "median": 15.5,
+        "p95": 19.55,
+        "max": 20,
+        "mean": 15.5
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 2,
+            "min": 9.4,
+            "median": 14.35,
+            "p95": 18.805,
+            "max": 19.3,
+            "mean": 14.35
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 2,
+            "min": 8.9,
+            "median": 9.3,
+            "p95": 9.66,
+            "max": 9.7,
+            "mean": 9.3
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 2,
+            "min": 6.3,
+            "median": 6.4,
+            "p95": 6.49,
+            "max": 6.5,
+            "mean": 6.4
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 2,
+            "min": 7.3,
+            "median": 8.2,
+            "p95": 9.01,
+            "max": 9.1,
+            "mean": 8.2
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 2,
+            "min": 7.8,
+            "median": 8.75,
+            "p95": 9.605,
+            "max": 9.7,
+            "mean": 8.75
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 2,
+        "min": 10.5,
+        "median": 10.65,
+        "p95": 10.785,
+        "max": 10.8,
+        "mean": 10.65
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 4.8,
+        "mean": 0.149
+      },
+      "workspaceSwitchMs": {
+        "samples": 2,
+        "min": 1,
+        "median": 1.15,
+        "p95": 1.285,
+        "max": 1.3,
+        "mean": 1.15
+      },
+      "rendererHeap": {
+        "usedBytes": 2237095,
+        "totalBytes": 5214235,
+        "localRows": 34,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 0,
+        "durationMs": {
+          "samples": 0,
+          "min": 0,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "mean": 0
+        }
+      }
+    }
+  ],
+  "ipcBurst": {
+    "messages": 100,
+    "operationPayloadBytes": 277,
+    "fullSnapshotBytes": 36086,
+    "fullToIncrementalSizeRatio": 130.274,
+    "mainSendDurationMs": 2.886,
+    "endToEndDurationMs": 4.866,
+    "messagesPerSecond": 20551.25
+  },
+  "soak": {
+    "cycles": 0,
+    "entriesPerPane": 10000,
+    "searchQueries": 0,
+    "samples": [],
+    "plateau": {
+      "usedHeapSlopeBytesPerCycle": 0,
+      "workingSetSlopeKiBPerCycle": 0,
+      "usedHeapChangeBytes": 0,
+      "workingSetChangeKiB": 0
+    },
+    "longTasks": {
+      "count": 0,
+      "durationMs": {
+        "samples": 0,
+        "min": 0,
+        "median": 0,
+        "p95": 0,
+        "max": 0,
+        "mean": 0
+      }
+    }
+  },
+  "longTasks": {
+    "count": 0,
+    "durationMs": {
+      "samples": 0,
+      "min": 0,
+      "median": 0,
+      "p95": 0,
+      "max": 0,
+      "mean": 0
+    }
+  },
+  "reloadLifecycle": {
+    "beforeReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 130678,
+        "memoryWorkingSetKiB": 209976
+      },
+      {
+        "type": "GPU",
+        "pid": 130713,
+        "memoryWorkingSetKiB": 106548
+      },
+      {
+        "type": "Utility",
+        "pid": 130717,
+        "memoryWorkingSetKiB": 87872
+      },
+      {
+        "type": "Tab",
+        "pid": 130831,
+        "memoryWorkingSetKiB": 168812
+      }
+    ],
+    "afterReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 130678,
+        "memoryWorkingSetKiB": 210116
+      },
+      {
+        "type": "GPU",
+        "pid": 130713,
+        "memoryWorkingSetKiB": 106548
+      },
+      {
+        "type": "Utility",
+        "pid": 130717,
+        "memoryWorkingSetKiB": 87872
+      },
+      {
+        "type": "Tab",
+        "pid": 130831,
+        "memoryWorkingSetKiB": 168812
+      }
+    ]
+  }
+}

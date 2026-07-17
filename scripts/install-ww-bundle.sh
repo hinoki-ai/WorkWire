@@ -112,8 +112,8 @@ Icon=${INSTALL_ROOT}/icon.png
 Terminal=false
 StartupNotify=true
 Categories=Utility;FileTools;Network;
-StartupWMClass=WorkWire
-X-GNOME-WMClass=WorkWire
+StartupWMClass=workwire
+X-GNOME-WMClass=workwire
 EOF
 
   if [[ "$DESKTOP_SHORTCUT_ENABLED" =~ ^(1|true|yes|on)$ ]]; then
@@ -129,6 +129,9 @@ EOF
 write_launcher_wrapper() {
   local launcher_path="$1"
   mkdir -p "$(dirname -- "$launcher_path")"
+  # Replace any existing launcher (including symlinked launchers) instead of
+  # writing through it, so a symlink target is never clobbered.
+  rm -f -- "$launcher_path"
   printf '#!/usr/bin/env bash\n\nset -euo pipefail\n\nexport WW_HOME_DIR=%q\nexport WW_CONFIG_DIR=%q\nexport WW_PORTAL_PATH=%q\n\nexec %q "$@"\n' \
     "$WW_RUNTIME_HOME" \
     "$WW_CONFIG_DIR" \

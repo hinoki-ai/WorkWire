@@ -1,0 +1,996 @@
+{
+  "benchmark": "portal-search",
+  "implementation": "actual renderer ranking functions in jsdom; optional full two-pane DOM render",
+  "conditions": {
+    "repeats": 5,
+    "sizes": [
+      10000,
+      50000
+    ],
+    "renderSizes": [
+      100,
+      1000
+    ],
+    "dropdownLimit": 10,
+    "cacheState": "warm after one explicit warmup"
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T07:12:35.132Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "results": [
+    {
+      "entriesPerPane": 10000,
+      "indexBuild": {
+        "durationsMs": [
+          49.24099000000001,
+          63.125708999999915,
+          48.46135600000002,
+          57.55288399999995,
+          52.082247999999936
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 48.461,
+          "median": 52.082,
+          "p95": 62.011,
+          "max": 63.126,
+          "mean": 54.093,
+          "standardDeviation": 5.529,
+          "coefficientOfVariation": 0.102
+        },
+        "outputs": [
+          10000,
+          10000,
+          10000,
+          10000,
+          10000
+        ],
+        "resources": {
+          "memoryStartBytes": {
+            "rss": 198148096,
+            "heapTotal": 107864064,
+            "heapUsed": 67569256,
+            "external": 4319952,
+            "arrayBuffers": 783323
+          },
+          "peakMemoryBytes": {
+            "rss": 217460736,
+            "heapTotal": 124854272,
+            "heapUsed": 99839912,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "memoryEndBytes": {
+            "rss": 217460736,
+            "heapTotal": 124854272,
+            "heapUsed": 99842608,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "rssStartBytes": 198148096,
+          "peakRssBytes": 217460736,
+          "rssEndBytes": 217460736,
+          "userCpuMs": 340.909,
+          "systemCpuMs": 23.838,
+          "maxRssDeltaKiB": 18700,
+          "voluntaryContextSwitches": 81,
+          "involuntaryContextSwitches": 22,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 49.349,
+            "meanMs": 54.411,
+            "p50Ms": 52.429,
+            "p95Ms": 61.473,
+            "p99Ms": 61.473,
+            "maxMs": 61.473
+          }
+        }
+      },
+      "queries": [
+        {
+          "query": "single-character",
+          "value": "r",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            12.639537000000018,
+            12.719980000000078,
+            2.97213899999997,
+            3.0559589999998025,
+            3.190255999999863
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 2.972,
+            "median": 3.19,
+            "p95": 12.704,
+            "max": 12.72,
+            "mean": 6.916,
+            "standardDeviation": 4.707,
+            "coefficientOfVariation": 0.681
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 214908928,
+              "heapTotal": 112844800,
+              "heapUsed": 67726584,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 214908928,
+              "heapTotal": 112844800,
+              "heapUsed": 83258016,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 214908928,
+              "heapTotal": 112844800,
+              "heapUsed": 71019320,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 214908928,
+            "peakRssBytes": 214908928,
+            "rssEndBytes": 214908928,
+            "userCpuMs": 94.687,
+            "systemCpuMs": 4.761,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 18,
+            "involuntaryContextSwitches": 8,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 11.108,
+              "meanMs": 12.104,
+              "p50Ms": 11.117,
+              "p95Ms": 13.099,
+              "p99Ms": 13.099,
+              "maxMs": 13.099
+            }
+          }
+        },
+        {
+          "query": "common",
+          "value": "quarterly report",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            6.811711000000287,
+            4.949787999999899,
+            4.682346999999936,
+            4.933227999999872,
+            5.204307999999855
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 4.682,
+            "median": 4.95,
+            "p95": 6.49,
+            "max": 6.812,
+            "mean": 5.316,
+            "standardDeviation": 0.766,
+            "coefficientOfVariation": 0.144
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 215040000,
+              "heapTotal": 106815488,
+              "heapUsed": 67777784,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 215040000,
+              "heapTotal": 106815488,
+              "heapUsed": 83181840,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 215040000,
+              "heapTotal": 106815488,
+              "heapUsed": 67828288,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 215040000,
+            "peakRssBytes": 215040000,
+            "rssEndBytes": 215040000,
+            "userCpuMs": 46.587,
+            "systemCpuMs": 2.907,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 12,
+            "involuntaryContextSwitches": 1,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 10.019,
+              "meanMs": 10.281,
+              "p50Ms": 10.027,
+              "p95Ms": 10.543,
+              "p99Ms": 10.543,
+              "maxMs": 10.543
+            }
+          }
+        },
+        {
+          "query": "rare-exact",
+          "value": "needle-exact-final",
+          "matchedTopResults": 0,
+          "durationsMs": [
+            7.3038659999997435,
+            6.368054999999913,
+            6.369048000000021,
+            6.880261999999675,
+            6.404908999999861
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 6.368,
+            "median": 6.405,
+            "p95": 7.219,
+            "max": 7.304,
+            "mean": 6.665,
+            "standardDeviation": 0.374,
+            "coefficientOfVariation": 0.056
+          },
+          "outputs": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 215040000,
+              "heapTotal": 107077632,
+              "heapUsed": 67802600,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 215040000,
+              "heapTotal": 107077632,
+              "heapUsed": 69435832,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 215040000,
+              "heapTotal": 107077632,
+              "heapUsed": 69437984,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 215040000,
+            "peakRssBytes": 215040000,
+            "rssEndBytes": 215040000,
+            "userCpuMs": 53.793,
+            "systemCpuMs": 0.131,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 5,
+            "involuntaryContextSwitches": 1,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 13.017,
+              "meanMs": 13.332,
+              "p50Ms": 13.025,
+              "p95Ms": 13.648,
+              "p99Ms": 13.648,
+              "maxMs": 13.648
+            }
+          }
+        },
+        {
+          "query": "multi-token",
+          "value": "project alpha resume",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            8.681926000000203,
+            8.453371999999945,
+            9.693022000000383,
+            8.405205000000024,
+            7.60191900000018
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 7.602,
+            "median": 8.453,
+            "p95": 9.491,
+            "max": 9.693,
+            "mean": 8.567,
+            "standardDeviation": 0.671,
+            "coefficientOfVariation": 0.078
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 215040000,
+              "heapTotal": 107077632,
+              "heapUsed": 67809648,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 215040000,
+              "heapTotal": 107077632,
+              "heapUsed": 72258568,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 215040000,
+              "heapTotal": 107077632,
+              "heapUsed": 72261088,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 215040000,
+            "peakRssBytes": 215040000,
+            "rssEndBytes": 215040000,
+            "userCpuMs": 64.691,
+            "systemCpuMs": 0.029,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 5,
+            "involuntaryContextSwitches": 2,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 16.368,
+              "meanMs": 17.422,
+              "p50Ms": 16.376,
+              "p95Ms": 18.481,
+              "p99Ms": 18.481,
+              "maxMs": 18.481
+            }
+          }
+        },
+        {
+          "query": "typo-tolerant",
+          "value": "reprot",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            13.470825000000332,
+            19.155213000000003,
+            9.595479999999952,
+            11.007060999999794,
+            11.171119999999974
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 9.595,
+            "median": 11.171,
+            "p95": 18.018,
+            "max": 19.155,
+            "mean": 12.88,
+            "standardDeviation": 3.375,
+            "coefficientOfVariation": 0.262
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 215040000,
+              "heapTotal": 107339776,
+              "heapUsed": 67815136,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 215433216,
+              "heapTotal": 107339776,
+              "heapUsed": 83294264,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 215433216,
+              "heapTotal": 107339776,
+              "heapUsed": 71762472,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 215040000,
+            "peakRssBytes": 215433216,
+            "rssEndBytes": 215433216,
+            "userCpuMs": 108.625,
+            "systemCpuMs": 2.965,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 13,
+            "involuntaryContextSwitches": 2,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 12.001,
+              "meanMs": 17.404,
+              "p50Ms": 19.399,
+              "p95Ms": 20.824,
+              "p99Ms": 20.824,
+              "maxMs": 20.824
+            }
+          }
+        }
+      ],
+      "rapidEdits": {
+        "durationsMs": [
+          72.04296799999975,
+          43.15627199999972,
+          46.27456000000029,
+          47.02881900000011,
+          61.85701900000004
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 43.156,
+          "median": 47.029,
+          "p95": 70.006,
+          "max": 72.043,
+          "mean": 54.072,
+          "standardDeviation": 11.074,
+          "coefficientOfVariation": 0.205
+        },
+        "outputs": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "resources": {
+          "memoryStartBytes": {
+            "rss": 215564288,
+            "heapTotal": 107339776,
+            "heapUsed": 67790664,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "peakMemoryBytes": {
+            "rss": 216088576,
+            "heapTotal": 107339776,
+            "heapUsed": 83272376,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "memoryEndBytes": {
+            "rss": 216088576,
+            "heapTotal": 107339776,
+            "heapUsed": 67849720,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "rssStartBytes": 215564288,
+          "peakRssBytes": 216088576,
+          "rssEndBytes": 216088576,
+          "userCpuMs": 340.606,
+          "systemCpuMs": 1.018,
+          "maxRssDeltaKiB": 0,
+          "voluntaryContextSwitches": 49,
+          "involuntaryContextSwitches": 9,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 43.352,
+            "meanMs": 49.857,
+            "p50Ms": 46.858,
+            "p95Ms": 62.03,
+            "p99Ms": 62.03,
+            "maxMs": 62.03
+          }
+        }
+      },
+      "fullTwoPaneRender": null
+    },
+    {
+      "entriesPerPane": 50000,
+      "indexBuild": {
+        "durationsMs": [
+          254.07805000000008,
+          289.39336300000014,
+          280.0932280000002,
+          269.10724900000014,
+          253.89335599999959
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 253.893,
+          "median": 269.107,
+          "p95": 287.533,
+          "max": 289.393,
+          "mean": 269.313,
+          "standardDeviation": 14.067,
+          "coefficientOfVariation": 0.052
+        },
+        "outputs": [
+          50000,
+          50000,
+          50000,
+          50000,
+          50000
+        ],
+        "resources": {
+          "memoryStartBytes": {
+            "rss": 224821248,
+            "heapTotal": 132071424,
+            "heapUsed": 82629408,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "peakMemoryBytes": {
+            "rss": 341504000,
+            "heapTotal": 248516608,
+            "heapUsed": 216337464,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "memoryEndBytes": {
+            "rss": 341504000,
+            "heapTotal": 248516608,
+            "heapUsed": 216339584,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "rssStartBytes": 224821248,
+          "peakRssBytes": 341504000,
+          "rssEndBytes": 341504000,
+          "userCpuMs": 1626.805,
+          "systemCpuMs": 83.989,
+          "maxRssDeltaKiB": 111596,
+          "voluntaryContextSwitches": 361,
+          "involuntaryContextSwitches": 109,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 254.018,
+            "meanMs": 273.334,
+            "p50Ms": 269.484,
+            "p95Ms": 289.669,
+            "p99Ms": 289.669,
+            "maxMs": 289.669
+          }
+        }
+      },
+      "queries": [
+        {
+          "query": "single-character",
+          "value": "r",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            16.375785000000178,
+            13.2795100000003,
+            14.295664000000215,
+            13.56370700000025,
+            13.812283999999636
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 13.28,
+            "median": 13.812,
+            "p95": 15.96,
+            "max": 16.376,
+            "mean": 14.265,
+            "standardDeviation": 1.107,
+            "coefficientOfVariation": 0.078
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 331624448,
+              "heapTotal": 144916480,
+              "heapUsed": 82621744,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 331624448,
+              "heapTotal": 144916480,
+              "heapUsed": 98295392,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 331624448,
+              "heapTotal": 144916480,
+              "heapUsed": 82636456,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 331624448,
+            "peakRssBytes": 331624448,
+            "rssEndBytes": 331624448,
+            "userCpuMs": 96.504,
+            "systemCpuMs": 0.055,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 34,
+            "involuntaryContextSwitches": 3,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 14.139,
+              "meanMs": 14.438,
+              "p50Ms": 14.221,
+              "p95Ms": 15,
+              "p99Ms": 15,
+              "maxMs": 15
+            }
+          }
+        },
+        {
+          "query": "common",
+          "value": "quarterly report",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            25.545474999999897,
+            22.541200000000572,
+            24.306948000000375,
+            22.92098999999962,
+            24.538422999999966
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 22.541,
+            "median": 24.307,
+            "p95": 25.344,
+            "max": 25.545,
+            "mean": 23.971,
+            "standardDeviation": 1.101,
+            "coefficientOfVariation": 0.046
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 331755520,
+              "heapTotal": 123682816,
+              "heapUsed": 82634056,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 331755520,
+              "heapTotal": 123682816,
+              "heapUsed": 98100544,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 331755520,
+              "heapTotal": 123682816,
+              "heapUsed": 82641384,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 331755520,
+            "peakRssBytes": 331755520,
+            "rssEndBytes": 331755520,
+            "userCpuMs": 144.715,
+            "systemCpuMs": 0.129,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 37,
+            "involuntaryContextSwitches": 5,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 23.462,
+              "meanMs": 24.257,
+              "p50Ms": 23.495,
+              "p95Ms": 25.1,
+              "p99Ms": 25.1,
+              "maxMs": 25.1
+            }
+          }
+        },
+        {
+          "query": "rare-exact",
+          "value": "needle-exact-final",
+          "matchedTopResults": 1,
+          "durationsMs": [
+            35.116265999999996,
+            31.99522900000011,
+            32.5577600000006,
+            34.172913999999764,
+            34.432660000000396
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 31.995,
+            "median": 34.173,
+            "p95": 34.98,
+            "max": 35.116,
+            "mean": 33.655,
+            "standardDeviation": 1.18,
+            "coefficientOfVariation": 0.035
+          },
+          "outputs": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 331755520,
+              "heapTotal": 123420672,
+              "heapUsed": 82636912,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 331755520,
+              "heapTotal": 123420672,
+              "heapUsed": 90672752,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 331755520,
+              "heapTotal": 123420672,
+              "heapUsed": 90675000,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 331755520,
+            "peakRssBytes": 331755520,
+            "rssEndBytes": 331755520,
+            "userCpuMs": 193.807,
+            "systemCpuMs": 0.074,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 6,
+            "involuntaryContextSwitches": 8,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 32.227,
+              "meanMs": 33.497,
+              "p50Ms": 32.752,
+              "p95Ms": 34.669,
+              "p99Ms": 34.669,
+              "maxMs": 34.669
+            }
+          }
+        },
+        {
+          "query": "multi-token",
+          "value": "project alpha resume",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            39.13387199999943,
+            38.14491300000009,
+            37.2569169999997,
+            39.65983799999958,
+            38.75121599999966
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 37.257,
+            "median": 38.751,
+            "p95": 39.555,
+            "max": 39.66,
+            "mean": 38.589,
+            "standardDeviation": 0.83,
+            "coefficientOfVariation": 0.021
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 331755520,
+              "heapTotal": 123158528,
+              "heapUsed": 82638880,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 331755520,
+              "heapTotal": 123158528,
+              "heapUsed": 95903640,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 331755520,
+              "heapTotal": 123158528,
+              "heapUsed": 88283912,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 331755520,
+            "peakRssBytes": 331755520,
+            "rssEndBytes": 331755520,
+            "userCpuMs": 217.938,
+            "systemCpuMs": 0.036,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 11,
+            "involuntaryContextSwitches": 4,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 37.421,
+              "meanMs": 38.658,
+              "p50Ms": 38.371,
+              "p95Ms": 39.879,
+              "p99Ms": 39.879,
+              "maxMs": 39.879
+            }
+          }
+        },
+        {
+          "query": "typo-tolerant",
+          "value": "reprot",
+          "matchedTopResults": 10,
+          "durationsMs": [
+            50.284497999999985,
+            45.1397620000007,
+            49.64853099999982,
+            49.37039399999958,
+            50.70151800000076
+          ],
+          "duration": {
+            "samples": 5,
+            "min": 45.14,
+            "median": 49.649,
+            "p95": 50.618,
+            "max": 50.702,
+            "mean": 49.029,
+            "standardDeviation": 2,
+            "coefficientOfVariation": 0.041
+          },
+          "outputs": [
+            10,
+            10,
+            10,
+            10,
+            10
+          ],
+          "resources": {
+            "memoryStartBytes": {
+              "rss": 331755520,
+              "heapTotal": 123420672,
+              "heapUsed": 82641376,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "peakMemoryBytes": {
+              "rss": 331755520,
+              "heapTotal": 123420672,
+              "heapUsed": 97291264,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "memoryEndBytes": {
+              "rss": 331755520,
+              "heapTotal": 123420672,
+              "heapUsed": 82647192,
+              "external": 4319992,
+              "arrayBuffers": 783323
+            },
+            "rssStartBytes": 331755520,
+            "peakRssBytes": 331755520,
+            "rssEndBytes": 331755520,
+            "userCpuMs": 270.266,
+            "systemCpuMs": 0.093,
+            "maxRssDeltaKiB": 0,
+            "voluntaryContextSwitches": 25,
+            "involuntaryContextSwitches": 4,
+            "eventLoopUtilization": 1,
+            "eventLoopDelay": {
+              "minMs": 45.351,
+              "meanMs": 48.923,
+              "p50Ms": 49.578,
+              "p95Ms": 50.921,
+              "p99Ms": 50.921,
+              "maxMs": 50.921
+            }
+          }
+        }
+      ],
+      "rapidEdits": {
+        "durationsMs": [
+          207.5866670000005,
+          198.2544939999998,
+          203.1367450000007,
+          208.24048399999992,
+          197.2495370000006
+        ],
+        "duration": {
+          "samples": 5,
+          "min": 197.25,
+          "median": 203.137,
+          "p95": 208.11,
+          "max": 208.24,
+          "mean": 202.894,
+          "standardDeviation": 4.562,
+          "coefficientOfVariation": 0.022
+        },
+        "outputs": [
+          80,
+          80,
+          80,
+          80,
+          80
+        ],
+        "resources": {
+          "memoryStartBytes": {
+            "rss": 331755520,
+            "heapTotal": 123420672,
+            "heapUsed": 82641728,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "peakMemoryBytes": {
+            "rss": 331755520,
+            "heapTotal": 123420672,
+            "heapUsed": 95191384,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "memoryEndBytes": {
+            "rss": 331755520,
+            "heapTotal": 123420672,
+            "heapUsed": 95193632,
+            "external": 4319992,
+            "arrayBuffers": 783323
+          },
+          "rssStartBytes": 331755520,
+          "peakRssBytes": 331755520,
+          "rssEndBytes": 331755520,
+          "userCpuMs": 1034.388,
+          "systemCpuMs": 1.014,
+          "maxRssDeltaKiB": 0,
+          "voluntaryContextSwitches": 47,
+          "involuntaryContextSwitches": 15,
+          "eventLoopUtilization": 1,
+          "eventLoopDelay": {
+            "minMs": 197.394,
+            "meanMs": 201.949,
+            "p50Ms": 198.574,
+            "p95Ms": 208.536,
+            "p99Ms": 208.536,
+            "maxMs": 208.536
+          }
+        }
+      },
+      "fullTwoPaneRender": null
+    }
+  ]
+}

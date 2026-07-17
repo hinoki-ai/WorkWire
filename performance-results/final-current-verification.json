@@ -1,0 +1,48 @@
+{
+  "capturedAt": "2026-07-17T03:45:26-04:00",
+  "reason": "Final verification repeated after post-baseline transfer-panel and telemetry edits were observed during report finalization.",
+  "focusedTests": {
+    "command": "node --test test/ww-search.test.mjs test/ww-performance.test.mjs test/ww-service.test.mjs test/ww-ui-contract.test.mjs",
+    "passed": 34,
+    "failed": 0,
+    "durationMs": 2710.629231
+  },
+  "fullTests": {
+    "command": "env NODE_OPTIONS= /usr/bin/time -v npm test",
+    "passed": 127,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "tapDurationMs": 4177.00928,
+    "wallSeconds": 4.66,
+    "cpuPercent": 378,
+    "userCpuSeconds": 16.02,
+    "systemCpuSeconds": 1.6,
+    "peakRssKiB": 175728,
+    "exitStatus": 0
+  },
+  "distributionBuild": {
+    "command": "env NODE_OPTIONS= /usr/bin/time -v npm run dist:linux",
+    "release": "0.1.0+ww1.253bc6f2b49e",
+    "wallSeconds": 44.97,
+    "cpuPercent": 136,
+    "userCpuSeconds": 57.5,
+    "systemCpuSeconds": 3.82,
+    "peakRssKiB": 438172,
+    "exitStatus": 0,
+    "artifacts": [
+      "dist/ww/WorkWire-0.1.0-ww1.253bc6f2b49e-linux-x64.tar.gz",
+      "dist/ww/ww-linux-x64.tar.gz",
+      "dist/ww/WorkWire-0.1.0-ww1.253bc6f2b49e-linux-x86_64.AppImage"
+    ]
+  },
+  "currentBenchmarkFiles": {
+    "electron": "performance-results/final-electron-portal.json",
+    "rendererReload": "performance-results/final-reload-audit.json",
+    "transfer": "performance-results/final-transfer.json"
+  },
+  "staticChecks": {
+    "gitDiffCheck": true,
+    "changedJavaScriptSyntax": true
+  }
+}

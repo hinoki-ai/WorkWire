@@ -1,0 +1,377 @@
+{
+  "benchmark": "electron-portal-interaction",
+  "conditions": {
+    "sizes": [
+      10000,
+      50000
+    ],
+    "repeats": 3,
+    "reloads": 0,
+    "window": "hidden 1440x980 Chromium renderer, background throttling disabled",
+    "syntheticData": "renderer-local construction to exclude IPC payload generation"
+  },
+  "versions": {
+    "node": "24.18.0",
+    "acorn": "8.16.0",
+    "ada": "3.4.4",
+    "amaro": "1.1.9",
+    "ares": "1.34.6",
+    "brotli": "1.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.4.2",
+    "merve": "1.2.2",
+    "modules": "148",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.69.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "0.0.0",
+    "simdjson": "4.6.4",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.1",
+    "tz": "2025c",
+    "undici": "7.28.0",
+    "unicode": "17.0",
+    "uv": "1.52.1",
+    "uvwasi": "0.0.23",
+    "v8": "15.0.245.15-electron.0",
+    "zlib": "1.3.2.1-motley",
+    "zstd": "1.6.0",
+    "electron": "43.1.1",
+    "chrome": "150.0.7871.114"
+  },
+  "results": [
+    {
+      "entriesPerPane": 10000,
+      "constructionMs": {
+        "samples": 3,
+        "min": 5.5,
+        "median": 6.9,
+        "p95": 37.23,
+        "max": 40.6,
+        "mean": 17.667
+      },
+      "initialRenderMs": {
+        "samples": 3,
+        "min": 25.7,
+        "median": 32,
+        "p95": 54.5,
+        "max": 57,
+        "mean": 38.233
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 3,
+        "min": 275,
+        "median": 292,
+        "p95": 303.7,
+        "max": 305,
+        "mean": 290.667
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 3,
+            "min": 10.8,
+            "median": 11,
+            "p95": 30.35,
+            "max": 32.5,
+            "mean": 18.1
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 3,
+            "min": 12.8,
+            "median": 13.9,
+            "p95": 18.85,
+            "max": 19.4,
+            "mean": 15.367
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 3,
+            "min": 12.2,
+            "median": 12.7,
+            "p95": 14.05,
+            "max": 14.2,
+            "mean": 13.033
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 3,
+            "min": 16.2,
+            "median": 16.5,
+            "p95": 21,
+            "max": 21.5,
+            "mean": 18.067
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 3,
+            "min": 19.7,
+            "median": 21.4,
+            "p95": 24.19,
+            "max": 24.5,
+            "mean": 21.867
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 3,
+        "min": 13.3,
+        "median": 13.7,
+        "p95": 17.93,
+        "max": 18.4,
+        "mean": 15.133
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 2.9,
+        "mean": 0.138
+      },
+      "workspaceSwitchMs": {
+        "samples": 3,
+        "min": 0.7,
+        "median": 0.8,
+        "p95": 1.25,
+        "max": 1.3,
+        "mean": 0.933
+      },
+      "rendererHeap": {
+        "usedBytes": 26933426,
+        "totalBytes": 102293414,
+        "localRows": 10,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 1,
+        "durationMs": {
+          "samples": 1,
+          "min": 98,
+          "median": 98,
+          "p95": 98,
+          "max": 98,
+          "mean": 98
+        }
+      }
+    },
+    {
+      "entriesPerPane": 50000,
+      "constructionMs": {
+        "samples": 3,
+        "min": 48.3,
+        "median": 51.5,
+        "p95": 69.23,
+        "max": 71.2,
+        "mean": 57
+      },
+      "initialRenderMs": {
+        "samples": 3,
+        "min": 40,
+        "median": 40.9,
+        "p95": 44.5,
+        "max": 44.9,
+        "mean": 41.933
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 3,
+        "min": 1375,
+        "median": 1387,
+        "p95": 1469.8,
+        "max": 1479,
+        "mean": 1413.667
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 3,
+            "min": 21.6,
+            "median": 25.3,
+            "p95": 29.08,
+            "max": 29.5,
+            "mean": 25.467
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 3,
+            "min": 31.5,
+            "median": 38.5,
+            "p95": 49.21,
+            "max": 50.4,
+            "mean": 40.133
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 3,
+            "min": 32.4,
+            "median": 32.5,
+            "p95": 45.19,
+            "max": 46.6,
+            "mean": 37.167
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 3,
+            "min": 41.7,
+            "median": 42.1,
+            "p95": 42.91,
+            "max": 43,
+            "mean": 42.267
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 3,
+            "min": 57.3,
+            "median": 57.6,
+            "p95": 58.14,
+            "max": 58.2,
+            "mean": 57.7
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 3,
+        "min": 12,
+        "median": 13.1,
+        "p95": 37.13,
+        "max": 39.8,
+        "mean": 21.633
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 2.4,
+        "mean": 0.124
+      },
+      "workspaceSwitchMs": {
+        "samples": 3,
+        "min": 0.2,
+        "median": 0.6,
+        "p95": 0.78,
+        "max": 0.8,
+        "mean": 0.533
+      },
+      "rendererHeap": {
+        "usedBytes": 417157664,
+        "totalBytes": 477471408,
+        "localRows": 10,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 8,
+        "durationMs": {
+          "samples": 8,
+          "min": 50,
+          "median": 62.5,
+          "p95": 107.25,
+          "max": 116,
+          "mean": 73.25
+        }
+      }
+    }
+  ],
+  "longTasks": {
+    "count": 9,
+    "durationMs": {
+      "samples": 9,
+      "min": 50,
+      "median": 63,
+      "p95": 108.8,
+      "max": 116,
+      "mean": 76
+    }
+  },
+  "reloadLifecycle": {
+    "beforeReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 130009,
+        "memoryWorkingSetKiB": 210824
+      },
+      {
+        "type": "GPU",
+        "pid": 130045,
+        "memoryWorkingSetKiB": 105212
+      },
+      {
+        "type": "Utility",
+        "pid": 130048,
+        "memoryWorkingSetKiB": 89076
+      },
+      {
+        "type": "Tab",
+        "pid": 130164,
+        "memoryWorkingSetKiB": 709356
+      }
+    ],
+    "afterReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 130009,
+        "memoryWorkingSetKiB": 211040
+      },
+      {
+        "type": "GPU",
+        "pid": 130045,
+        "memoryWorkingSetKiB": 105212
+      },
+      {
+        "type": "Utility",
+        "pid": 130048,
+        "memoryWorkingSetKiB": 89076
+      },
+      {
+        "type": "Tab",
+        "pid": 130164,
+        "memoryWorkingSetKiB": 709356
+      }
+    ]
+  }
+}

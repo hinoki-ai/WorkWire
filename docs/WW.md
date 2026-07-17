@@ -6,6 +6,10 @@ Each computer runs one authenticated HTTP filesystem service and, when opened, o
 
 The repository launcher uses the checkout itself as its portal root. A packaged installation uses `~/.local/opt/workwire/app` unless `WW_PORTAL_PATH` explicitly selects another root. Both computers must use the intended corresponding root.
 
+The desktop desk browses only the portal environment, the `Portal/` directory inside the portal root. It is created automatically on both machines, both panes are clamped to it (navigation, launch intents, and saved paths that fall outside it snap back to `Portal/`), and everything else in the root stays backend-only: reachable by the service, the mirror, and the CLI, but never shown in the frontend. User files exchanged through the desk therefore live under `Portal/` and are mirrored like any other portal content.
+
+`Explore This PC` opens a copy-only file browser for the local machine outside its portal. Select files or folders and choose `Bring into Portal`; WorkWire copies them into the currently open folder on This PC's `Portal/` pane. The source is never moved or deleted, and normal portal synchronization can then carry the imported content to the paired PC. Whole-machine browsing is local-only and is not exposed by the network service.
+
 The background mirror elects exactly one of the two machine IDs as the active synchronizer. This avoids two mirror engines racing over the same change. It refreshes its route from authenticated-compatible beacon data, so DHCP changes and fallback ports do not require a restart.
 
 ## Synchronization and conflicts

@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import http from "node:http";
+import { once } from "node:events";
 import { Readable } from "node:stream";
 import {
   WW_APP_VERSION,
@@ -94,6 +96,18 @@ test("ww service supports remote CRUD over loopback", async () => {
 
     const download = await client.createDownloadStream(path.join(remoteRoot, "greetings.txt"));
     assert.equal(await readStream(download.stream), "hello world");
+
+    const trashResults = await client.trashPaths({
+      paths: [path.join(remoteRoot, "greetings-copy.txt")],
+    });
+    assert.equal(trashResults[0].ok, true);
+    const deletedItems = await client.listTrash();
+    assert.equal(deletedItems[0].name, "greetings-copy.txt");
+    await client.restoreTrashItem({ id: deletedItems[0].id });
+    assert.equal(
+      await fs.readFile(path.join(remoteRoot, "greetings-copy.txt"), "utf8"),
+      "hello world",
+    );
 
     const deleteResults = await client.deletePaths({
       paths: [path.join(remoteRoot, "greetings.txt")],
@@ -253,6 +267,87 @@ test("ww service info keeps portal metadata behind auth without echoing secrets"
     assert.equal(Object.hasOwn(remoteInfo, "homeDir"), false);
 
     await service.stop();
+  });
+});
+
+test("ww local machine explorer browses outside the portal and imports selections into it", async () => {
+  await withTempDir(async (baseDir) => {
+    const machineFolder = path.join(baseDir, "machine-files");
+    const localPortal = path.join(baseDir, "local-portal");
+    const localPortalEnvironment = path.join(localPortal, "Portal");
+    await fs.mkdir(path.join(machineFolder, "project"), { recursive: true });
+    await fs.writeFile(path.join(machineFolder, "project", "notes.txt"), "from the machine");
+
+    const localEndpoint = createLocalEndpoint({
+      name: "Portal Receiver",
+      rootPath: localPortal,
+    });
+
+    await assert.rejects(
+      localEndpoint.listDirectory({ path: machineFolder }),
+      /locked to/,
+    );
+
+    const listing = await localEndpoint.listDirectory({
+      path: machineFolder,
+      scope: "machine",
+      includeHidden: true,
+    });
+    assert.equal(listing.scope, "machine");
+    assert.deepEqual(listing.items.map((entry) => entry.name), ["project"]);
+
+    const result = await transferSelections({
+      sourceEndpoint: localEndpoint,
+      destinationEndpoint: localEndpoint,
+      sourcePaths: [path.join(machineFolder, "project")],
+      destinationDir: localPortalEnvironment,
+      sourceScope: "machine",
+      conflictPolicy: "rename",
+    });
+
+    assert.equal(result.transferredFiles, 1);
+    assert.equal(
+      await fs.readFile(path.join(localPortalEnvironment, "project", "notes.txt"), "utf8"),
+      "from the machine",
+    );
+    assert.equal(await fs.readFile(path.join(machineFolder, "project", "notes.txt"), "utf8"), "from the machine");
+
+    await assert.rejects(
+      transferSelections({
+        sourceEndpoint: localEndpoint,
+        destinationEndpoint: localEndpoint,
+        sourcePaths: [path.join(machineFolder, "project")],
+        destinationDir: localPortalEnvironment,
+        sourceScope: "machine",
+        move: true,
+      }),
+      /copy-only/,
+    );
+  });
+});
+
+test("ww service does not expose whole-machine browsing to remote clients", async () => {
+  await withTempDir(async (baseDir) => {
+    const service = createWwService({
+      host: "127.0.0.1",
+      port: 0,
+      token: "local-only-explorer-token",
+      rootPath: path.join(baseDir, "portal"),
+    });
+    const info = await service.start();
+    try {
+      const client = createRemoteWwClient({
+        host: "127.0.0.1",
+        port: info.port,
+        token: "local-only-explorer-token",
+      });
+      await assert.rejects(
+        client.listDirectory({ path: baseDir, scope: "machine" }),
+        /not available over the WorkWire service/,
+      );
+    } finally {
+      await service.stop();
+    }
   });
 });
 
@@ -491,6 +586,23 @@ test("ww transfer engine copies folders, resolves conflicts, and supports move",
       "spacing preserved",
     );
 
+    const skipStages = [];
+    const skipResult = await transferSelections({
+      sourceEndpoint: localEndpoint,
+      destinationEndpoint: remoteEndpoint,
+      sourcePaths: [path.join(localRoot, "report.txt")],
+      destinationDir: remoteRoot,
+      conflictPolicy: "skip",
+      move: false,
+      onProgress(event) { skipStages.push(event.stage); },
+    });
+    assert.equal(skipResult.transferredFiles, 0);
+    assert.equal(skipResult.transferredBytes, 0);
+    assert.equal(skipResult.skippedFiles, 1);
+    assert.equal(skipResult.processedFiles, 1);
+    assert.equal(skipResult.processedBytes, skipResult.totals.bytes);
+    assert.ok(skipStages.includes("skip"));
+
     await fs.writeFile(path.join(localRoot, "move-me.txt"), "move me", "utf8");
     const moveResult = await transferSelections({
       sourceEndpoint: localEndpoint,
@@ -605,5 +717,162 @@ test("ww overwrite keeps the old destination when the incoming stream fails", as
       /simulated network failure/,
     );
     assert.equal(await fs.readFile(destinationPath, "utf8"), "old contents\n");
+  });
+});
+
+test("ww remote upload honors slow-receiver backpressure without buffering the file", async () => {
+  const totalBytes = 24 * 1024 * 1024;
+  const chunkBytes = 64 * 1024;
+  let producedBytes = 0;
+  let receivedBytes = 0;
+  let maximumLeadBytes = 0;
+  const updateLead = () => {
+    maximumLeadBytes = Math.max(maximumLeadBytes, producedBytes - receivedBytes);
+  };
+  const server = http.createServer((request, response) => {
+    request.on("data", (chunk) => {
+      receivedBytes += chunk.length;
+      updateLead();
+      request.pause();
+      setTimeout(() => request.resume(), 1);
+    });
+    request.on("end", () => {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        record: { path: "/slow.bin", name: "slow.bin", kind: "file", size: receivedBytes },
+      }));
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  try {
+    const client = createRemoteWwClient({
+      host: "127.0.0.1",
+      port: server.address().port,
+      token: "backpressure-test",
+    });
+    const source = new Readable({
+      read() {
+        if (producedBytes >= totalBytes) {
+          this.push(null);
+          return;
+        }
+        const size = Math.min(chunkBytes, totalBytes - producedBytes);
+        producedBytes += size;
+        updateLead();
+        this.push(Buffer.alloc(size, producedBytes & 0xff));
+      },
+    });
+    const record = await client.uploadFileStream("/slow.bin", source, { timeoutMs: 30_000 });
+    assert.equal(record.size, totalBytes);
+    assert.equal(producedBytes, totalBytes);
+    assert.equal(receivedBytes, totalBytes);
+    assert.ok(
+      maximumLeadBytes < 12 * 1024 * 1024,
+      `producer advanced ${maximumLeadBytes} bytes beyond the slow receiver`,
+    );
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test("ww aborts a large download cleanly and keeps control requests responsive", async () => {
+  await withTempDir(async (baseDir) => {
+    const targetPath = path.join(baseDir, "abort-download.bin");
+    const handle = await fs.open(targetPath, "w");
+    await handle.truncate(16 * 1024 * 1024);
+    await handle.close();
+    const service = createWwService({
+      host: "127.0.0.1",
+      port: 0,
+      token: "abort-token",
+      rootPath: baseDir,
+      recoverPortCollision: false,
+    });
+    const info = await service.start();
+    try {
+      const client = createRemoteWwClient({
+        host: "127.0.0.1",
+        port: info.port,
+        token: "abort-token",
+      });
+      const download = await client.createDownloadStream(targetPath);
+      download.stream.once("error", () => {});
+      download.stream.once("data", () => download.stream.destroy());
+      await once(download.stream, "close");
+      const startedAt = process.hrtime.bigint();
+      await client.ping({ timeoutMs: 2_000 });
+      const pingMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
+      assert.ok(pingMs < 1_000, `ping after aborted download took ${pingMs.toFixed(1)} ms`);
+    } finally {
+      await service.stop();
+    }
+  });
+});
+
+test("ww transfer coalesces tiny-chunk progress while preserving exact output", async () => {
+  await withTempDir(async (baseDir) => {
+    const destinationRoot = path.join(baseDir, "destination");
+    await fs.mkdir(destinationRoot);
+    const totalBytes = 2 * 1024 * 1024;
+    const chunkBytes = 4 * 1024;
+    const sourcePath = "/synthetic/tiny-chunks.bin";
+    const sourceEndpoint = {
+      async getInfo() {
+        return { name: "tiny chunks", platform: process.platform };
+      },
+      async buildManifest() {
+        return {
+          root: { path: sourcePath, name: "tiny-chunks.bin", kind: "file", size: totalBytes, mtimeMs: 1_700_000_000_000 },
+          directories: [],
+          files: [],
+          totals: { files: 1, directories: 0, bytes: totalBytes },
+        };
+      },
+      async createDownloadStream() {
+        async function* chunks() {
+          for (let offset = 0; offset < totalBytes; offset += chunkBytes) {
+            await new Promise((resolve) => setTimeout(resolve, 1));
+            yield Buffer.alloc(Math.min(chunkBytes, totalBytes - offset), offset & 0xff);
+          }
+        }
+        return { stream: Readable.from(chunks()), mtimeMs: 1_700_000_000_000, name: "tiny-chunks.bin" };
+      },
+    };
+    const events = [];
+    const result = await transferSelections({
+      sourceEndpoint,
+      destinationEndpoint: createLocalEndpoint({ name: "destination", rootPath: destinationRoot }),
+      sourcePaths: [sourcePath],
+      destinationDir: destinationRoot,
+      conflictPolicy: "overwrite",
+      onProgress(event) {
+        const bytesInFlight = Number(event.bytesInFlight) || 0;
+        events.push({
+          stage: event.stage,
+          liveTransferredBytes: (Number(event.result?.transferredBytes) || 0) + bytesInFlight,
+          liveProcessedBytes: (Number(event.result?.processedBytes) || 0) + bytesInFlight,
+        });
+      },
+    });
+    const stages = events.map((event) => event.stage);
+    const progressEvents = stages.filter((stage) => stage === "transfer-progress").length;
+    assert.equal(result.transferredBytes, totalBytes);
+    assert.equal(result.processedBytes, totalBytes);
+    assert.equal(result.processedFiles, 1);
+    assert.equal((await fs.stat(path.join(destinationRoot, "tiny-chunks.bin"))).size, totalBytes);
+    assert.ok(progressEvents >= 2, `expected periodic progress, got ${progressEvents}`);
+    assert.ok(progressEvents <= 10, `progress event flood: ${progressEvents}`);
+    assert.ok(events.some((event) => (
+      event.stage === "transfer-progress"
+      && event.liveTransferredBytes > 0
+      && event.liveTransferredBytes < totalBytes
+    )), "expected real in-flight byte telemetry before the file completed");
+    assert.ok(events.every((event, index) => (
+      index === 0 || event.liveProcessedBytes >= events[index - 1].liveProcessedBytes
+    )), "expected reported progress to be monotonic");
+    assert.equal(stages.at(-1), "complete");
   });
 });

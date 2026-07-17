@@ -1,0 +1,355 @@
+{
+  "benchmark": "electron-portal-interaction",
+  "conditions": {
+    "sizes": [
+      10000,
+      50000
+    ],
+    "repeats": 3,
+    "reloads": 3,
+    "window": "hidden 1440x980 Chromium renderer, background throttling disabled",
+    "syntheticData": "renderer-local construction to exclude IPC payload generation"
+  },
+  "versions": {
+    "node": "24.18.0",
+    "acorn": "8.16.0",
+    "ada": "3.4.4",
+    "amaro": "1.1.9",
+    "ares": "1.34.6",
+    "brotli": "1.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.4.2",
+    "merve": "1.2.2",
+    "modules": "148",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.69.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "0.0.0",
+    "simdjson": "4.6.4",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.1",
+    "tz": "2025c",
+    "undici": "7.28.0",
+    "unicode": "17.0",
+    "uv": "1.52.1",
+    "uvwasi": "0.0.23",
+    "v8": "15.0.245.15-electron.0",
+    "zlib": "1.3.2.1-motley",
+    "zstd": "1.6.0",
+    "electron": "43.1.1",
+    "chrome": "150.0.7871.114"
+  },
+  "results": [
+    {
+      "entriesPerPane": 10000,
+      "constructionMs": {
+        "samples": 3,
+        "min": 5.2,
+        "median": 8,
+        "p95": 45.26,
+        "max": 49.4,
+        "mean": 20.867
+      },
+      "initialRenderMs": {
+        "samples": 3,
+        "min": 43.7,
+        "median": 65.8,
+        "p95": 82.45,
+        "max": 84.3,
+        "mean": 64.6
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 3,
+        "min": 150,
+        "median": 174,
+        "p95": 182.1,
+        "max": 183,
+        "mean": 169
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 3,
+            "min": 11.4,
+            "median": 11.7,
+            "p95": 20.61,
+            "max": 21.6,
+            "mean": 14.9
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 3,
+            "min": 13.8,
+            "median": 22.1,
+            "p95": 36.05,
+            "max": 37.6,
+            "mean": 24.5
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 3,
+            "min": 12.1,
+            "median": 13.2,
+            "p95": 14.46,
+            "max": 14.6,
+            "mean": 13.3
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 3,
+            "min": 15.2,
+            "median": 15.5,
+            "p95": 21.53,
+            "max": 22.2,
+            "mean": 17.633
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 3,
+            "min": 18.8,
+            "median": 20.6,
+            "p95": 23.39,
+            "max": 23.7,
+            "mean": 21.033
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 3,
+        "min": 11.7,
+        "median": 12.1,
+        "p95": 16.33,
+        "max": 16.8,
+        "mean": 13.533
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 2.7,
+        "mean": 0.11
+      },
+      "workspaceSwitchMs": {
+        "samples": 3,
+        "min": 0.6,
+        "median": 0.8,
+        "p95": 1.52,
+        "max": 1.6,
+        "mean": 1
+      },
+      "rendererHeap": {
+        "usedBytes": 43915120,
+        "totalBytes": 97571036,
+        "localRows": 10,
+        "remoteRows": 34,
+        "query": "report"
+      }
+    },
+    {
+      "entriesPerPane": 50000,
+      "constructionMs": {
+        "samples": 3,
+        "min": 31.7,
+        "median": 39.1,
+        "p95": 40.81,
+        "max": 41,
+        "mean": 37.267
+      },
+      "initialRenderMs": {
+        "samples": 3,
+        "min": 171.8,
+        "median": 198.5,
+        "p95": 262.67,
+        "max": 269.8,
+        "mean": 213.367
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 3,
+        "min": 733,
+        "median": 736,
+        "p95": 749.5,
+        "max": 751,
+        "mean": 740
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 3,
+            "min": 20.7,
+            "median": 21.6,
+            "p95": 23.94,
+            "max": 24.2,
+            "mean": 22.167
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 3,
+            "min": 28.2,
+            "median": 29.1,
+            "p95": 31.44,
+            "max": 31.7,
+            "mean": 29.667
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 3,
+            "min": 30.4,
+            "median": 30.4,
+            "p95": 40.66,
+            "max": 41.8,
+            "mean": 34.2
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 3,
+            "min": 38.7,
+            "median": 41.5,
+            "p95": 42.13,
+            "max": 42.2,
+            "mean": 40.8
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 3,
+            "min": 53.2,
+            "median": 53.3,
+            "p95": 53.75,
+            "max": 53.8,
+            "mean": 53.433
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 3,
+        "min": 11.8,
+        "median": 12.3,
+        "p95": 34.26,
+        "max": 36.7,
+        "mean": 20.267
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 2.2,
+        "mean": 0.103
+      },
+      "workspaceSwitchMs": {
+        "samples": 3,
+        "min": 0.1,
+        "median": 0.6,
+        "p95": 0.6,
+        "max": 0.6,
+        "mean": 0.433
+      },
+      "rendererHeap": {
+        "usedBytes": 392513631,
+        "totalBytes": 464167163,
+        "localRows": 10,
+        "remoteRows": 34,
+        "query": "report"
+      }
+    }
+  ],
+  "longTasks": {
+    "count": 9,
+    "durationMs": {
+      "samples": 9,
+      "min": 50,
+      "median": 74,
+      "p95": 281.8,
+      "max": 311,
+      "mean": 131.222
+    }
+  },
+  "reloadLifecycle": {
+    "beforeReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 129501,
+        "memoryWorkingSetKiB": 210500
+      },
+      {
+        "type": "GPU",
+        "pid": 129551,
+        "memoryWorkingSetKiB": 106940
+      },
+      {
+        "type": "Utility",
+        "pid": 129554,
+        "memoryWorkingSetKiB": 89128
+      },
+      {
+        "type": "Tab",
+        "pid": 129668,
+        "memoryWorkingSetKiB": 692612
+      }
+    ],
+    "afterReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 129501,
+        "memoryWorkingSetKiB": 211300
+      },
+      {
+        "type": "GPU",
+        "pid": 129551,
+        "memoryWorkingSetKiB": 106988
+      },
+      {
+        "type": "Utility",
+        "pid": 129554,
+        "memoryWorkingSetKiB": 89148
+      },
+      {
+        "type": "Tab",
+        "pid": 129668,
+        "memoryWorkingSetKiB": 719364
+      }
+    ]
+  }
+}

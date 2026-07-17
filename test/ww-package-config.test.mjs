@@ -28,6 +28,7 @@ test("ww linux build config packages a dedicated runtime", () => {
   assert.equal(config.extraMetadata.main, "desktop/ww-runtime.cjs");
   assert.equal(config.extraMetadata.desktopName, "workwire.desktop");
   assert.equal(config.linux.icon, "desktop/assets/workwire/icon.png");
+  assert.equal(config.linux.syncDesktopName, true);
   assert.deepEqual(config.linux.target, ["AppImage"]);
 });
 

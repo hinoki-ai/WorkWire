@@ -3,7 +3,9 @@ import os from "node:os";
 import path from "node:path";
 
 export const WORKWIRE_APP_NAME = "WorkWire";
-export const WORKWIRE_WINDOW_CLASS = WORKWIRE_APP_NAME;
+// This must match the basename of workwire.desktop. GNOME/Wayland associates
+// windows with pinned launchers by desktop app ID, not by the display name.
+export const WORKWIRE_WINDOW_CLASS = "workwire";
 export const WORKWIRE_APP_COMMENT = "Local two-machine file desk for the WorkWire portal.";
 export const LINUX_WW_DESKTOP_ENTRY_NAME = "workwire.desktop";
 export const LINUX_WW_SERVICE_UNIT_NAME = "workwire-ww.service";
@@ -13,6 +15,40 @@ const WORKWIRE_ICON_CANDIDATE_RELATIVE_PATHS = [
   path.join("desktop", "assets", "workwire", "icon.png"),
   path.join("desktop", "assets", "workwire", "icon.ico"),
 ];
+
+export function configureWwElectronAppIdentity(electronApp, {
+  platform = process.platform,
+  env = process.env,
+  appName = WORKWIRE_APP_NAME,
+  desktopEntryName = LINUX_WW_DESKTOP_ENTRY_NAME,
+  windowClass = WORKWIRE_WINDOW_CLASS,
+} = {}) {
+  electronApp.setName(appName);
+
+  if (platform !== "linux") {
+    return {
+      appName,
+      desktopEntryName: null,
+      windowClass: null,
+      userDataPath: null,
+    };
+  }
+
+  env.CHROME_DESKTOP ||= desktopEntryName;
+  // Keep Electron's Chromium profile separate from WW's lowercase
+  // ~/.config/workwire application/config directory.
+  const userDataPath = path.join(electronApp.getPath("appData"), appName);
+  electronApp.setDesktopName(desktopEntryName);
+  electronApp.setPath("userData", userDataPath);
+  electronApp.commandLine.appendSwitch("class", windowClass);
+
+  return {
+    appName,
+    desktopEntryName,
+    windowClass,
+    userDataPath,
+  };
+}
 
 function quoteDesktopExecArg(value) {
   return `"${String(value)

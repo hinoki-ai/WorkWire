@@ -23,7 +23,20 @@
     "autostart": "node ./scripts/install-ww-autostart.mjs",
     "ww:autostart": "node ./scripts/install-ww-autostart.mjs",
     "dist:linux": "node ./scripts/package-ww-linux.mjs",
-    "ww:lan-installer": "node ./scripts/serve-ww-lan-installer.mjs"
+    "ww:lan-installer": "node ./scripts/serve-ww-lan-installer.mjs",
+    "perf:portal": "node --expose-gc ./scripts/performance/portal-search-benchmark.mjs",
+    "perf:portal:electron": "node ./scripts/performance/electron-portal-benchmark.mjs",
+    "perf:filesystem": "node --expose-gc ./scripts/performance/filesystem-benchmark.mjs",
+    "perf:service": "node --expose-gc ./scripts/performance/service-stress-benchmark.mjs",
+    "perf:reconnect": "node --expose-gc ./scripts/performance/service-stress-benchmark.mjs --reconnect-only",
+    "perf:transfer": "node --expose-gc ./scripts/performance/transfer-benchmark.mjs",
+    "perf:store": "node ./scripts/performance/recovery-scope-report.mjs --component=event-store",
+    "perf:output": "node ./scripts/performance/recovery-scope-report.mjs --component=command-output",
+    "perf:artifact": "node --expose-gc ./scripts/performance/transfer-benchmark.mjs",
+    "perf:inventory": "node ./scripts/performance/recovery-scope-report.mjs --component=inventory",
+    "perf:soak": "node --expose-gc ./scripts/performance/lifecycle-soak.mjs",
+    "perf:scope": "node ./scripts/performance/recovery-scope-report.mjs",
+    "perf:all": "node ./scripts/performance/run-all.mjs"
   },
   "files": [
     "ww.mjs",

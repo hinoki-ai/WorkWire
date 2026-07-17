@@ -1,0 +1,164 @@
+{
+  "report": "recovery-performance-scope",
+  "component": "all",
+  "environment": {
+    "capturedAt": "2026-07-17T07:47:09.053Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "phaseState": {
+    "completedPhase": null,
+    "nextPhase": {
+      "phase": 0,
+      "title": "Preserve baseline and establish recovery configuration",
+      "checked": 0,
+      "unchecked": 15,
+      "complete": false
+    },
+    "phases": [
+      {
+        "phase": 0,
+        "title": "Preserve baseline and establish recovery configuration",
+        "checked": 0,
+        "unchecked": 15,
+        "complete": false
+      },
+      {
+        "phase": 1,
+        "title": "Protocol types, validation, and state machines",
+        "checked": 0,
+        "unchecked": 23,
+        "complete": false
+      },
+      {
+        "phase": 2,
+        "title": "Durable recovery store",
+        "checked": 0,
+        "unchecked": 31,
+        "complete": false
+      },
+      {
+        "phase": 3,
+        "title": "Recovery controller and client",
+        "checked": 0,
+        "unchecked": 51,
+        "complete": false
+      },
+      {
+        "phase": 4,
+        "title": "Root executor and complete inventory",
+        "checked": 0,
+        "unchecked": 33,
+        "complete": false
+      },
+      {
+        "phase": 5,
+        "title": "Recovery agent daemon",
+        "checked": 0,
+        "unchecked": 28,
+        "complete": false
+      },
+      {
+        "phase": 6,
+        "title": "Complete recovery CLI",
+        "checked": 0,
+        "unchecked": 15,
+        "complete": false
+      },
+      {
+        "phase": 7,
+        "title": "Typed recovery action registry",
+        "checked": 0,
+        "unchecked": 122,
+        "complete": false
+      },
+      {
+        "phase": 8,
+        "title": "Artifact and bulk-transfer plane",
+        "checked": 0,
+        "unchecked": 23,
+        "complete": false
+      },
+      {
+        "phase": 9,
+        "title": "Electron Recovery workspace",
+        "checked": 0,
+        "unchecked": 32,
+        "complete": false
+      },
+      {
+        "phase": 10,
+        "title": "Wake-on-LAN and power state",
+        "checked": 0,
+        "unchecked": 17,
+        "complete": false
+      },
+      {
+        "phase": 11,
+        "title": "PXE/iPXE boot plane on Fedora",
+        "checked": 0,
+        "unchecked": 31,
+        "complete": false
+      },
+      {
+        "phase": 12,
+        "title": "Build the PXE recovery operating system",
+        "checked": 0,
+        "unchecked": 30,
+        "complete": false
+      },
+      {
+        "phase": 13,
+        "title": "Autonomous recovery case engine",
+        "checked": 0,
+        "unchecked": 22,
+        "complete": false
+      },
+      {
+        "phase": 14,
+        "title": "Recovery playbooks and autonomous case templates",
+        "checked": 0,
+        "unchecked": 62,
+        "complete": false
+      },
+      {
+        "phase": 15,
+        "title": "Blackout, disconnect, and resume engineering",
+        "checked": 0,
+        "unchecked": 25,
+        "complete": false
+      },
+      {
+        "phase": 16,
+        "title": "QEMU, loop-device, and physical LAN validation",
+        "checked": 0,
+        "unchecked": 43,
+        "complete": false
+      },
+      {
+        "phase": 17,
+        "title": "Packaging, installation, documentation, and final verification",
+        "checked": 0,
+        "unchecked": 16,
+        "complete": false
+      }
+    ]
+  },
+  "recoveryModules": {
+    "configuration": false,
+    "protocol": false,
+    "durableStore": false,
+    "controller": false,
+    "agent": false,
+    "inventory": false,
+    "recoveryPortal": false
+  },
+  "classification": "NOT APPLICABLE TO CURRENT IMPLEMENTATION",
+  "explanation": "The recovery specification is a future implementation plan. Phase 0 remains entirely unchecked, so recovery event stores, WebSocket agents, SSE, command output, artifacts, and inventory cannot be truthfully load-tested. The gate benchmarks the active Files implementation and does not introduce production mocks to fabricate recovery measurements."
+}

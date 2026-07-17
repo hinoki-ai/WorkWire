@@ -18,10 +18,9 @@ import {
   registerAppProtocol,
 } from "./app-protocol.mjs";
 import {
+  configureWwElectronAppIdentity,
   ensureLinuxWwDesktopEntry,
-  LINUX_WW_DESKTOP_ENTRY_NAME,
   WORKWIRE_APP_NAME,
-  WORKWIRE_WINDOW_CLASS,
 } from "./linux-integration.mjs";
 import { WW_BEACON_PORTS, createWwLanBeacon } from "../lib/ww-beacon.mjs";
 import { buildWwBuildInfo } from "../lib/ww-compat.mjs";
@@ -31,9 +30,15 @@ import {
   collectLanInterfaceRecords,
   selectReachableLanAddressForPeer,
 } from "../lib/ww-network.mjs";
+import { isPathInsideRoot } from "../lib/ww-fs.mjs";
 import { transferSelections } from "../lib/ww-transfer.mjs";
 import { createWwService } from "../lib/ww-service.mjs";
 import { createWwMirror } from "../lib/ww-mirror.mjs";
+import {
+  measurePerformance,
+  performanceDiagnosticsEnabled,
+  startPerformanceMonitor,
+} from "../lib/ww-performance.mjs";
 import {
   WW_CONFIG_PATH,
   buildDefaultWwConfig,
@@ -43,9 +48,11 @@ import {
   normalizePort,
   parsePeerSpec,
   rememberPeer,
+  resolveWwPortalEnvironmentRoot,
   resolveWwPortalRoot,
   updateWwConfig,
   WW_PORTAL_DIRNAME,
+  WW_PORTAL_ENVIRONMENT_DIRNAME,
 } from "../lib/ww-config-store.mjs";
 import {
   buildPeerLaunchSuppression,
@@ -68,15 +75,18 @@ const WINDOW_ICON_CANDIDATE_RELATIVE_PATHS = [
   path.join("desktop", "assets", "workwire", "icon.ico"),
 ];
 
-if (process.platform === "linux") {
-  process.env.CHROME_DESKTOP ||= LINUX_WW_DESKTOP_ENTRY_NAME;
-  app.commandLine.appendSwitch("class", WORKWIRE_WINDOW_CLASS);
-}
+// Establish the native desktop identity before Electron computes userData or
+// acquires the singleton lock. In development Electron otherwise falls back to
+// the generic "Electron" identity, which breaks GNOME/Wayland launcher
+// grouping and can collide with unrelated Electron applications.
+configureWwElectronAppIdentity(app);
 
 const SINGLE_INSTANCE_LOCK = app.requestSingleInstanceLock();
 
 if (!SINGLE_INSTANCE_LOCK) {
-  app.quit();
+  // A primary WorkWire process already owns the window. Exit immediately so a
+  // duplicate launcher process never lingers as a ghost Dash instance.
+  app.exit(0);
 }
 
 if (!app.isReady()) {
@@ -93,7 +103,6 @@ if (!app.isReady()) {
   ]);
 }
 
-app.setName(WORKWIRE_APP_NAME);
 if (process.platform === "win32") {
   app.setAppUserModelId(WORKWIRE_APP_NAME);
 }
@@ -120,22 +129,44 @@ let localEndpoint = createLocalEndpoint({
   rootPath: resolveWwPortalRoot(),
 });
 let operationState = {
+  id: 0,
   active: false,
   stage: "idle",
   label: "",
+  kind: "",
+  fromSide: "",
+  toSide: "",
   totals: null,
   transferredFiles: 0,
   transferredBytes: 0,
+  processedFiles: 0,
+  processedBytes: 0,
   skippedFiles: 0,
+  currentName: "",
+  currentFileBytes: 0,
+  currentFileTotalBytes: 0,
+  bytesPerSecond: 0,
+  estimatedSecondsRemaining: null,
+  startedAt: 0,
+  updatedAt: 0,
+  completedAt: 0,
+  durationMs: 0,
   error: null,
 };
+let operationSequence = 0;
 let notifications = [];
 let activityFeed = [];
 let peerLaunchSuppression = null;
 let peerStateMutation = Promise.resolve();
 let remoteSyncTimer = null;
+let remoteSyncPromise = null;
+const paneRefreshGeneration = {
+  local: 0,
+  remote: 0,
+};
 let launchIntentsReady = false;
 const pendingLaunchArgv = [];
+const mainPerformanceMonitor = startPerformanceMonitor({ scope: "electron-main" });
 const paneWatchers = {
   local: null,
 };
@@ -147,12 +178,21 @@ const paneState = {
     path: "",
     listing: null,
     error: null,
+    loading: false,
   },
   remote: {
     path: "",
     listing: null,
     error: null,
+    loading: false,
   },
+};
+const explorerState = {
+  open: false,
+  homePath: os.homedir(),
+  path: "",
+  listing: null,
+  error: null,
 };
 
 function formatErrorMessage(error, fallback = "WW failed.") {
@@ -260,7 +300,7 @@ function assertTrustedIpcSender(event) {
 function handleTrusted(channel, handler) {
   ipcMain.handle(channel, async (event, ...args) => {
     assertTrustedIpcSender(event);
-    return handler(event, ...args);
+    return measurePerformance("electron.ipc", { channel }, () => handler(event, ...args));
   });
 }
 
@@ -303,7 +343,7 @@ function applyLaunchIntentToConfig(intent = {}) {
   if (intent.localPath) {
     paneState.local.path = intent.localPath;
   } else if (!paneState.local.path) {
-    paneState.local.path = config.service.rootPath;
+    paneState.local.path = getPaneEnvironmentRoot("local") || config.service.rootPath;
   }
 
   if (intent.remotePath) {
@@ -462,6 +502,9 @@ function pushActivity(title, detail = "", {
 }
 
 function describeSide(side) {
+  if (side === "machine") {
+    return "This PC files";
+  }
   return side === "local" ? "This PC" : "Other PC";
 }
 
@@ -486,26 +529,40 @@ function serializePeer(peer = {}) {
   return safePeer;
 }
 
+function serializeEndpointInfoForUi(info, side) {
+  if (!info) {
+    return clone(info);
+  }
+
+  const environmentRoot = getPaneEnvironmentRoot(side);
+  return {
+    ...clone(info),
+    ...(environmentRoot ? { rootPath: environmentRoot } : {}),
+  };
+}
+
 function serializeState() {
   return {
     configPath: WW_CONFIG_PATH,
     logPath: WW_LOG_PATH,
     service: {
-      info: clone(serviceInfo),
+      info: serializeEndpointInfoForUi(serviceInfo, "local"),
       error: serviceError,
     },
     peer: {
       saved: serializePeer(config.peer),
       recent: config.recentPeers.map((peer) => serializePeer(peer)),
-      info: clone(remoteInfo),
+      info: serializeEndpointInfoForUi(remoteInfo, "remote"),
       connected: Boolean(remoteEndpoint && remoteInfo),
       error: remoteError,
     },
     panes: clone(paneState),
+    explorer: clone(explorerState),
     ui: {
       showHidden: Boolean(config.ui.showHidden),
       conflictPolicy: normalizeConflictPolicy(config.ui.conflictPolicy),
       portalName: WW_PORTAL_DIRNAME,
+      portalEnvironmentName: WW_PORTAL_ENVIRONMENT_DIRNAME,
     },
     operation: clone(operationState),
     notifications: clone(notifications),
@@ -518,6 +575,35 @@ function serializeState() {
   };
 }
 
+function serializeEventState(type, payload) {
+  if (type === "operation") {
+    return {
+      operation: clone(operationState),
+      notifications: clone(notifications),
+      activity: clone(activityFeed),
+    };
+  }
+  if (type === "explorer") {
+    return { explorer: clone(explorerState) };
+  }
+  if (type === "loading" && paneState[payload?.side]) {
+    const pane = paneState[payload.side];
+    return {
+      panes: {
+        [payload.side]: {
+          path: pane.path,
+          error: pane.error,
+          loading: pane.loading,
+        },
+      },
+    };
+  }
+  if ((type === "listing" || type === "error" || type === "loading") && paneState[payload?.side]) {
+    return { panes: { [payload.side]: clone(paneState[payload.side]) } };
+  }
+  return serializeState();
+}
+
 function sendEvent(type, payload = {}) {
   const windows = getLiveWindows();
   if (windows.length === 0) {
@@ -527,8 +613,24 @@ function sendEvent(type, payload = {}) {
   const eventPayload = {
     type,
     payload,
-    state: serializeState(),
+    state: serializeEventState(type, payload),
+    partial: type === "operation"
+      || type === "explorer"
+      || type === "listing"
+      || type === "loading"
+      || (type === "error" && Boolean(paneState[payload?.side])),
   };
+
+  if (performanceDiagnosticsEnabled()) {
+    const encodedBytes = Buffer.byteLength(JSON.stringify(eventPayload));
+    process.stderr.write(`[ww:performance] ${JSON.stringify({
+      kind: "electron-event",
+      type,
+      encodedBytes,
+      recipients: windows.length,
+      timestamp: new Date().toISOString(),
+    })}\n`);
+  }
 
   for (const window of windows) {
     window.webContents.send("ww:event", eventPayload);
@@ -641,6 +743,66 @@ function ensureLocalPaneWatcher() {
   }
 }
 
+function getPaneEnvironmentRoot(side) {
+  if (side === "local") {
+    return resolveWwPortalEnvironmentRoot(config.service.rootPath || resolveWwPortalRoot());
+  }
+
+  const remoteRootPath = String(remoteInfo?.rootPath || "").trim();
+  if (!remoteRootPath) {
+    return "";
+  }
+  return resolveWwPortalEnvironmentRoot(remoteRootPath, {
+    pathApi: getPathApi(remoteInfo?.platform),
+  });
+}
+
+function clampPaneTargetPath(side, requestedPath = "") {
+  const environmentRoot = getPaneEnvironmentRoot(side);
+  const raw = String(requestedPath || "").trim();
+  if (!environmentRoot) {
+    return raw;
+  }
+  if (!raw) {
+    return environmentRoot;
+  }
+
+  const pathApi = getPathApi(side === "remote" ? remoteInfo?.platform : process.platform);
+  const resolved = pathApi.isAbsolute(raw)
+    ? pathApi.normalize(raw)
+    : pathApi.resolve(environmentRoot, raw);
+  const relativePath = pathApi.relative(environmentRoot, resolved);
+  if (relativePath === "") {
+    return environmentRoot;
+  }
+  if (relativePath.startsWith("..") || pathApi.isAbsolute(relativePath)) {
+    return environmentRoot;
+  }
+  return resolved;
+}
+
+function clampListingToEnvironment(listing, environmentRoot) {
+  if (!listing || !environmentRoot) {
+    return listing;
+  }
+
+  listing.rootPath = environmentRoot;
+  if (
+    listing.path === environmentRoot
+    || !listing.parentPath
+    || !isPathInsideRoot(listing.parentPath, environmentRoot)
+  ) {
+    listing.parentPath = null;
+  }
+  return listing;
+}
+
+function isMissingPathError(error) {
+  return error?.code === "ENOENT"
+    || error?.status === 404
+    || /ENOENT|no such file/i.test(String(error?.message || ""));
+}
+
 function disconnectRemoteForRefreshError(error) {
   return queuePeerStateMutation(async () => {
     setRemoteUnavailable(buildPeerLinkFailureMessage(error, {
@@ -650,41 +812,94 @@ function disconnectRemoteForRefreshError(error) {
   });
 }
 
+function listingsEqual(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  if (
+    left.path !== right.path
+    || left.parentPath !== right.parentPath
+    || left.rootPath !== right.rootPath
+  ) return false;
+  const leftItems = Array.isArray(left.items) ? left.items : [];
+  const rightItems = Array.isArray(right.items) ? right.items : [];
+  if (leftItems.length !== rightItems.length) return false;
+  for (let index = 0; index < leftItems.length; index += 1) {
+    const leftItem = leftItems[index];
+    const rightItem = rightItems[index];
+    if (
+      leftItem.path !== rightItem.path
+      || leftItem.name !== rightItem.name
+      || leftItem.kind !== rightItem.kind
+      || Number(leftItem.size) !== Number(rightItem.size)
+      || Number(leftItem.mtimeMs) !== Number(rightItem.mtimeMs)
+      || leftItem.error?.code !== rightItem.error?.code
+      || leftItem.error?.message !== rightItem.error?.message
+    ) return false;
+  }
+  return true;
+}
+
 async function refreshPane(side, targetPath = null) {
   const pane = paneState[side];
   const endpoint = side === "local" ? localEndpoint : remoteEndpoint;
+  const generation = ++paneRefreshGeneration[side];
   if (!endpoint) {
     pane.error = side === "remote" ? getWaitingForPeerMessage() : "Local endpoint unavailable.";
     pane.listing = null;
-    sendEvent("state");
+    pane.loading = false;
+    sendEvent("error", { side, message: pane.error });
     return null;
   }
 
-  const requestedPath = String(
-    targetPath
-      || pane.path
-      || (side === "local"
-        ? config.service.rootPath
-        : remoteInfo?.rootPath || config.peer.remotePath || config.ui.remotePath)
-      || config.service.rootPath,
-  ).trim();
+  const environmentRoot = getPaneEnvironmentRoot(side);
+  const requestedPath = clampPaneTargetPath(side, String(targetPath || pane.path || "").trim());
+  const showLoading = targetPath != null && requestedPath !== pane.path;
+  if (showLoading) {
+    pane.loading = true;
+    pane.error = null;
+    sendEvent("loading", { side });
+  }
 
   try {
-    const listing = await endpoint.listDirectory({
-      path: requestedPath,
-      includeHidden: Boolean(config.ui.showHidden),
-    });
+    let listing;
+    try {
+      listing = await endpoint.listDirectory({
+        path: requestedPath,
+        includeHidden: Boolean(config.ui.showHidden),
+      });
+    } catch (error) {
+      if (!environmentRoot || requestedPath !== environmentRoot || !isMissingPathError(error)) {
+        throw error;
+      }
+      await endpoint.createDirectory({ path: environmentRoot });
+      listing = await endpoint.listDirectory({
+        path: requestedPath,
+        includeHidden: Boolean(config.ui.showHidden),
+      });
+    }
+    const currentEndpoint = side === "local" ? localEndpoint : remoteEndpoint;
+    if (generation !== paneRefreshGeneration[side] || endpoint !== currentEndpoint) {
+      return null;
+    }
+    clampListingToEnvironment(listing, environmentRoot);
+    const listingChanged = !listingsEqual(pane.listing, listing);
     pane.path = listing.path;
-    pane.listing = listing;
+    if (listingChanged) pane.listing = listing;
     pane.error = null;
+    pane.loading = false;
     if (side === "local") {
       ensureLocalPaneWatcher();
     }
-    sendEvent("listing", { side });
-    return listing;
+    if (listingChanged || showLoading) sendEvent("listing", { side });
+    return pane.listing;
   } catch (error) {
+    const currentEndpoint = side === "local" ? localEndpoint : remoteEndpoint;
+    if (generation !== paneRefreshGeneration[side] || endpoint !== currentEndpoint) {
+      return null;
+    }
     pane.error = String(error?.message || "Unable to load directory.");
     pane.listing = null;
+    pane.loading = false;
     if (side === "local") {
       ensureLocalPaneWatcher();
     }
@@ -702,13 +917,15 @@ function scheduleRemoteSyncLoop() {
   }
 
   remoteSyncTimer = setInterval(() => {
-    if (!remoteEndpoint || !remoteInfo || operationState.active) {
+    if (!remoteEndpoint || !remoteInfo || operationState.active || remoteSyncPromise) {
       return;
     }
 
-    void refreshPane("remote").catch((error) => {
+    remoteSyncPromise = refreshPane("remote").catch((error) => {
       appendLogLine(`[WW] Remote pane refresh failed: ${formatErrorMessage(error)}`);
-      void disconnectRemoteForRefreshError(error);
+      return disconnectRemoteForRefreshError(error);
+    }).finally(() => {
+      remoteSyncPromise = null;
     });
   }, REMOTE_SYNC_INTERVAL_MS);
 }
@@ -719,6 +936,7 @@ function stopRemoteSyncLoop() {
   }
   clearInterval(remoteSyncTimer);
   remoteSyncTimer = null;
+  remoteSyncPromise = null;
 }
 
 function getWaitingForPeerMessage() {
@@ -768,11 +986,13 @@ function buildPeerLinkFailureMessage(error, {
 }
 
 function setRemoteUnavailable(message = getWaitingForPeerMessage()) {
+  paneRefreshGeneration.remote += 1;
   remoteEndpoint = null;
   remoteInfo = null;
   remoteError = message;
   paneState.remote.listing = null;
   paneState.remote.error = message;
+  paneState.remote.loading = false;
 }
 
 function getAttachedServicePeer() {
@@ -1196,7 +1416,7 @@ async function autoLinkRemote({
   if (remoteEndpoint && remoteInfo) {
     return {
       peer: serializePeer(config.peer),
-      info: clone(remoteInfo),
+      info: serializeEndpointInfoForUi(remoteInfo, "remote"),
     };
   }
 
@@ -1354,7 +1574,7 @@ async function connectRemoteNow(overrides = {}, {
   sendEvent("connected");
   return {
     peer: serializePeer(config.peer),
-    info,
+    info: serializeEndpointInfoForUi(info, "remote"),
   };
 }
 
@@ -1546,7 +1766,7 @@ async function deleteItems(side, { targetPaths = [] } = {}) {
     throw new Error(`${side} endpoint is unavailable.`);
   }
 
-  const results = await endpoint.deletePaths({
+  const results = await endpoint.trashPaths({
     paths: targetPaths,
   });
   const failures = results.filter((entry) => !entry.ok);
@@ -1555,11 +1775,33 @@ async function deleteItems(side, { targetPaths = [] } = {}) {
   }
 
   await refreshPane(side);
-  pushActivity("Deleted items", `${describeSide(side)} · ${targetPaths.length} item(s) · ${summarizePaths(targetPaths)}`, {
+  pushActivity("Moved to Recently Deleted", `${describeSide(side)} · ${targetPaths.length} item(s) · ${summarizePaths(targetPaths)}`, {
     level: "success",
     category: "crud",
   });
   return results;
+}
+
+async function listDeletedItems(side) {
+  const endpoint = side === "local" ? localEndpoint : remoteEndpoint;
+  if (!endpoint) {
+    throw new Error(`${side} endpoint is unavailable.`);
+  }
+  return endpoint.listTrash();
+}
+
+async function restoreDeletedItem(side, { id } = {}) {
+  const endpoint = side === "local" ? localEndpoint : remoteEndpoint;
+  if (!endpoint) {
+    throw new Error(`${side} endpoint is unavailable.`);
+  }
+  const restored = await endpoint.restoreTrashItem({ id });
+  await refreshPane(side);
+  pushActivity("Restored item", `${describeSide(side)} · ${restored.originalPath}`, {
+    level: "success",
+    category: "crud",
+  });
+  return restored;
 }
 
 async function runTransfer({
@@ -1567,35 +1809,64 @@ async function runTransfer({
   targetPaths,
   move = false,
   conflictPolicy = config.ui.conflictPolicy,
+  sourceScope = "",
 } = {}) {
-  const sourceEndpoint = fromSide === "local" ? localEndpoint : remoteEndpoint;
-  const destinationEndpoint = fromSide === "local" ? remoteEndpoint : localEndpoint;
-  const destinationSide = fromSide === "local" ? "remote" : "local";
+  if (operationState.active) {
+    const error = new Error("A file transfer is already in progress.");
+    error.code = "ERR_WW_TRANSFER_BUSY";
+    throw error;
+  }
+
+  const machineImport = fromSide === "machine";
+  const sourceEndpoint = machineImport || fromSide === "local" ? localEndpoint : remoteEndpoint;
+  const destinationEndpoint = machineImport
+    ? localEndpoint
+    : fromSide === "local" ? remoteEndpoint : localEndpoint;
+  const destinationSide = machineImport || fromSide === "remote" ? "local" : "remote";
   const destinationPane = paneState[destinationSide];
 
   if (!sourceEndpoint || !destinationEndpoint) {
     throw new Error("Both panes must be available before transferring.");
   }
 
+  const startedAt = Date.now();
   operationState = {
+    id: ++operationSequence,
     active: true,
     stage: "starting",
     label: move ? "Moving items" : "Copying items",
+    kind: move ? "move" : "copy",
+    fromSide,
+    toSide: destinationSide,
     totals: null,
     transferredFiles: 0,
     transferredBytes: 0,
+    processedFiles: 0,
+    processedBytes: 0,
     skippedFiles: 0,
+    currentName: "",
+    currentFileBytes: 0,
+    currentFileTotalBytes: 0,
+    bytesPerSecond: 0,
+    estimatedSecondsRemaining: null,
+    startedAt,
+    updatedAt: startedAt,
+    completedAt: 0,
+    durationMs: 0,
     error: null,
   };
   config.ui.conflictPolicy = normalizeConflictPolicy(conflictPolicy);
-  await persistConfig();
-  pushActivity(move ? "Move started" : "Copy started", `${describeSide(fromSide)} -> ${describeSide(destinationSide)} · ${summarizePaths(targetPaths)}`, {
-    level: "info",
-    category: "transfer",
-  });
   sendEvent("operation");
 
   try {
+    await persistConfig();
+    pushActivity(move ? "Move started" : "Copy started", `${describeSide(fromSide)} -> ${describeSide(destinationSide)} · ${summarizePaths(targetPaths)}`, {
+      level: "info",
+      category: "transfer",
+    });
+    let lastRateSampleAt = startedAt;
+    let lastRateSampleBytes = 0;
+    let smoothedBytesPerSecond = 0;
     const result = await transferSelections({
       sourceEndpoint,
       destinationEndpoint,
@@ -1603,21 +1874,78 @@ async function runTransfer({
       destinationDir: destinationPane.path,
       conflictPolicy: config.ui.conflictPolicy,
       move,
+      sourceScope,
       onProgress(progress) {
+        const now = Date.now();
+        const totals = clone(progress.result?.totals || operationState.totals);
+        const committedTransferredBytes = Number(progress.result?.transferredBytes) || 0;
+        const bytesInFlight = Number(progress.bytesInFlight) || 0;
+        const reportedTransferredBytes = committedTransferredBytes + bytesInFlight;
+        const transferredBytes = progress.stage === "error"
+          ? Math.max(Number(operationState.transferredBytes) || 0, reportedTransferredBytes)
+          : reportedTransferredBytes;
+        const reportedCurrentFileTotalBytes = Number(progress.currentBytesTotal);
+        const currentFileTotalBytes = progress.currentBytesTotal != null
+          && Number.isFinite(reportedCurrentFileTotalBytes)
+          ? Math.max(0, reportedCurrentFileTotalBytes)
+          : Number(operationState.currentFileTotalBytes) || 0;
+        const currentFileBytes = progress.stage === "file-complete"
+          || progress.stage === "skip"
+          || progress.stage === "skip-file"
+          ? currentFileTotalBytes
+          : progress.stage === "complete" || progress.stage === "error"
+            ? Number(operationState.currentFileBytes) || 0
+            : bytesInFlight;
+        const reportedProcessedBytes = (Number(progress.result?.processedBytes) || 0)
+          + Math.min(bytesInFlight, currentFileTotalBytes || bytesInFlight);
+        const processedBytes = progress.stage === "error"
+          ? Math.max(Number(operationState.processedBytes) || 0, reportedProcessedBytes)
+          : reportedProcessedBytes;
+        const elapsedSinceRateSample = now - lastRateSampleAt;
+
+        if (
+          transferredBytes > lastRateSampleBytes
+          && elapsedSinceRateSample >= 100
+        ) {
+          const sampleRate = ((transferredBytes - lastRateSampleBytes) * 1_000)
+            / elapsedSinceRateSample;
+          smoothedBytesPerSecond = smoothedBytesPerSecond > 0
+            ? (smoothedBytesPerSecond * 0.72) + (sampleRate * 0.28)
+            : sampleRate;
+          lastRateSampleAt = now;
+          lastRateSampleBytes = transferredBytes;
+        }
+
+        const remainingBytes = Math.max(0, (Number(totals?.bytes) || 0) - processedBytes);
+        const transferFinished = progress.stage === "complete";
         operationState = {
           ...operationState,
-          active: progress.stage !== "complete",
+          active: progress.stage !== "complete" && progress.stage !== "error",
           stage: progress.stage,
-          totals: clone(progress.result?.totals || operationState.totals),
+          totals,
           transferredFiles: Number(progress.result?.transferredFiles) || 0,
-          transferredBytes: Number(progress.result?.transferredBytes) || 0,
+          transferredBytes,
+          processedFiles: Number(progress.result?.processedFiles) || 0,
+          processedBytes,
           skippedFiles: Number(progress.result?.skippedFiles) || 0,
+          currentName: String(progress.currentName || operationState.currentName || ""),
+          currentFileBytes,
+          currentFileTotalBytes,
+          bytesPerSecond: smoothedBytesPerSecond,
+          estimatedSecondsRemaining: smoothedBytesPerSecond > 0 && remainingBytes > 0
+            ? remainingBytes / smoothedBytesPerSecond
+            : transferFinished ? 0 : null,
+          updatedAt: now,
+          completedAt: transferFinished ? now : 0,
+          durationMs: now - startedAt,
           error: progress.error ? String(progress.error.message || progress.error) : null,
         };
         sendEvent("operation");
       },
     });
 
+    const completedAt = Date.now();
+    const durationMs = completedAt - startedAt;
     operationState = {
       ...operationState,
       active: false,
@@ -1625,14 +1953,24 @@ async function runTransfer({
       totals: clone(result.totals),
       transferredFiles: result.transferredFiles,
       transferredBytes: result.transferredBytes,
+      processedFiles: result.processedFiles,
+      processedBytes: result.processedBytes,
       skippedFiles: result.skippedFiles,
+      currentFileBytes: operationState.currentFileTotalBytes,
+      bytesPerSecond: durationMs > 0
+        ? (result.transferredBytes * 1_000) / durationMs
+        : operationState.bytesPerSecond,
+      estimatedSecondsRemaining: 0,
+      updatedAt: completedAt,
+      completedAt,
+      durationMs,
       error: null,
     };
 
-    await Promise.all([
-      refreshPane(fromSide),
-      refreshPane(destinationSide),
-    ]);
+    await Promise.all(
+      (machineImport ? [destinationSide] : [fromSide, destinationSide])
+        .map((side) => refreshPane(side)),
+    );
     pushNotification(
       `${move ? "Moved" : "Copied"} ${result.transferredFiles} file${result.transferredFiles === 1 ? "" : "s"}.`,
       "success",
@@ -1644,10 +1982,15 @@ async function runTransfer({
     sendEvent("operation");
     return result;
   } catch (error) {
+    const completedAt = Date.now();
     operationState = {
       ...operationState,
       active: false,
       stage: "error",
+      estimatedSecondsRemaining: null,
+      updatedAt: completedAt,
+      completedAt,
+      durationMs: completedAt - startedAt,
       error: String(error?.message || "Transfer failed."),
     };
     pushNotification(operationState.error, "error");
@@ -1658,6 +2001,58 @@ async function runTransfer({
     sendEvent("operation");
     throw error;
   }
+}
+
+async function openMachineExplorer(targetPath = "") {
+  const requestedPath = String(
+    targetPath
+      || explorerState.path
+      || explorerState.homePath,
+  ).trim();
+
+  try {
+    const listing = await localEndpoint.listDirectory({
+      path: requestedPath,
+      scope: "machine",
+      includeHidden: Boolean(config.ui.showHidden),
+    });
+    explorerState.open = true;
+    explorerState.path = listing.path;
+    explorerState.listing = listing;
+    explorerState.error = null;
+    sendEvent("explorer");
+    return clone(explorerState);
+  } catch (error) {
+    explorerState.open = true;
+    explorerState.error = String(error?.message || "Unable to browse this PC.");
+    sendEvent("explorer");
+    throw error;
+  }
+}
+
+function closeMachineExplorer() {
+  explorerState.open = false;
+  explorerState.listing = null;
+  explorerState.error = null;
+  sendEvent("explorer");
+}
+
+async function fetchFromMachineExplorer({ targetPaths = [] } = {}) {
+  const result = await runTransfer({
+    fromSide: "machine",
+    targetPaths,
+    move: false,
+    sourceScope: "machine",
+  });
+  pushActivity(
+    "Imported files into Portal",
+    `${summarizePaths(targetPaths)} -> ${paneState.local.path}`,
+    {
+      level: "success",
+      category: "transfer",
+    },
+  );
+  return result;
 }
 
 function attachWindowDiagnostics(window, label) {
@@ -1706,6 +2101,9 @@ function createManagedWindow({
     minHeight,
     title,
     backgroundColor,
+    frame: false,
+    transparent: true,
+    roundedCorners: true,
     autoHideMenuBar: true,
     ...(icon ? { icon: icon.path } : {}),
     webPreferences: {
@@ -1744,7 +2142,7 @@ function createWindow() {
     height: 980,
     minWidth: 1180,
     minHeight: 760,
-    backgroundColor: "#0d1115",
+    backgroundColor: "#00000000",
   });
   attachWindowDiagnostics(mainWindow, "WorkWire desk");
   mainWindow.once("ready-to-show", () => {
@@ -1847,8 +2245,32 @@ function registerIpc() {
       result,
     };
   });
+  handleTrusted("ww:list-deleted-items", async (_event, side) => listDeletedItems(side));
+  handleTrusted("ww:restore-deleted-item", async (_event, side, payload) => {
+    const restored = await restoreDeletedItem(side, payload);
+    return {
+      state: serializeState(),
+      restored,
+      items: await listDeletedItems(side),
+    };
+  });
   handleTrusted("ww:transfer", async (_event, payload) => {
     const result = await runTransfer(payload);
+    return {
+      state: serializeState(),
+      result,
+    };
+  });
+  handleTrusted("ww:explorer-open", async (_event, targetPath = "") => {
+    await openMachineExplorer(targetPath);
+    return serializeState();
+  });
+  handleTrusted("ww:explorer-close", async () => {
+    closeMachineExplorer();
+    return serializeState();
+  });
+  handleTrusted("ww:explorer-fetch", async (_event, payload = {}) => {
+    const result = await fetchFromMachineExplorer(payload);
     return {
       state: serializeState(),
       result,
@@ -1861,7 +2283,9 @@ async function bootstrapState() {
   persistedConfig = clone(config);
   const startupIntent = buildWwLaunchIntent(parseWwDesktopFlags(process.argv.slice(2)));
   applyLaunchIntentToConfig(startupIntent);
-  await persistConfig();
+  if (!valuesEqual(config, persistedConfig)) {
+    await persistConfig();
+  }
 
   paneState.remote.error = getWaitingForPeerMessage();
   launchIntentsReady = true;
@@ -1919,21 +2343,33 @@ app.on("second-instance", (_event, commandLine = []) => {
   });
 });
 
-app.on("window-all-closed", () => {
-  app.quit();
-});
-
 app.on("activate", () => {
   createWindow();
 });
 
-app.on("before-quit", () => {
+let shutdownStarted = false;
+function beginShutdown() {
+  if (shutdownStarted) {
+    return;
+  }
+  shutdownStarted = true;
   stopAutoLinkLoop();
   stopRemoteSyncLoop();
+  mainPerformanceMonitor.stop();
   stopPaneWatcher("local");
   stopLanBeacon().catch(() => {});
   mirrorController?.stop().catch(() => {});
   serviceController?.stop().catch(() => {});
+}
+
+app.on("window-all-closed", () => {
+  beginShutdown();
+  // Releasing the singleton lock immediately makes close-then-reopen reliable.
+  app.exit(0);
+});
+
+app.on("before-quit", () => {
+  beginShutdown();
 });
 
 process.on("uncaughtException", (error) => {

@@ -12,13 +12,16 @@ import {
   normalizeWwConfig,
   parsePeerSpec,
   rememberPeer,
+  ensureWwPortalRoot,
   resolveWwConfigPath,
   resolveWwHomeDir,
+  resolveWwPortalEnvironmentRoot,
   resolveWwPortalRoot,
   saveWwConfig,
   updateWwConfig,
   WW_CONFIG_VERSION,
   WW_PORTAL_DIRNAME,
+  WW_PORTAL_ENVIRONMENT_DIRNAME,
 } from "../lib/ww-config-store.mjs";
 
 test("ww config defaults are local-first and tokenized", () => {
@@ -45,6 +48,29 @@ test("ww config paths respect explicit standalone env overrides", () => {
   assert.equal(resolveWwHomeDir({ env, homeDir: "/home/tester" }), "/srv/workwire/.workwire");
   assert.equal(resolveWwConfigPath({ env, homeDir: "/home/tester" }), "/srv/workwire/.workwire/config/ww-config.json");
   assert.equal(resolveWwPortalRoot("/home/tester", { env }), "/srv/workwire/app");
+});
+
+test("ww portal environment lives inside the portal root", () => {
+  assert.equal(
+    resolveWwPortalEnvironmentRoot("/home/tester/WorkWire"),
+    `/home/tester/WorkWire/${WW_PORTAL_ENVIRONMENT_DIRNAME}`,
+  );
+  assert.equal(resolveWwPortalEnvironmentRoot(""), "");
+  assert.equal(
+    resolveWwPortalEnvironmentRoot(resolveWwPortalRoot("/home/tester")),
+    `/home/tester/${WW_PORTAL_DIRNAME}/${WW_PORTAL_ENVIRONMENT_DIRNAME}`,
+  );
+});
+
+test("ww ensureWwPortalRoot creates the portal environment directory", async () => {
+  const rootPath = path.join(await fs.mkdtemp(path.join(os.tmpdir(), "ww-portal-")), "WorkWire");
+  try {
+    await ensureWwPortalRoot(rootPath);
+    const stats = await fs.stat(path.join(rootPath, WW_PORTAL_ENVIRONMENT_DIRNAME));
+    assert.ok(stats.isDirectory());
+  } finally {
+    await fs.rm(path.dirname(rootPath), { recursive: true, force: true });
+  }
 });
 
 test("ww trust ids are stable and non-empty for non-empty tokens", () => {

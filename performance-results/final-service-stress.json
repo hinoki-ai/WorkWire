@@ -1,0 +1,314 @@
+{
+  "benchmark": "file-service-and-reconnect-stress",
+  "scopeNote": "This is the active WorkWire HTTP file service; the Phase 3 recovery controller and agents do not exist yet.",
+  "conditions": {
+    "fleetSizes": [
+      1,
+      10,
+      50,
+      100
+    ],
+    "rounds": 7,
+    "listingEntries": 1000,
+    "loopback": true
+  },
+  "environment": {
+    "capturedAt": "2026-07-17T07:19:43.967Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "resources": {
+    "memoryStartBytes": {
+      "rss": 79663104,
+      "heapTotal": 16793600,
+      "heapUsed": 7526624,
+      "external": 3612567,
+      "arrayBuffers": 70174
+    },
+    "peakMemoryBytes": {
+      "rss": 169873408,
+      "heapTotal": 86614016,
+      "heapUsed": 64000680,
+      "external": 7068085,
+      "arrayBuffers": 3348667
+    },
+    "memoryEndBytes": {
+      "rss": 169381888,
+      "heapTotal": 83353600,
+      "heapUsed": 31723960,
+      "external": 5994581,
+      "arrayBuffers": 2274083
+    },
+    "cpuUserMs": 4945.292,
+    "cpuSystemMs": 511.758,
+    "eventLoopUtilization": 0.995461,
+    "eventLoopDelayMs": {
+      "mean": 14.346,
+      "p95": 33.751,
+      "p99": 62.783,
+      "max": 67.699
+    },
+    "handlesBefore": [
+      "Socket"
+    ],
+    "handlesAfter": [
+      "Socket"
+    ]
+  },
+  "results": [
+    {
+      "concurrentClients": 1,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 7,
+        "min": 4.229,
+        "median": 5.463,
+        "p95": 41.642,
+        "max": 56.314,
+        "mean": 12.847,
+        "standardDeviation": 17.779,
+        "coefficientOfVariation": 1.384
+      },
+      "batchDurationMs": {
+        "samples": 7,
+        "min": 4.243,
+        "median": 5.471,
+        "p95": 41.688,
+        "max": 56.374,
+        "mean": 12.865,
+        "standardDeviation": 17.796,
+        "coefficientOfVariation": 1.383
+      },
+      "requests": 7
+    },
+    {
+      "concurrentClients": 10,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 70,
+        "min": 8.666,
+        "median": 11.325,
+        "p95": 29.956,
+        "max": 32.795,
+        "mean": 14.498,
+        "standardDeviation": 6.448,
+        "coefficientOfVariation": 0.445
+      },
+      "batchDurationMs": {
+        "samples": 7,
+        "min": 12.888,
+        "median": 14.414,
+        "p95": 35.579,
+        "max": 38.358,
+        "mean": 20.016,
+        "standardDeviation": 9.099,
+        "coefficientOfVariation": 0.455
+      },
+      "requests": 70
+    },
+    {
+      "concurrentClients": 50,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 350,
+        "min": 32.602,
+        "median": 43.637,
+        "p95": 67.103,
+        "max": 95.287,
+        "mean": 45.893,
+        "standardDeviation": 11.629,
+        "coefficientOfVariation": 0.253
+      },
+      "batchDurationMs": {
+        "samples": 7,
+        "min": 47.685,
+        "median": 58.839,
+        "p95": 98.639,
+        "max": 106.779,
+        "mean": 65.933,
+        "standardDeviation": 19.241,
+        "coefficientOfVariation": 0.292
+      },
+      "requests": 350
+    },
+    {
+      "concurrentClients": 100,
+      "operation": "simultaneous-connect-negotiation",
+      "requestLatencyMs": {
+        "samples": 700,
+        "min": 51.032,
+        "median": 70.563,
+        "p95": 105.78,
+        "max": 124.199,
+        "mean": 75.573,
+        "standardDeviation": 14.391,
+        "coefficientOfVariation": 0.19
+      },
+      "batchDurationMs": {
+        "samples": 7,
+        "min": 77.89,
+        "median": 97.916,
+        "p95": 141.328,
+        "max": 146.591,
+        "mean": 106.697,
+        "standardDeviation": 22.283,
+        "coefficientOfVariation": 0.209
+      },
+      "requests": 700
+    },
+    {
+      "concurrentClients": 1,
+      "operation": "simultaneous-reconnect-after-service-restart",
+      "rounds": 5,
+      "requestLatencyMs": {
+        "samples": 5,
+        "min": 1.494,
+        "median": 1.75,
+        "p95": 2.169,
+        "max": 2.226,
+        "mean": 1.792,
+        "standardDeviation": 0.269,
+        "coefficientOfVariation": 0.15
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 1.5,
+        "median": 1.757,
+        "p95": 2.243,
+        "max": 2.317,
+        "mean": 1.815,
+        "standardDeviation": 0.297,
+        "coefficientOfVariation": 0.163
+      },
+      "requests": 5
+    },
+    {
+      "concurrentClients": 10,
+      "operation": "simultaneous-reconnect-after-service-restart",
+      "rounds": 5,
+      "requestLatencyMs": {
+        "samples": 50,
+        "min": 6.156,
+        "median": 8.394,
+        "p95": 10.446,
+        "max": 11.146,
+        "mean": 8.338,
+        "standardDeviation": 1.33,
+        "coefficientOfVariation": 0.159
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 11.315,
+        "median": 11.728,
+        "p95": 13.013,
+        "max": 13.041,
+        "mean": 12.093,
+        "standardDeviation": 0.731,
+        "coefficientOfVariation": 0.06
+      },
+      "requests": 50
+    },
+    {
+      "concurrentClients": 50,
+      "operation": "simultaneous-reconnect-after-service-restart",
+      "rounds": 5,
+      "requestLatencyMs": {
+        "samples": 250,
+        "min": 23.309,
+        "median": 40.879,
+        "p95": 55.166,
+        "max": 61.609,
+        "mean": 41.211,
+        "standardDeviation": 9.086,
+        "coefficientOfVariation": 0.22
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 60.379,
+        "median": 62.164,
+        "p95": 68.515,
+        "max": 69.164,
+        "mean": 63.64,
+        "standardDeviation": 3.404,
+        "coefficientOfVariation": 0.053
+      },
+      "requests": 250
+    },
+    {
+      "concurrentClients": 100,
+      "operation": "simultaneous-reconnect-after-service-restart",
+      "rounds": 5,
+      "requestLatencyMs": {
+        "samples": 500,
+        "min": 47.944,
+        "median": 78.583,
+        "p95": 113.081,
+        "max": 126.394,
+        "mean": 79.539,
+        "standardDeviation": 18.356,
+        "coefficientOfVariation": 0.231
+      },
+      "batchDurationMs": {
+        "samples": 5,
+        "min": 110.217,
+        "median": 119.186,
+        "p95": 138.839,
+        "max": 143.422,
+        "mean": 122.101,
+        "standardDeviation": 11.235,
+        "coefficientOfVariation": 0.092
+      },
+      "requests": 500
+    },
+    {
+      "concurrentClients": 1,
+      "operation": "ping",
+      "requestLatencyMs": {
+        "samples": 28,
+        "min": 0.523,
+        "median": 0.633,
+        "p95": 1.367,
+        "max": 2.099,
+        "mean": 0.759,
+        "standardDeviation": 0.335,
+        "coefficientOfVariation": 0.442
+      },
+      "requests": 28
+    },
+    {
+      "concurrentClients": 1,
+      "operation": "list-1000",
+      "requestLatencyMs": {
+        "samples": 28,
+        "min": 26.891,
+        "median": 32.592,
+        "p95": 44.399,
+        "max": 52.176,
+        "mean": 34.576,
+        "standardDeviation": 5.072,
+        "coefficientOfVariation": 0.147
+      },
+      "requests": 28
+    },
+    {
+      "operation": "controller-stop-start-reconnect",
+      "cycles": 20,
+      "latencyMs": {
+        "samples": 20,
+        "min": 2.284,
+        "median": 2.986,
+        "p95": 4.645,
+        "max": 20.894,
+        "mean": 3.882,
+        "standardDeviation": 3.927,
+        "coefficientOfVariation": 1.011
+      }
+    }
+  ]
+}

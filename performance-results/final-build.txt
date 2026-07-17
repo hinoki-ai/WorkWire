@@ -1,0 +1,32 @@
+
+> workwire@0.1.0 dist:linux
+> node ./scripts/package-ww-linux.mjs
+
+  • electron-builder  version=26.15.3 os=6.18.5-200.fc43.x86_64
+  • loaded configuration  file=/home/hinoki/WorkWire/electron-builder.linux.json
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=linux arch=x64 electron=43.1.1 appOutDir=dist/ww/linux-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=/home/hinoki/WorkWire/dist/ww/linux-unpacked
+  • searching for node modules  pm=npm searchDir=/home/hinoki/WorkWire
+  • searching for node modules  pm=traversal searchDir=/home/hinoki/WorkWire
+  • using manual traversal of node_modules to build dependency tree
+  • no node modules returned while searching directories  searchDirectories=[""]
+  • executing @electron/fuses  electronPath=dist/ww/linux-unpacked/ww
+  • electron-builder  version=26.15.3 os=6.18.5-200.fc43.x86_64
+  • loaded configuration  file=/home/hinoki/WorkWire/electron-builder.linux.json
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=linux arch=x64 electron=43.1.1 appOutDir=dist/ww/linux-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=/home/hinoki/WorkWire/dist/ww/linux-unpacked
+  • searching for node modules  pm=npm searchDir=/home/hinoki/WorkWire
+  • searching for node modules  pm=traversal searchDir=/home/hinoki/WorkWire
+  • using manual traversal of node_modules to build dependency tree
+  • no node modules returned while searching directories  searchDirectories=[""]
+  • executing @electron/fuses  electronPath=dist/ww/linux-unpacked/ww
+  • building        target=AppImage arch=x64 file=dist/ww/WorkWire-0.1.0-linux-x86_64.AppImage
+  • building embedded block map  file=dist/ww/WorkWire-0.1.0-linux-x86_64.AppImage
+WorkWire release: 0.1.0+ww1.290cc98c4f38
+WorkWire Linux bundle: /home/hinoki/WorkWire/dist/ww/WorkWire-0.1.0-ww1.290cc98c4f38-linux-x64.tar.gz
+WorkWire Linux alias: /home/hinoki/WorkWire/dist/ww/ww-linux-x64.tar.gz
+WorkWire AppImage: /home/hinoki/WorkWire/dist/ww/WorkWire-0.1.0-ww1.290cc98c4f38-linux-x86_64.AppImage

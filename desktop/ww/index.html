@@ -16,24 +16,20 @@
   </head>
   <body>
     <div class="app-shell">
+      <button id="window-close" class="window-close" type="button" aria-label="Close WorkWire"></button>
       <main class="workspace">
         <section id="local-pane" class="pane pane-local" data-side="local">
           <header class="pane-header">
-            <div class="pane-heading">
+            <div class="pane-heading pane-heading-compact">
               <span class="pane-title">This PC</span>
               <strong id="local-pane-meta" class="pane-summary">Starting local WorkWire...</strong>
-              <p id="local-path-value" class="pane-path"></p>
-            </div>
-            <div class="pane-actions">
-              <button id="local-home" class="button button-small" type="button">Home</button>
-              <button id="local-up" class="button button-small" type="button">Up</button>
-              <button id="local-refresh" class="button button-small" type="button">Refresh</button>
+              <span id="local-path-value" class="pane-path" title=""></span>
             </div>
           </header>
 
           <label class="filter-field" for="local-filter">
-            <span>Filter</span>
-            <input id="local-filter" class="filter-input" type="search" placeholder="Show matching names only">
+            <input id="local-filter" class="filter-input" type="search" placeholder="Search files and folders…" role="combobox" aria-autocomplete="list" aria-controls="local-search-results" aria-expanded="false">
+            <div id="local-search-results" class="search-results" role="listbox" hidden></div>
           </label>
 
           <div class="file-head">
@@ -47,70 +43,98 @@
         </section>
 
         <aside class="action-rail" aria-label="WorkWire actions">
-          <section class="rail-panel">
-            <span class="rail-label">This PC</span>
-            <strong id="service-name" class="rail-title">This PC</strong>
-            <p id="service-meta" class="rail-copy">Waiting for local WorkWire...</p>
+          <section class="rail-panel rail-panel-send">
+            <button id="copy-to-other" class="button button-copy button-wide" type="button">Copy to Other PC</button>
+            <button id="move-to-other" class="button button-move button-wide" type="button">Move to Other PC</button>
+            <button id="explore-machine" class="button button-wide" type="button">Explore This PC</button>
           </section>
 
-          <section class="rail-panel">
-            <span class="rail-label">Other PC</span>
-            <strong id="peer-name" class="rail-title">Waiting</strong>
-            <p id="peer-meta" class="rail-copy">WW will link the other PC automatically when it is available.</p>
-          </section>
+          <section
+            id="transfer-panel"
+            class="rail-panel rail-panel-transfer-status"
+            data-state="idle"
+            data-direction="forward"
+            aria-labelledby="operation-label"
+            aria-hidden="true"
+          >
+            <header class="transfer-head">
+              <div class="transfer-identity">
+                <span class="transfer-mark" aria-hidden="true">
+                  <span id="operation-arrow" class="transfer-arrow">→</span>
+                </span>
+                <span class="transfer-title-stack">
+                  <span class="rail-label">File transfer</span>
+                  <strong id="operation-label" class="rail-title" aria-live="polite">Idle</strong>
+                </span>
+              </div>
+              <span class="transfer-head-actions">
+                <output id="operation-percent" class="transfer-percent" aria-label="Transfer percentage">0%</output>
+                <button id="operation-dismiss" class="transfer-dismiss" type="button" aria-label="Dismiss transfer status" hidden>×</button>
+              </span>
+            </header>
 
-          <section class="rail-panel">
-            <span class="rail-label">Transfer</span>
-            <strong id="operation-label" class="rail-title">Idle</strong>
-            <p id="operation-meta" class="rail-copy">No active file transfers.</p>
-            <div class="progress-rail" aria-hidden="true">
-              <div id="operation-bar" class="progress-fill"></div>
+            <p id="operation-current" class="transfer-current" title="">Waiting for a transfer</p>
+
+            <div
+              id="operation-progress"
+              class="progress-rail"
+              role="progressbar"
+              aria-label="File transfer progress"
+              aria-describedby="operation-current operation-meta"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <div id="operation-bar" class="progress-fill">
+                <span class="progress-spark" aria-hidden="true"></span>
+              </div>
+            </div>
+
+            <div class="transfer-readout">
+              <strong id="operation-meta">0 B of 0 B</strong>
+              <span id="operation-speed">Measuring…</span>
+            </div>
+            <div class="transfer-foot">
+              <span id="operation-files">0 of 0 files</span>
+              <span id="operation-eta">Preparing…</span>
             </div>
           </section>
 
           <section class="rail-panel">
-            <span class="rail-label">Controls</span>
-            <div class="action-cluster">
-              <button id="auto-link" class="button button-primary button-wide" type="button">Find Other PC</button>
+            <div class="control-actions">
               <button id="refresh-all" class="button button-wide" type="button">Refresh Both</button>
-            </div>
+              <button id="delete-selection" class="button button-small" type="button">Delete</button>
+              <button id="restore-deleted" class="button button-wide" type="button">Restore deleted</button>
+              <button id="select-visible" class="button button-select" type="button">Select Shown</button>
+              <button id="clear-selection" class="button button-small" type="button">Clear selection</button>
+              <button id="toggle-active-pane" class="button button-small button-switch" type="button" aria-label="Switch active side">Switch Side</button>
             <label class="toggle-pill" for="show-hidden">
               <input id="show-hidden" type="checkbox">
               <span>Show hidden files</span>
             </label>
+              <button id="settings" class="button button-wide" type="button">Settings</button>
+            </div>
           </section>
 
-          <section class="rail-panel">
-            <span class="rail-label">Selection</span>
-            <p id="action-summary" class="rail-copy">Select files on one side, then send them across.</p>
-            <div class="action-cluster">
-              <button id="toggle-active-pane" class="button button-small" type="button">Switch Side</button>
-              <button id="select-visible" class="button button-small" type="button">Select Shown</button>
-              <button id="clear-selection" class="button button-small" type="button">Clear</button>
-            </div>
+          <section class="rail-panel rail-panel-kpi">
             <div class="chip-grid">
               <button id="select-local-only" class="rail-chip rail-chip-local" type="button">
-                <span>Local Only</span>
+                <span><i class="chip-dot"></i>Local Only</span>
                 <strong id="compare-local-only">0</strong>
               </button>
               <button id="select-different" class="rail-chip rail-chip-warning" type="button">
-                <span>Different</span>
+                <span><i class="chip-dot"></i>Different</span>
                 <strong id="compare-different">0</strong>
               </button>
               <button id="select-remote-only" class="rail-chip rail-chip-remote" type="button">
-                <span>Remote Only</span>
+                <span><i class="chip-dot"></i>Remote Only</span>
                 <strong id="compare-remote-only">0</strong>
               </button>
               <div class="rail-chip rail-chip-static" aria-hidden="true">
-                <span>Match</span>
+                <span><i class="chip-dot"></i>Match</span>
                 <strong id="compare-match">0</strong>
               </div>
             </div>
-          </section>
-
-          <section class="rail-panel rail-panel-transfer">
-            <button id="copy-to-other" class="button button-primary button-wide" type="button">Copy to Other PC</button>
-            <button id="move-to-other" class="button button-wide" type="button">Move to Other PC</button>
           </section>
 
           <p id="inline-message" class="inline-message" hidden></p>
@@ -118,21 +142,16 @@
 
         <section id="remote-pane" class="pane pane-remote" data-side="remote">
           <header class="pane-header">
-            <div class="pane-heading">
+            <div class="pane-heading pane-heading-compact">
               <span class="pane-title">Other PC</span>
               <strong id="remote-pane-meta" class="pane-summary">Waiting</strong>
-              <p id="remote-path-value" class="pane-path"></p>
-            </div>
-            <div class="pane-actions">
-              <button id="remote-home" class="button button-small" type="button">Home</button>
-              <button id="remote-up" class="button button-small" type="button">Up</button>
-              <button id="remote-refresh" class="button button-small" type="button">Refresh</button>
+              <span id="remote-path-value" class="pane-path" title=""></span>
             </div>
           </header>
 
           <label class="filter-field" for="remote-filter">
-            <span>Filter</span>
-            <input id="remote-filter" class="filter-input" type="search" placeholder="Show matching names only">
+            <input id="remote-filter" class="filter-input" type="search" placeholder="Search files and folders…" role="combobox" aria-autocomplete="list" aria-controls="remote-search-results" aria-expanded="false">
+            <div id="remote-search-results" class="search-results" role="listbox" hidden></div>
           </label>
 
           <div class="file-head">
@@ -145,6 +164,69 @@
           <footer id="remote-selection-meta" class="pane-footer"></footer>
         </section>
       </main>
+
+      <div id="explorer-layer" class="explorer-layer" hidden>
+        <section class="explorer-panel" role="dialog" aria-modal="true" aria-label="Explore this PC">
+          <header class="explorer-header">
+            <div class="pane-heading">
+              <span class="pane-title">This PC · File Explorer</span>
+              <strong id="explorer-meta" class="pane-summary"></strong>
+              <p id="explorer-path-value" class="pane-path"></p>
+            </div>
+            <div class="pane-actions">
+              <button id="explorer-home" class="button button-small" type="button">Home</button>
+              <button id="explorer-up" class="button button-small" type="button">Up</button>
+              <button id="explorer-refresh" class="button button-small" type="button">Refresh</button>
+              <button id="explorer-close" class="button button-small" type="button">Close</button>
+            </div>
+          </header>
+
+          <label class="filter-field" for="explorer-filter">
+            <span>Filter</span>
+            <input id="explorer-filter" class="filter-input" type="search" placeholder="Show matching names only">
+          </label>
+
+          <div class="file-head explorer-file-head">
+            <span>Name</span>
+            <span>Size</span>
+            <span>Modified</span>
+          </div>
+          <div id="explorer-list" class="file-list"></div>
+
+          <footer class="explorer-footer">
+            <span id="explorer-selection-meta" class="pane-footer"></span>
+            <button id="explorer-fetch" class="button button-copy" type="button">Bring into Portal</button>
+          </footer>
+        </section>
+      </div>
+
+      <div id="restore-layer" class="restore-layer" hidden>
+        <section class="restore-drawer" role="dialog" aria-modal="true" aria-labelledby="restore-title">
+          <header class="restore-header">
+            <div class="pane-heading">
+              <span class="pane-title">Recovery</span>
+              <strong id="restore-title" class="pane-summary">Recently deleted</strong>
+              <p id="restore-meta" class="pane-path">Items are permanently deleted after 5 days.</p>
+            </div>
+            <button id="restore-close" class="button button-small" type="button">Close</button>
+          </header>
+
+          <label class="filter-field" for="restore-filter">
+            <span>Search by name</span>
+            <input id="restore-filter" class="filter-input" type="search" placeholder="Find a deleted file or folder">
+          </label>
+
+          <p id="restore-message" class="inline-message inline-message-error" hidden></p>
+
+          <div class="restore-file-head">
+            <span>Name</span>
+            <span>Deleted</span>
+            <span>Available for</span>
+            <span></span>
+          </div>
+          <div id="restore-list" class="restore-list"></div>
+        </section>
+      </div>
     </div>
 
     <script type="module" src="./renderer.js"></script>

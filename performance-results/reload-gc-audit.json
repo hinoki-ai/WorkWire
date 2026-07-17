@@ -1,0 +1,466 @@
+{
+  "benchmark": "electron-portal-interaction",
+  "conditions": {
+    "sizes": [
+      100
+    ],
+    "repeats": 2,
+    "reloads": 30,
+    "soakCycles": 0,
+    "soakEntries": 10000,
+    "queriesPerCycle": 50,
+    "ipcMessages": 10,
+    "window": "hidden 1440x980 Chromium renderer, background throttling disabled",
+    "syntheticData": "renderer-local construction to exclude IPC payload generation"
+  },
+  "versions": {
+    "node": "24.18.0",
+    "acorn": "8.16.0",
+    "ada": "3.4.4",
+    "amaro": "1.1.9",
+    "ares": "1.34.6",
+    "brotli": "1.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.4.2",
+    "merve": "1.2.2",
+    "modules": "148",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.69.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "0.0.0",
+    "simdjson": "4.6.4",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.1",
+    "tz": "2025c",
+    "undici": "7.28.0",
+    "unicode": "17.0",
+    "uv": "1.52.1",
+    "uvwasi": "0.0.23",
+    "v8": "15.0.245.15-electron.0",
+    "zlib": "1.3.2.1-motley",
+    "zstd": "1.6.0",
+    "electron": "43.1.1",
+    "chrome": "150.0.7871.114"
+  },
+  "results": [
+    {
+      "entriesPerPane": 100,
+      "constructionMs": {
+        "samples": 2,
+        "min": 0.3,
+        "median": 0.5,
+        "p95": 0.68,
+        "max": 0.7,
+        "mean": 0.5
+      },
+      "initialRenderMs": {
+        "samples": 2,
+        "min": 16.7,
+        "median": 30.25,
+        "p95": 42.445,
+        "max": 43.8,
+        "mean": 30.25
+      },
+      "asynchronousIndexReadyMs": {
+        "samples": 2,
+        "min": 13,
+        "median": 19,
+        "p95": 24.4,
+        "max": 25,
+        "mean": 19
+      },
+      "queries": [
+        {
+          "name": "single-character",
+          "query": "r",
+          "latencyMs": {
+            "samples": 2,
+            "min": 8.5,
+            "median": 14.85,
+            "p95": 20.565,
+            "max": 21.2,
+            "mean": 14.85
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "common",
+          "query": "quarterly report",
+          "latencyMs": {
+            "samples": 2,
+            "min": 8.4,
+            "median": 9.25,
+            "p95": 10.015,
+            "max": 10.1,
+            "mean": 9.25
+          },
+          "visibleResults": 10
+        },
+        {
+          "name": "rare-exact",
+          "query": "needle-exact-final",
+          "latencyMs": {
+            "samples": 2,
+            "min": 5.4,
+            "median": 6.55,
+            "p95": 7.585,
+            "max": 7.7,
+            "mean": 6.55
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "multi-token",
+          "query": "project alpha resume",
+          "latencyMs": {
+            "samples": 2,
+            "min": 6.8,
+            "median": 6.85,
+            "p95": 6.895,
+            "max": 6.9,
+            "mean": 6.85
+          },
+          "visibleResults": 1
+        },
+        {
+          "name": "typo-tolerant",
+          "query": "reprot",
+          "latencyMs": {
+            "samples": 2,
+            "min": 9.3,
+            "median": 10.3,
+            "p95": 11.2,
+            "max": 11.3,
+            "mean": 10.3
+          },
+          "visibleResults": 10
+        }
+      ],
+      "rapidEditsMs": {
+        "samples": 2,
+        "min": 8.9,
+        "median": 9.7,
+        "p95": 10.42,
+        "max": 10.5,
+        "mean": 9.7
+      },
+      "keyboardNavigationHandlerMs": {
+        "samples": 100,
+        "min": 0,
+        "median": 0.1,
+        "p95": 0.2,
+        "max": 5.2,
+        "mean": 0.141
+      },
+      "workspaceSwitchMs": {
+        "samples": 2,
+        "min": 1,
+        "median": 1.1,
+        "p95": 1.19,
+        "max": 1.2,
+        "mean": 1.1
+      },
+      "rendererHeap": {
+        "usedBytes": 2242367,
+        "totalBytes": 5214399,
+        "localRows": 34,
+        "remoteRows": 34,
+        "query": "report"
+      },
+      "longTasks": {
+        "count": 0,
+        "durationMs": {
+          "samples": 0,
+          "min": 0,
+          "median": 0,
+          "p95": 0,
+          "max": 0,
+          "mean": 0
+        }
+      }
+    }
+  ],
+  "ipcBurst": {
+    "messages": 10,
+    "operationPayloadBytes": 277,
+    "fullSnapshotBytes": 36086,
+    "fullToIncrementalSizeRatio": 130.274,
+    "mainSendDurationMs": 0.62,
+    "endToEndDurationMs": 1.47,
+    "messagesPerSecond": 6801.897
+  },
+  "soak": {
+    "cycles": 0,
+    "entriesPerPane": 10000,
+    "searchQueries": 0,
+    "samples": [],
+    "plateau": {
+      "usedHeapSlopeBytesPerCycle": 0,
+      "workingSetSlopeKiBPerCycle": 0,
+      "usedHeapChangeBytes": 0,
+      "workingSetChangeKiB": 0
+    },
+    "longTasks": {
+      "count": 0,
+      "durationMs": {
+        "samples": 0,
+        "min": 0,
+        "median": 0,
+        "p95": 0,
+        "max": 0,
+        "mean": 0
+      }
+    }
+  },
+  "longTasks": {
+    "count": 0,
+    "durationMs": {
+      "samples": 0,
+      "min": 0,
+      "median": 0,
+      "p95": 0,
+      "max": 0,
+      "mean": 0
+    }
+  },
+  "reloadLifecycle": {
+    "beforeReloadHeap": {
+      "usedHeapBytes": 1508480,
+      "totalHeapBytes": 4674916
+    },
+    "beforeReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 131864,
+        "memoryWorkingSetKiB": 208676
+      },
+      {
+        "type": "GPU",
+        "pid": 131900,
+        "memoryWorkingSetKiB": 101004
+      },
+      {
+        "type": "Utility",
+        "pid": 131903,
+        "memoryWorkingSetKiB": 88032
+      },
+      {
+        "type": "Tab",
+        "pid": 132018,
+        "memoryWorkingSetKiB": 168544
+      }
+    ],
+    "samples": [
+      {
+        "reload": 1,
+        "usedHeapBytes": 1388008,
+        "totalHeapBytes": 4670708,
+        "workingSetKiB": 184940
+      },
+      {
+        "reload": 2,
+        "usedHeapBytes": 1388171,
+        "totalHeapBytes": 4670843,
+        "workingSetKiB": 198476
+      },
+      {
+        "reload": 3,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 219956
+      },
+      {
+        "reload": 4,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 240972
+      },
+      {
+        "reload": 5,
+        "usedHeapBytes": 1388035,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 259684
+      },
+      {
+        "reload": 6,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 281884
+      },
+      {
+        "reload": 7,
+        "usedHeapBytes": 1387955,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 304088
+      },
+      {
+        "reload": 8,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 331404
+      },
+      {
+        "reload": 9,
+        "usedHeapBytes": 1388163,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 352416
+      },
+      {
+        "reload": 10,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 380848
+      },
+      {
+        "reload": 11,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 393956
+      },
+      {
+        "reload": 12,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 418516
+      },
+      {
+        "reload": 13,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 447044
+      },
+      {
+        "reload": 14,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 421796
+      },
+      {
+        "reload": 15,
+        "usedHeapBytes": 1387995,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 415064
+      },
+      {
+        "reload": 16,
+        "usedHeapBytes": 1388171,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 411160
+      },
+      {
+        "reload": 17,
+        "usedHeapBytes": 1387995,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 412632
+      },
+      {
+        "reload": 18,
+        "usedHeapBytes": 1388203,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 401816
+      },
+      {
+        "reload": 19,
+        "usedHeapBytes": 1388179,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 402480
+      },
+      {
+        "reload": 20,
+        "usedHeapBytes": 1387995,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 398960
+      },
+      {
+        "reload": 21,
+        "usedHeapBytes": 1388179,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 405652
+      },
+      {
+        "reload": 22,
+        "usedHeapBytes": 1388011,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 402072
+      },
+      {
+        "reload": 23,
+        "usedHeapBytes": 1388019,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 379996
+      },
+      {
+        "reload": 24,
+        "usedHeapBytes": 1388163,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 373924
+      },
+      {
+        "reload": 25,
+        "usedHeapBytes": 1388235,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 403320
+      },
+      {
+        "reload": 26,
+        "usedHeapBytes": 1388027,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 402168
+      },
+      {
+        "reload": 27,
+        "usedHeapBytes": 1387955,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 405452
+      },
+      {
+        "reload": 28,
+        "usedHeapBytes": 1388235,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 402692
+      },
+      {
+        "reload": 29,
+        "usedHeapBytes": 1388027,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 395996
+      },
+      {
+        "reload": 30,
+        "usedHeapBytes": 1388211,
+        "totalHeapBytes": 4932987,
+        "workingSetKiB": 422120
+      }
+    ],
+    "plateau": {
+      "usedHeapSlopeBytesPerReload": -1.428,
+      "workingSetSlopeKiBPerReload": 6311.871
+    },
+    "afterReloadMetrics": [
+      {
+        "type": "Browser",
+        "pid": 131864,
+        "memoryWorkingSetKiB": 210976
+      },
+      {
+        "type": "GPU",
+        "pid": 131900,
+        "memoryWorkingSetKiB": 101300
+      },
+      {
+        "type": "Utility",
+        "pid": 131903,
+        "memoryWorkingSetKiB": 88060
+      },
+      {
+        "type": "Tab",
+        "pid": 132018,
+        "memoryWorkingSetKiB": 422740
+      }
+    ]
+  }
+}
