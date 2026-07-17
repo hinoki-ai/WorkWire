@@ -1,0 +1,52 @@
+{
+  "appId": "com.hinoki.workwire",
+  "productName": "WorkWire",
+  "executableName": "ww",
+  "asar": true,
+  "electronFuses": {
+    "runAsNode": false,
+    "enableCookieEncryption": true,
+    "enableNodeOptionsEnvironmentVariable": false,
+    "enableNodeCliInspectArguments": false,
+    "enableEmbeddedAsarIntegrityValidation": true,
+    "onlyLoadAppFromAsar": true,
+    "grantFileProtocolExtraPrivileges": false
+  },
+  "npmRebuild": false,
+  "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
+  "directories": {
+    "output": "dist/ww",
+    "buildResources": "desktop/assets"
+  },
+  "files": [
+    "ww.mjs",
+    "desktop/app-protocol.mjs",
+    "desktop/ww-main.cjs",
+    "desktop/ww-main.mjs",
+    "desktop/ww-runtime.cjs",
+    "desktop/ww-runtime.mjs",
+    "desktop/ww-preload.cjs",
+    "desktop/ww/**/*",
+    "desktop/assets/**/*",
+    "desktop/linux-integration.mjs",
+    "lib/electron-app-argv.mjs",
+    "lib/ww*.mjs",
+    "package.json",
+    "!desktop/**/*.map",
+    "!**/*.log"
+  ],
+  "extraMetadata": {
+    "name": "workwire",
+    "productName": "WorkWire",
+    "description": "Self-contained Linux bundle for the WorkWire two-machine file desk.",
+    "desktopName": "workwire.desktop",
+    "main": "desktop/ww-runtime.cjs"
+  },
+  "linux": {
+    "category": "Utility",
+    "icon": "desktop/assets/workwire/icon.png",
+    "target": [
+      "AppImage"
+    ]
+  }
+}
