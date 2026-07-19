@@ -4,6 +4,8 @@
 
 Each computer runs one authenticated HTTP filesystem service and, when opened, one sandboxed Electron desk. UDP beacons advertise the current service address and port. A paired machine is accepted only when its bearer trust, pinned machine identity, protocol version, and exact WorkWire build agree.
 
+WorkWire also contains a separate LAN recovery subsystem on ports 4852/4853. It does not reuse the file service's peer trust or filesystem boundary. Its root agents, durable cases, PXE live environment, and operational safety model are documented in [RECOVERY.md](./RECOVERY.md).
+
 The repository launcher uses the checkout itself as its portal root. A packaged installation uses `~/.local/opt/workwire/app` unless `WW_PORTAL_PATH` explicitly selects another root. Both computers must use the intended corresponding root.
 
 The desktop desk browses only the portal environment, the `Portal/` directory inside the portal root. It is created automatically on both machines, both panes are clamped to it (navigation, launch intents, and saved paths that fall outside it snap back to `Portal/`), and everything else in the root stays backend-only: reachable by the service, the mirror, and the CLI, but never shown in the frontend. User files exchanged through the desk therefore live under `Portal/` and are mirrored like any other portal content.
@@ -99,6 +101,7 @@ Pairing replaces shared trust but preserves the local machine identity.
 - Requests require the shared bearer token and the pinned peer machine ID after pairing.
 - JSON requests, headers, and transfers have bounded sizes or timeouts.
 - WorkWire is intended for a trusted private LAN; the LAN publisher is HTTP, so use a trusted network and verify the displayed checksum when transporting artifacts outside that LAN.
+- The optional Recovery workspace is intentionally root-equivalent on its targets. Keep recovery ports on the operator-owned wired lab LAN and consult [RECOVERY.md](./RECOVERY.md) before enabling PXE or destructive actions.
 
 ## Release verification
 

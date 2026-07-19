@@ -1,0 +1,16 @@
+{
+  "id": "partition-table-recovery-v1",
+  "title": "Missing or corrupt GPT/MBR recovery",
+  "inputs": ["diskDeviceId", "diskPath", "candidateScript"],
+  "steps": [
+    { "id": "inventory-before", "action": "inventory.collect", "params": { "raw": true } },
+    { "id": "table-backup", "action": "disk.table.backup", "params": { "deviceId": "${input.diskDeviceId}", "path": "${input.diskPath}" } },
+    { "id": "sector-samples", "action": "disk.read.sample", "params": { "deviceId": "${input.diskDeviceId}", "offsets": [0, 1] } },
+    { "id": "signature-scan", "action": "shell.exec", "params": { "script": "testdisk /log /debug ${input.diskPath}" } },
+    { "id": "candidate-write", "action": "disk.table.write", "params": { "deviceId": "${input.diskDeviceId}", "script": "${input.candidateScript}" }, "force": true },
+    { "id": "reread", "action": "disk.reread", "params": { "deviceId": "${input.diskDeviceId}" } },
+    { "id": "inventory-after", "action": "inventory.collect", "params": { "raw": true } }
+  ],
+  "verification": ["Partition boundaries align", "Discovered filesystems mount and sample files read", "Before and after table artifacts are retained"],
+  "plannerHints": ["Prefer intact backup GPT when available", "Generate and preserve a candidate table before writing"]
+}

@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import process from "node:process";
+import path from "node:path";
 import { extractElectronAppArgv } from "../lib/electron-app-argv.mjs";
 import {
   buildLinuxLaunchEnv,
@@ -15,6 +16,7 @@ import {
   runWwPairCommand,
   wantsWwEngineeringHelp,
 } from "../ww.mjs";
+import { runRecoveryCli } from "../lib/recovery/ww-recovery-cli.mjs";
 
 export function buildPackagedWwDesktopLaunchSpec({
   argv = [],
@@ -61,7 +63,7 @@ export function resolvePackagedWwRuntimeMode(argv = extractElectronAppArgv(proce
     };
   }
 
-  if (["serve", "connect", "pair", "config"].includes(parsed.command)) {
+  if (["serve", "connect", "pair", "config", "recovery"].includes(parsed.command)) {
     return {
       kind: "command",
       argv,
@@ -127,6 +129,19 @@ export async function runPackagedWwRuntime({
         positionals,
         stdout,
         stderr,
+      });
+      return "exit";
+    }
+
+    if (command === "recovery") {
+      await runRecoveryCli({
+        argv: argv.slice(1),
+        stdout,
+        stderr,
+        env,
+        baseDir: process.resourcesPath
+          ? path.join(process.resourcesPath, "recovery-runtime")
+          : process.cwd(),
       });
       return "exit";
     }

@@ -12,6 +12,7 @@ import {
   scanLocalMirrorTree,
 } from "../lib/ww-mirror.mjs";
 import { createWwService } from "../lib/ww-service.mjs";
+import { createRemoteWwClient } from "../lib/ww-client.mjs";
 
 function record(kind, size = 0, mtimeMs = 0) {
   return { kind, size, mtimeMs };
@@ -170,6 +171,63 @@ test("ww mirror follows a refreshed peer route and preserves simultaneous edits"
       await assert.rejects(fs.access(path.join(remoteRoot, "shared.txt")));
 
       assert.equal((await fs.stat(statePath)).mode & 0o777, 0o600);
+    } finally {
+      await mirror.stop();
+      await service.stop();
+    }
+  });
+});
+
+test("ww mirror keeps the permanent update channel alive across app-version mismatch", async () => {
+  await withTempDir(async (baseDir) => {
+    const localRoot = path.join(baseDir, "local");
+    const remoteRoot = path.join(baseDir, "remote");
+    await fs.mkdir(localRoot, { recursive: true });
+    await fs.mkdir(remoteRoot, { recursive: true });
+    await fs.writeFile(path.join(localRoot, "new-runtime.mjs"), "export const updated = true;\n");
+
+    const service = createWwService({
+      host: "127.0.0.1",
+      port: 0,
+      machineId: "b-machine",
+      token: "update-token",
+      name: "Older App Peer",
+      rootPath: remoteRoot,
+    });
+    const serviceInfo = await service.start();
+    let strictConnectCalled = false;
+    const mirror = createWwMirror({
+      rootPath: localRoot,
+      statePath: path.join(baseDir, "state", "mirror.json"),
+      peer: {
+        host: "127.0.0.1",
+        port: serviceInfo.port,
+        machineId: "b-machine",
+        token: "update-token",
+      },
+      machineId: "a-machine",
+      expectedRemoteRootPath: remoteRoot,
+      intervalMs: 60_000,
+      clientFactory(peer) {
+        const client = createRemoteWwClient(peer);
+        return {
+          ...client,
+          async connect() {
+            strictConnectCalled = true;
+            throw new Error("The desktop app versions differ.");
+          },
+        };
+      },
+    });
+
+    try {
+      await mirror.syncNow();
+      assert.equal(strictConnectCalled, false);
+      assert.equal(
+        await fs.readFile(path.join(remoteRoot, "new-runtime.mjs"), "utf8"),
+        "export const updated = true;\n",
+      );
+      assert.equal(mirror.getStatus().connected, true);
     } finally {
       await mirror.stop();
       await service.stop();

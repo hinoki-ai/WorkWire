@@ -6,6 +6,7 @@ import {
   WW_PROTOCOL_VERSION,
 } from "../lib/ww-compat.mjs";
 import { discoverLanPeers, enumerateLanDiscoveryHosts } from "../lib/ww-discovery.mjs";
+import { WW_UPDATE_PROTOCOL_VERSION } from "../lib/ww-update.mjs";
 
 test("ww discovery enumerates the local /24 while excluding this machine", () => {
   const hosts = enumerateLanDiscoveryHosts({
@@ -115,6 +116,13 @@ test("ww discovery keeps only reachable WW peers from scan responses", async () 
       label: "Office PC",
       machineId: "office-machine",
       trustId: "deployment-trust",
+      updateCompatibility: {
+        ok: true,
+        code: null,
+        message: "",
+        localVersion: WW_UPDATE_PROTOCOL_VERSION,
+        remoteVersion: WW_UPDATE_PROTOCOL_VERSION,
+      },
       compatibility: {
         ok: true,
         code: null,
@@ -144,6 +152,15 @@ test("ww discovery keeps only reachable WW peers from scan responses", async () 
         installerUrl: WW_LAN_INSTALLER_URL,
         capabilities: {
           launchDesktop: true,
+          updateProtocol: WW_UPDATE_PROTOCOL_VERSION,
+          downloadUpdate: false,
+        },
+        updateCompatibility: {
+          ok: true,
+          code: null,
+          message: "",
+          localVersion: WW_UPDATE_PROTOCOL_VERSION,
+          remoteVersion: WW_UPDATE_PROTOCOL_VERSION,
         },
         compatibility: {
           ok: true,

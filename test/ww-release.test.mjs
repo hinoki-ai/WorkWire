@@ -27,6 +27,7 @@ test("ww release info fingerprints the WW runtime and keeps file-safe artifact n
   assert.equal(WW_RELEASE_INFO.files.includes("desktop/assets/workwire/icon.png"), true);
   assert.equal(WW_RELEASE_INFO.files.includes("lib/ww-release.mjs"), true);
   assert.equal(WW_RELEASE_INFO.files.includes("lib/ww-mirror.mjs"), true);
+  assert.equal(WW_RELEASE_INFO.files.includes("lib/recovery/ww-recovery-controller.mjs"), true);
   assert.equal(WW_RELEASE_INFO.files.includes("package.json"), true);
   assert.equal(WW_RELEASE_INFO.files.includes("scripts/install-ww-bundle.sh"), true);
   assert.equal(WW_RELEASE_INFO.files.some((file) => file.includes("/ops/")), false);

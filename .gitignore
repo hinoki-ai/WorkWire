@@ -8,3 +8,6 @@ dist/
 .workwire/
 link/
 runtime/
+
+# Build output (recovery images, Windows agent bundle, packaged binaries)
+artifacts/

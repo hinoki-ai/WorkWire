@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /opt/workwire/node/bin/node /opt/workwire/agent/lib/recovery/ww-recovery-agent.mjs "$@"

@@ -1,0 +1,17 @@
+{
+  "id": "resize-migrate-v1",
+  "title": "Resize or migrate storage layers",
+  "inputs": ["filesystemDeviceId", "filesystemPath", "filesystemType", "filesystemSize", "logicalVolume", "logicalVolumeSize", "diskDeviceId", "partitionNumber", "partitionEnd"],
+  "steps": [
+    { "id": "inventory-before", "action": "inventory.collect", "params": { "raw": true } },
+    { "id": "table-backup", "action": "disk.table.backup", "params": { "deviceId": "${input.diskDeviceId}" } },
+    { "id": "filesystem-check", "action": "filesystem.check", "params": { "deviceId": "${input.filesystemDeviceId}", "path": "${input.filesystemPath}", "filesystemType": "${input.filesystemType}" } },
+    { "id": "filesystem-resize", "action": "filesystem.resize", "params": { "deviceId": "${input.filesystemDeviceId}", "path": "${input.filesystemPath}", "filesystemType": "${input.filesystemType}", "size": "${input.filesystemSize}" } },
+    { "id": "lv-resize", "action": "lvm.lv.resize", "params": { "logicalVolume": "${input.logicalVolume}", "size": "${input.logicalVolumeSize}" } },
+    { "id": "partition-resize", "action": "disk.partition.resize", "params": { "deviceId": "${input.diskDeviceId}", "number": "${input.partitionNumber}", "end": "${input.partitionEnd}" } },
+    { "id": "inventory-after", "action": "inventory.collect", "params": { "raw": true } },
+    { "id": "check-after", "action": "filesystem.check", "params": { "deviceId": "${input.filesystemDeviceId}", "path": "${input.filesystemPath}", "filesystemType": "${input.filesystemType}" } }
+  ],
+  "verification": ["Every resized layer reports the requested boundary", "Final filesystem check is clean"],
+  "plannerHints": ["For grow: container before filesystem when required; for shrink: filesystem before container", "Skip unsupported shrink operations and use an explicit raw sequence"]
+}

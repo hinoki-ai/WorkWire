@@ -605,6 +605,7 @@ test("ww serve keeps the background service running while it opens the desktop a
   assert.equal(typeof beaconAnnouncement?.installerUrl, "string");
   assert.equal(Boolean(beaconAnnouncement?.installerUrl), true);
   assert.equal(beaconAnnouncement?.canLaunchDesktop, true);
+  assert.equal(beaconAnnouncement?.updateProtocol, 1);
   assert.equal(Object.hasOwn(beaconAnnouncement, "token"), false);
   assert.equal(Object.hasOwn(beaconAnnouncement, "rootPath"), false);
 
@@ -644,6 +645,71 @@ test("ww serve keeps the background service running while it opens the desktop a
     "--remote-path",
     "/srv/local",
   ]);
+});
+
+test("ww serve exits for supervisor restart only after coordinated release activation", async () => {
+  let activatorOptions = null;
+  let activatorStarted = 0;
+  let activatorStopped = 0;
+  let mirrorStopped = 0;
+  let beaconStopped = 0;
+  let serviceStopped = 0;
+  let exitCode = null;
+
+  await runServeCommand({
+    stdout: { write() {} },
+    stderr: { write() {} },
+    keepAlive: false,
+    createWwServiceImpl() {
+      return {
+        async start() {
+          return {
+            name: "Update Box",
+            port: 4851,
+            rootPath: "/srv/WorkWire",
+            urls: ["http://127.0.0.1:4851"],
+            versions: { protocol: 1, app: "old" },
+          };
+        },
+        async stop() { serviceStopped += 1; },
+      };
+    },
+    createWwLanBeaconImpl() {
+      return {
+        async start() {},
+        async stop() { beaconStopped += 1; },
+      };
+    },
+    createWwMirrorImpl() {
+      return {
+        start() {},
+        async stop() { mirrorStopped += 1; },
+      };
+    },
+    createWwReleaseActivatorImpl(options) {
+      activatorOptions = options;
+      return {
+        start() { activatorStarted += 1; },
+        stop() { activatorStopped += 1; },
+      };
+    },
+    processImpl: {
+      exit(code) { exitCode = code; },
+      once() {},
+      exitCode: 0,
+    },
+  });
+
+  assert.equal(activatorStarted, 1);
+  await activatorOptions.onActivationRequired({
+    hash: "finished-hash",
+    version: "0.1.0+ww1.finished",
+  });
+  assert.equal(exitCode, 75);
+  assert.equal(activatorStopped, 1);
+  assert.equal(mirrorStopped, 1);
+  assert.equal(beaconStopped, 1);
+  assert.equal(serviceStopped, 1);
 });
 
 test("ww serve keeps duplicate peer launch requests pending while one handoff is already scheduled", async () => {

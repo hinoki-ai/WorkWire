@@ -1,0 +1,18 @@
+{
+  "id": "uefi-grub-initramfs-v1",
+  "title": "UEFI, GRUB, and initramfs repair",
+  "inputs": ["rootPath", "rootMount", "efiPath", "diskPath", "distribution", "bootloaderId"],
+  "steps": [
+    { "id": "detect", "action": "boot.detect", "params": {} },
+    { "id": "mount", "action": "boot.mount-system", "params": { "rootPath": "${input.rootPath}", "efiPath": "${input.efiPath}", "target": "${input.rootMount}" } },
+    { "id": "pseudo", "action": "boot.mount-pseudo", "params": { "root": "${input.rootMount}" } },
+    { "id": "fstab", "action": "boot.fstab.inspect", "params": { "root": "${input.rootMount}" } },
+    { "id": "initramfs", "action": "boot.initramfs.rebuild", "params": { "root": "${input.rootMount}", "distribution": "${input.distribution}" } },
+    { "id": "grub", "action": "boot.grub.install-uefi", "params": { "root": "${input.rootMount}", "bootloaderId": "${input.bootloaderId}" } },
+    { "id": "grub-config", "action": "boot.grub.regenerate-config", "params": { "root": "${input.rootMount}" } },
+    { "id": "efi-list", "action": "boot.efi.list", "params": {} },
+    { "id": "cleanup", "action": "boot.cleanup-mounts", "params": { "root": "${input.rootMount}" } }
+  ],
+  "verification": ["Native initramfs rebuild succeeds", "EFI loader files and boot entry exist", "Generated boot configuration references the intended root UUID"],
+  "plannerHints": ["Detect the distribution and boot stack before choosing command names"]
+}

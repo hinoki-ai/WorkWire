@@ -13,6 +13,7 @@ import {
 } from "../lib/ww-compat.mjs";
 import { deriveWwTrustId } from "../lib/ww-config-store.mjs";
 import { createWwService } from "../lib/ww-service.mjs";
+import { WW_UPDATE_PROTOCOL_VERSION } from "../lib/ww-update.mjs";
 import { createRemoteWwClient } from "../lib/ww-client.mjs";
 import { createLocalEndpoint, createRemoteEndpoint } from "../lib/ww-endpoint.mjs";
 import { transferSelections } from "../lib/ww-transfer.mjs";
@@ -265,6 +266,48 @@ test("ww service info keeps portal metadata behind auth without echoing secrets"
     assert.equal(Object.hasOwn(remoteInfo, "token"), false);
     assert.equal(Object.hasOwn(remoteInfo, "cwd"), false);
     assert.equal(Object.hasOwn(remoteInfo, "homeDir"), false);
+
+    await service.stop();
+  });
+});
+
+test("ww service exposes an authenticated permanent-update status", async () => {
+  await withTempDir(async (baseDir) => {
+    const updateBundlePath = path.join(baseDir, "ww-update.tar.gz");
+    await fs.writeFile(updateBundlePath, "verified-update-bytes");
+    const service = createWwService({
+      host: "127.0.0.1",
+      port: 0,
+      machineId: "update-machine",
+      token: "update-token",
+      name: "Update Box",
+      rootPath: baseDir,
+      updateBundlePath,
+    });
+    const info = await service.start();
+    const unauthorized = await fetch(`http://127.0.0.1:${info.port}/v1/update-status`);
+    assert.equal(unauthorized.status, 401);
+
+    const client = createRemoteWwClient({
+      host: "127.0.0.1",
+      port: info.port,
+      token: "update-token",
+    });
+    const updatePeer = await client.connectForUpdate();
+    const status = await client.getUpdateStatus();
+    assert.equal(updatePeer.capabilities.updateProtocol, WW_UPDATE_PROTOCOL_VERSION);
+    assert.equal(updatePeer.capabilities.downloadUpdate, true);
+    assert.equal(status.protocol, WW_UPDATE_PROTOCOL_VERSION);
+    assert.match(status.running.hash, /^[a-f0-9]{64}$/);
+    assert.match(status.source.hash, /^[a-f0-9]{64}$/);
+
+    const bundleResponse = await fetch(`http://127.0.0.1:${info.port}/v1/update-bundle`, {
+      headers: {
+        authorization: "Bearer update-token",
+      },
+    });
+    assert.equal(bundleResponse.status, 200);
+    assert.equal(await bundleResponse.text(), "verified-update-bytes");
 
     await service.stop();
   });

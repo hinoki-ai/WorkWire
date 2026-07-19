@@ -1,0 +1,13 @@
+[Unit]
+Description=WorkWire Recovery PXE proxyDHCP and TFTP
+After=network-online.target workwire-ww.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env node /usr/local/lib/workwire/scripts/run-ww-pxe.mjs start
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

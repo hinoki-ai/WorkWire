@@ -26,5 +26,11 @@ npm run dist:linux
 npm run ww:lan-installer
 ```
 
-The supported commands are `workwire` and `ww`. See [docs/WW.md](./docs/WW.md) for architecture, installation, security, conflict behavior, and operations.
+The supported commands are `workwire` and `ww`. See [docs/WW.md](./docs/WW.md) for file-desk architecture, installation, security, conflict behavior, and operations. See [docs/RECOVERY.md](./docs/RECOVERY.md) for the separate root-capable LAN recovery controller, agents, Electron workspace, PXE live environment, autonomy, and QEMU validation.
 
+Recovery quick check:
+
+```bash
+ww recovery controller status
+ww recovery agents
+```

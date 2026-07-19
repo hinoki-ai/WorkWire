@@ -1,0 +1,103 @@
+WORKWIRE RECOVERY SUBSYSTEM — HANDOFF STATUS SNAPSHOT
+Prepared on HINOKI: 2026-07-17
+Repo: /home/hinoki/WorkWire   Branch: main   HEAD: 47a8a0a2df75 (recovery work uncommitted)
+
+SUBSYSTEM: implemented, in working tree, UNCOMMITTED (do not commit/push).
+  - lib/recovery/            17 modules       - desktop/            recovery main + renderer
+  - recovery/               image, 7 playbooks, dnsmasq, iPXE, 2 units
+  - scripts/                9 recovery scripts + package-ww-linux.mjs (fixed)
+  - docs/RECOVERY.md        operator guide (+ WW.md / README cross-refs)
+  - test/                   14 ww-recovery-*.test.mjs + package-config
+
+PORTS/PROTOCOL: file desk 4851 | recovery controller 4852 | recovery boot 4853
+  recovery protocol v1 | Node pinned 22.22.0 | Debian bookworm live image
+
+============================================================================
+RELEASE TARBALL (the bootstrap for the other machine)  ✅ BUILT + VERIFIED
+============================================================================
+  Release version : 0.1.0+ww1.295fca8906a3
+  Bundle          : dist/ww/ww-linux-x64.tar.gz
+                    (alias of WorkWire-0.1.0-ww1.295fca8906a3-linux-x64.tar.gz,
+                     byte-identical)
+  SHA-256         : 03fb5ff970d5b0b72afb5cb90b39ba440583ae90ee1b42a16ce92ad1a51a7a14
+  Size            : 126095267 bytes
+  AppImage        : dist/ww/WorkWire-0.1.0-ww1.295fca8906a3-linux-x86_64.AppImage
+  (Supersedes earlier fc1be60c7829/e0c7aa9971f9; rebuilt to include the QEMU-gate
+   fixes below. Rebuild + recompute SHA after any release-source change.)
+  Served at       : HINOKI GET /v1/update-bundle (peer-pinned to Sakura)
+
+  Verified inside the tarball:
+    - app.asar root has package.json, lib, recovery, scripts, desktop, ww.mjs,
+      node_modules/ws  (the desktop recovery UI imports lib/recovery in-process)
+    - resources/recovery-runtime/ is self-contained: lib, recovery, scripts,
+      package.json, node_modules/ws  (spawned recovery subprocesses + the agent
+      installer run from here as real files, not from inside the asar)
+
+  FIX APPLIED THIS SESSION (the previous config never built a release):
+    electron-builder excludes every extraResources `from` path from the asar to
+    avoid duplication. The old config mapped from:"package.json", from:"lib",
+    from:"recovery", from:"scripts" — which stripped package.json + lib from the
+    asar and failed the asar integrity check ("package.json not found"). Now the
+    recovery runtime is staged once at dist/recovery-runtime (package-ww-linux.mjs
+    :stageRecoveryRuntime) and shipped via a single extraResources entry, with a
+    dedicated from:"node_modules/ws" entry (asar node_modules come from a separate
+    matcher, so ws stays in the asar too). Touched files: electron-builder.linux.json,
+    scripts/package-ww-linux.mjs, test/ww-package-config.test.mjs.
+
+============================================================================
+PERMANENT LINK — how the recovery subsystem reaches Sakura and both stay linked
+============================================================================
+  - The release/update source hash is computed live from the working tree
+    (package.json, electron-builder.linux.json, ww.mjs, README.md, desktop, docs,
+    lib, scripts). lib/recovery IS in that set. handoff/ and test/ are NOT, so
+    this handoff and test edits never shift the version.
+  - The mirror syncs the whole portal root except .workwire/.codex/.git/dist/
+    link/node_modules/runtime. So ALL recovery source (lib/recovery, recovery/,
+    scripts, desktop, docs) mirrors to Sakura automatically.
+  - The recovery subsystem adds NO new npm dependency (only `ws`, already a dep),
+    so the mirrored source runs on Sakura's existing node_modules — no runtime
+    change needed for an already-bootstrapped Sakura.
+  - Flow: Sakura mirrors the recovery source -> both services compute the same
+    source hash fc1be60c7829 -> each auto-activator waits for the other to settle
+    -> both restart into the converged checkout. No manual two-PC activation.
+  - The tarball/update-bundle is the BOOTSTRAP path (fresh install or Phase-2
+    Sakura). It now carries recovery. An already-bootstrapped Sakura does not need
+    to re-pull it; the mirror carries the source.
+
+  LINK HEALTH RIGHT NOW: HINOKI service active on 4851 (pid 1024, ~9h uptime).
+  Paired peer = Sakura (RQn5hi_GTBHwvC6bQmmTYg). Config peer host = 192.168.8.106,
+  lastSeen = none (memory recorded .105; DHCP likely reassigned). HINOKI cannot
+  currently see Sakura, so the staged fc1be60c7829 release is correctly WAITING
+  for Sakura to come online and converge — this is the safety behavior, not a
+  fault. Bring Sakura online on the wired LAN to complete convergence.
+
+============================================================================
+VALIDATION GATES
+============================================================================
+  GATE 1 repo software .............. ✅ npm test 188/188
+  GATE 2 Debian image build+verify .. ✅ built + verified (via ROOTFUL podman)
+         Rootless podman cannot mknod for debootstrap (userns); build under sudo
+         podman with storage+TMPDIR on /home (/ only ~3GB). Command + env in
+         FINAL-PROMPT and [[workwire-recovery-build-env]]. Verified: squashfs
+         745MB, protocol 1, Node 22.22.0, all core tools (only "dracut" skipped).
+         NOTE: after the mkfs fix (below) the image is being REBUILT to bake the
+         corrected agent; network flakes force retries (use --reuse-rootfs to keep
+         the package cache across retries).
+  GATE 3 QEMU end-to-end ............. ◑ core PROVEN; final re-run pending image rebuild
+         qemu 10.1.5 installed. First real end-to-end run drove out + fixed THREE
+         defects never exercised before (no release/image had ever been built):
+           1. dist:linux asar bug (package.json excluded) — packaging fixed.
+           2. test-ww-recovery-qemu.mjs served the boot squashfs from an empty
+              controller-state dir -> VM "Unable to find a live file system".
+              Fixed by linking the verified image into <stateDir>/boot/live. The
+              VM now boots over the network, the recovery AGENT starts, and the
+              controller drives jobs on it (pipeline proven end to end).
+           3. filesystem.create emitted bad mkfs flags (mkfs.fat -F -L) -> fixed
+              to per-tool force/label flags (mkfs.fat uses -n, no -F) + regression
+              test. Requires the image rebuild to validate the full cycle in QEMU.
+         Re-run after rebuild: npm run recovery:test:qemu
+  GATE 4 physical lab ................ 📋 hardware; see docs/RECOVERY.md
+
+NEXT AGENT: read FINAL-PROMPT-RECOVERY.md here. Tarball + permanent link DONE.
+Gate 2 done. Gate 3: three fixes landed and the pipeline is proven; only the
+final QEMU cycle after the (network-flaky) image rebuild remains.

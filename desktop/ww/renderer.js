@@ -11,6 +11,7 @@ import {
   formatTransferPercent,
   getTransferProgress,
 } from "./transfer-progress.js";
+import { createRecoveryRenderer } from "./recovery-renderer.js";
 
 const SEARCH_RESULT_LIMIT = 10;
 const VIRTUAL_ROW_HEIGHT = 44;
@@ -146,6 +147,10 @@ const comparisonCache = {
 function api() {
   return window.wwApi;
 }
+
+const recoveryUi = createRecoveryRenderer({
+  recoveryApi: () => api()?.recovery,
+});
 
 function setInlineMessage(message = "", level = "info") {
   const normalized = String(message || "").trim();
@@ -455,6 +460,7 @@ function scheduleSearchRender(side) {
 
 function setSnapshot(nextSnapshot) {
   uiState.snapshot = nextSnapshot;
+  recoveryUi.setState(nextSnapshot?.recovery || null);
   if (nextSnapshot?.ui) {
     refs.showHidden.checked = Boolean(nextSnapshot.ui.showHidden);
   }
@@ -489,6 +495,13 @@ function pruneSideSelection(side) {
 
 function applyStateEvent(event) {
   if (!event?.state) return;
+  if (event.type === "recovery") {
+    if (uiState.snapshot) {
+      uiState.snapshot = mergeSnapshotPatch(uiState.snapshot, event.state);
+    }
+    recoveryUi.setState(event.state.recovery || null);
+    return;
+  }
   if (!event.partial || !uiState.snapshot) {
     setSnapshot(event.state);
     return;
@@ -1604,6 +1617,9 @@ async function deleteActiveSelection() {
 
 function bindKeyboardShortcuts() {
   document.addEventListener("keydown", (event) => {
+    if (recoveryUi.handleKeydown(event)) {
+      return;
+    }
     const target = event.target;
     const isTypingTarget = target instanceof HTMLElement
       && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
@@ -1683,6 +1699,7 @@ function bindKeyboardShortcuts() {
 }
 
 async function init() {
+  recoveryUi.bind();
   bindPaneActions();
   bindKeyboardShortcuts();
   const initialState = await api().getState();

@@ -1,0 +1,14 @@
+[Unit]
+Description=WorkWire root recovery agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ww-recovery-agent
+Restart=always
+RestartSec=2
+WorkingDirectory=/opt/workwire/recovery-agent
+
+[Install]
+WantedBy=multi-user.target

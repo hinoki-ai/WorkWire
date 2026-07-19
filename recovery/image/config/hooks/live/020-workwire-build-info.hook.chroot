@@ -1,0 +1,45 @@
+#!/bin/sh
+set -eu
+
+node=/opt/workwire/node/bin/node
+"$node" --input-type=module -e '
+  await import("/opt/workwire/agent/lib/recovery/ww-recovery-agent.mjs");
+  await import("/opt/workwire/agent/lib/recovery/ww-recovery-actions.mjs");
+  await import("/opt/workwire/agent/lib/recovery/ww-recovery-inventory.mjs");
+  await import("/opt/workwire/agent/lib/recovery/ww-recovery-protocol.mjs");
+'
+
+"$node" --input-type=module <<'EOF'
+import fs from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { WW_RECOVERY_PROTOCOL_VERSION } from "/opt/workwire/agent/lib/recovery/ww-recovery-config.mjs";
+import { COMPLETE_ACTION_NAMES } from "/opt/workwire/agent/lib/recovery/ww-recovery-actions.mjs";
+
+const seed = JSON.parse(await fs.readFile("/etc/workwire-recovery-build-seed.json", "utf8"));
+const packages = execFileSync("dpkg-query", ["-W", "-f=${binary:Package}\t${Version}\n"], { encoding: "utf8" })
+  .trim().split("\n").filter(Boolean);
+const optionalMissing = (await fs.readFile("/etc/workwire-recovery-optional-missing.txt", "utf8").catch(() => ""))
+  .trim().split("\n").filter(Boolean);
+const coreTools = ["bash", "ip", "curl", "sshd", "lsblk", "findmnt", "blkid", "sfdisk", "fdisk", "parted", "sgdisk", "ddrescue", "smartctl", "nvme", "mdadm", "pvs", "cryptsetup", "mount", "chroot", "e2fsck", "xfs_repair", "btrfs", "fsck.fat", "fsck.exfat", "ntfsfix", "grub-install", "efibootmgr"];
+const tools = Object.fromEntries(coreTools.map((tool) => {
+  try {
+    return [tool, execFileSync("sh", ["-c", "command -v -- \"$1\"", "workwire", tool], { encoding: "utf8" }).trim()];
+  } catch {
+    return [tool, ""];
+  }
+}));
+const manifest = {
+  ...seed,
+  recoveryProtocol: WW_RECOVERY_PROTOCOL_VERSION,
+  nodeVersion: process.versions.node,
+  architecture: process.arch,
+  actions: COMPLETE_ACTION_NAMES,
+  packages,
+  optionalMissing,
+  tools,
+  verifiedAtBuild: true,
+};
+await fs.writeFile("/etc/workwire-recovery-build.json", `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o644 });
+EOF
+
+rm -f /etc/workwire-recovery-build-seed.json

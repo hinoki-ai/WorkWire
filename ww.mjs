@@ -25,6 +25,13 @@ import { createRemoteWwClient } from "./lib/ww-client.mjs";
 import { WW_APP_VERSION, buildWwBuildInfo } from "./lib/ww-compat.mjs";
 import { createWwMirror } from "./lib/ww-mirror.mjs";
 import { createWwService } from "./lib/ww-service.mjs";
+import { loadRecoveryConfig } from "./lib/recovery/ww-recovery-config.mjs";
+import { createRecoveryController } from "./lib/recovery/ww-recovery-controller.mjs";
+import { runRecoveryCli } from "./lib/recovery/ww-recovery-cli.mjs";
+import {
+  WW_UPDATE_PROTOCOL_VERSION,
+  createWwReleaseActivator,
+} from "./lib/ww-update.mjs";
 import {
   buildLinuxLaunchEnv,
   ensureLinuxWwDesktopEntry,
@@ -47,6 +54,7 @@ export const WW_HELP_TEXT = `Usage:
   ww
   ww serve
   ww pair <pairing-file>
+  ww recovery --help
   ww --help
   ww --help --engineering
 
@@ -57,6 +65,7 @@ Commands:
   ww                 Launch the WorkWire desktop app.
   ww serve           Run the WW background service for headless auto-linking.
   ww pair <file>      Pair this installation using a trusted WorkWire pairing file.
+  ww recovery         Open the root-capable LAN recovery command surface.
   ww --help          Print the public WW help.
   ww --help --engineering
                      Print engineering-only WorkWire commands and flags.
@@ -74,6 +83,7 @@ export const WW_ENGINEERING_HELP_TEXT = `Usage:
   ww connect <host[:port]> [--token <token>] [--name <label>] [--remote-path <path>]
   ww pair <pairing-file>
   ww config
+  ww recovery <command>
   ww --help
   ww --help --engineering
 
@@ -83,6 +93,7 @@ Commands:
   ww connect         Save the default peer connection in ${WW_CONFIG_PATH}.
   ww pair            Apply a shared pairing profile without replacing this PC's machine identity.
   ww config          Print the active WW config and config path.
+  ww recovery        Control recovery agents, jobs, disks, PXE, and artifacts.
 
 Desktop options:
   --local <path>         Initial local subfolder inside ${WW_PORTAL_DIRNAME}.
@@ -96,7 +107,7 @@ Desktop options:
 
 export function parseWwArgv(argv = []) {
   const args = [...argv];
-  const command = ["serve", "connect", "pair", "config"].includes(args[0]) ? args.shift() : "desktop";
+  const command = ["serve", "connect", "pair", "config", "recovery"].includes(args[0]) ? args.shift() : "desktop";
   const flags = {};
   const positionals = [];
 
@@ -497,6 +508,10 @@ export async function runServeCommand({
   createWwServiceImpl = createWwService,
   createWwLanBeaconImpl = createWwLanBeacon,
   createWwMirrorImpl = createWwMirror,
+  createWwReleaseActivatorImpl = createWwReleaseActivator,
+  loadRecoveryConfigImpl = loadRecoveryConfig,
+  createRecoveryControllerImpl = createRecoveryController,
+  enableRecovery = createWwServiceImpl === createWwService,
   setTimeoutImpl = setTimeout,
   processImpl = process,
   keepAlive = true,
@@ -506,8 +521,34 @@ export async function runServeCommand({
   let service = null;
   let mirror = null;
   let beaconController = null;
+  let releaseActivator = null;
+  let recoveryController = null;
+  let recoveryInfo = null;
+  let shutdownPromise = null;
   let peerUpdatePromise = Promise.resolve();
   const serviceLog = (message = "") => writeWwLog(stdout, message);
+  const peerHasStagedRelease = async (releaseInfo = {}) => {
+    const peerMachineId = String(config.peer.machineId || "").trim();
+    const peerHost = String(config.peer.host || "").trim();
+    if (!peerMachineId) {
+      return true;
+    }
+    if (!peerHost) {
+      return false;
+    }
+
+    const client = createRemoteWwClient({
+      ...config.peer,
+      localMachineId: String(config.service.machineId || serviceInfo?.machineId || "").trim(),
+    });
+    const update = await client.getUpdateStatus({ timeoutMs: 3_000 });
+    if (Number(update?.protocol) !== WW_UPDATE_PROTOCOL_VERSION) {
+      const error = new Error(`The paired PC does not support WorkWire update protocol ${WW_UPDATE_PROTOCOL_VERSION}.`);
+      error.code = "ERR_WW_UPDATE_PROTOCOL_MISMATCH";
+      throw error;
+    }
+    return String(update?.source?.hash || "").trim() === String(releaseInfo?.updateHash || "").trim();
+  };
   const rememberIncomingPeerIdentity = async (peer = {}) => {
     const machineId = String(peer.machineId || "").trim();
     if (!machineId || String(config.peer.machineId || "").trim()) {
@@ -579,6 +620,7 @@ export async function runServeCommand({
     onLaunchDesktop: queueDesktopLaunch,
     onPairPeer: rememberIncomingPeerIdentity,
     getTrustedPeerMachineId: () => String(config.peer.machineId || "").trim(),
+    updateBundlePath: path.join(__dirname, "dist", "ww", `ww-linux-${process.arch}.tar.gz`),
   });
 
   let serviceInfo;
@@ -595,6 +637,24 @@ export async function runServeCommand({
       current.service.machineId = serviceInfo.machineId;
       return current;
     });
+  }
+
+  if (enableRecovery) {
+    try {
+      const recoveryConfig = await loadRecoveryConfigImpl();
+      if (recoveryConfig.enabled) {
+        recoveryController = createRecoveryControllerImpl({
+          config: recoveryConfig,
+          log: serviceLog,
+        });
+        recoveryInfo = await recoveryController.start();
+        serviceLog(`Recovery controller: ${recoveryInfo.url}`);
+        serviceLog(`Recovery boot server: ${recoveryInfo.boot.url}`);
+      }
+    } catch (error) {
+      writeWwLog(stderr, `Recovery controller unavailable: ${error.message}`);
+      recoveryController = null;
+    }
   }
 
   beaconController = createWwLanBeaconImpl({
@@ -614,6 +674,7 @@ export async function runServeCommand({
         versions: buildInfo.versions,
         installerUrl: buildInfo.installerUrl,
         canLaunchDesktop: true,
+        updateProtocol: WW_UPDATE_PROTOCOL_VERSION,
       };
     },
     onPeer: (peer = {}) => {
@@ -622,7 +683,7 @@ export async function runServeCommand({
         if (
           !peerMachineId
           || peerMachineId === String(config.service.machineId || "").trim()
-          || peer.compatibility?.ok !== true
+          || peer.updateCompatibility?.ok !== true
           || !peer.trustId
           || peer.trustId !== serviceTrustId
         ) {
@@ -682,23 +743,43 @@ export async function runServeCommand({
     serviceLog(`- ${url}`);
   }
 
-  const shutdown = async () => {
-    await peerUpdatePromise.catch(() => {});
-    await mirror?.stop().catch(() => {});
-    await beaconController?.stop().catch(() => {});
-    await service.stop().catch(() => {});
-    processImpl.exit(0);
+  const shutdown = async (exitCode = 0) => {
+    if (shutdownPromise) {
+      return shutdownPromise;
+    }
+    shutdownPromise = (async () => {
+      releaseActivator?.stop();
+      await peerUpdatePromise.catch(() => {});
+      await mirror?.stop().catch(() => {});
+      await beaconController?.stop().catch(() => {});
+      await recoveryController?.stop().catch(() => {});
+      await service.stop().catch(() => {});
+      processImpl.exit(Number(exitCode) || 0);
+    })();
+    return shutdownPromise;
   };
+
+  releaseActivator = createWwReleaseActivatorImpl({
+    log: serviceLog,
+    isReadyToActivate: peerHasStagedRelease,
+    onActivationRequired: async (releaseInfo) => {
+      serviceLog(`WorkWire activating ${releaseInfo.version} on this paired PC.`);
+      await shutdown(75);
+    },
+  });
+  releaseActivator.start();
 
   if (!keepAlive) {
     return {
       serviceInfo,
+      recoveryInfo,
+      releaseActivator,
       shutdown,
     };
   }
 
-  processImpl.once("SIGINT", shutdown);
-  processImpl.once("SIGTERM", shutdown);
+  processImpl.once("SIGINT", () => void shutdown(0));
+  processImpl.once("SIGTERM", () => void shutdown(0));
   return new Promise(() => {});
 }
 
@@ -836,6 +917,15 @@ export async function runWwCli({
   resolveLocalServiceImpl = resolveLocalWwBackgroundService,
   restartLocalServiceImpl = restartManagedLocalWwBackgroundService,
 } = {}) {
+  if (argv[0] === "recovery") {
+    return runRecoveryCli({
+      argv: argv.slice(1),
+      stdout,
+      stderr,
+      processImpl: process,
+    });
+  }
+
   if (wantsWwHelp(argv)) {
     printWwHelp(stdout, {
       engineering: wantsWwEngineeringHelp(argv),

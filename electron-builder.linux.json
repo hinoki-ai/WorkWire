@@ -31,14 +31,40 @@
     "desktop/linux-integration.mjs",
     "lib/electron-app-argv.mjs",
     "lib/ww*.mjs",
+    "lib/recovery/**/*.mjs",
+    "recovery/**/*",
+    "scripts/build-ww-recovery-image.sh",
+    "scripts/install-ww-recovery-agent.sh",
+    "scripts/install-ww-recovery-host.sh",
+    "scripts/run-ww-pxe.mjs",
+    "scripts/test-ww-recovery-qemu.mjs",
+    "scripts/verify-ww-recovery-image.mjs",
+    "scripts/verify-ww-recovery-image.sh",
+    "scripts/write-ww-recovery-build-seed.mjs",
+    "scripts/write-ww-recovery-manifest.mjs",
     "package.json",
+    "!recovery/image/.build/**/*",
+    "!recovery/image/binary/**/*",
+    "!recovery/image/chroot/**/*",
+    "!recovery/image/cache/**/*",
+    "!recovery/image/*.iso",
     "!desktop/**/*.map",
     "!**/*.log"
+  ],
+  "extraResources": [
+    {
+      "from": "dist/recovery-runtime",
+      "to": "recovery-runtime"
+    },
+    {
+      "from": "node_modules/ws",
+      "to": "recovery-runtime/node_modules/ws"
+    }
   ],
   "extraMetadata": {
     "name": "workwire",
     "productName": "WorkWire",
-    "description": "Self-contained Linux bundle for the WorkWire two-machine file desk.",
+    "description": "Self-contained WorkWire two-machine file desk and LAN recovery portal.",
     "desktopName": "workwire.desktop",
     "main": "desktop/ww-runtime.cjs"
   },

@@ -44,6 +44,13 @@ test("packaged ww runtime routes pairing profiles without opening the desk", () 
   assert.deepEqual(mode.parsed.positionals, ["/media/WORKWIRE/pairing.json"]);
 });
 
+test("packaged ww runtime routes recovery CLI without opening the desk", () => {
+  const mode = resolvePackagedWwRuntimeMode(["recovery", "agents", "--json"]);
+  assert.equal(mode.kind, "command");
+  assert.equal(mode.parsed.command, "recovery");
+  assert.deepEqual(mode.argv, ["recovery", "agents", "--json"]);
+});
+
 test("packaged ww runtime keeps desktop argument normalization", () => {
   const mode = resolvePackagedWwRuntimeMode([
     "--remote",

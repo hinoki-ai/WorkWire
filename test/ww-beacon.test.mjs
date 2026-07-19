@@ -5,7 +5,12 @@ import {
   WW_LAN_INSTALLER_URL,
   WW_PROTOCOL_VERSION,
 } from "../lib/ww-compat.mjs";
-import { collectLanBeaconTargets, normalizeLanBeaconPayload } from "../lib/ww-beacon.mjs";
+import {
+  WW_BEACON_VERSION,
+  collectLanBeaconTargets,
+  normalizeLanBeaconPayload,
+} from "../lib/ww-beacon.mjs";
+import { WW_UPDATE_PROTOCOL_VERSION } from "../lib/ww-update.mjs";
 
 test("ww beacon computes LAN broadcast targets plus global broadcast", () => {
   const targets = collectLanBeaconTargets({
@@ -68,7 +73,7 @@ test("ww beacon normalizes a received peer payload", () => {
   const peer = normalizeLanBeaconPayload({
     kind: "ww-beacon",
     name: "Office PC",
-    version: WW_PROTOCOL_VERSION,
+    version: WW_BEACON_VERSION,
     versions: {
       protocol: WW_PROTOCOL_VERSION,
       app: WW_APP_VERSION,
@@ -88,7 +93,9 @@ test("ww beacon normalizes a received peer payload", () => {
   assert.equal(peer.machineId, "peer-machine-id");
   assert.equal(peer.trustId, "deployment-trust");
   assert.equal(peer.compatibility.ok, true);
+  assert.equal(peer.updateCompatibility.ok, true);
   assert.equal(peer.info.capabilities.launchDesktop, true);
+  assert.equal(peer.info.capabilities.updateProtocol, WW_UPDATE_PROTOCOL_VERSION);
   assert.equal(peer.info.machineId, "peer-machine-id");
   assert.equal(peer.info.trustId, "deployment-trust");
   assert.equal(peer.info.versions.protocol, WW_PROTOCOL_VERSION);
@@ -98,7 +105,28 @@ test("ww beacon normalizes a received peer payload", () => {
   assert.equal(String(peer.remotePath || ""), "");
 });
 
-test("ww beacon ignores peers advertising an incompatible protocol version", () => {
+test("ww beacon keeps update discovery alive when desktop protocols differ", () => {
+  const peer = normalizeLanBeaconPayload({
+    kind: "ww-beacon",
+    version: WW_BEACON_VERSION,
+    name: "Future PC",
+    versions: {
+      protocol: 999,
+      app: "future-app",
+    },
+    updateProtocol: WW_UPDATE_PROTOCOL_VERSION,
+    port: 4851,
+    machineId: "future-machine",
+  }, {
+    address: "192.168.8.105",
+  });
+
+  assert.equal(peer.compatibility.ok, false);
+  assert.equal(peer.updateCompatibility.ok, true);
+  assert.equal(peer.info.capabilities.updateProtocol, WW_UPDATE_PROTOCOL_VERSION);
+});
+
+test("ww beacon ignores incompatible beacon envelope versions", () => {
   const peer = normalizeLanBeaconPayload({
     kind: "ww-beacon",
     version: 99,

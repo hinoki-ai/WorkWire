@@ -5,11 +5,14 @@ import { fileURLToPath } from "node:url";
 import {
   app,
   BrowserWindow,
+  clipboard,
+  dialog,
   ipcMain,
   nativeImage,
   net,
   protocol,
   session as electronSession,
+  shell,
 } from "electron";
 import {
   APP_PROTOCOL_SCHEME,
@@ -34,6 +37,11 @@ import { isPathInsideRoot } from "../lib/ww-fs.mjs";
 import { transferSelections } from "../lib/ww-transfer.mjs";
 import { createWwService } from "../lib/ww-service.mjs";
 import { createWwMirror } from "../lib/ww-mirror.mjs";
+import { createRemoteWwClient } from "../lib/ww-client.mjs";
+import {
+  WW_UPDATE_PROTOCOL_VERSION,
+  createWwReleaseActivator,
+} from "../lib/ww-update.mjs";
 import {
   measurePerformance,
   performanceDiagnosticsEnabled,
@@ -60,6 +68,7 @@ import {
   parseWwDesktopFlags,
   peerLaunchSuppressionMatches,
 } from "../lib/ww-launch-intent.mjs";
+import { createDesktopRecoveryManager } from "./ww-recovery-main.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_BASE_DIR = path.resolve(__dirname, "..");
@@ -122,6 +131,8 @@ let autoLinkPromise = null;
 let autoLinkTimer = null;
 let beaconController = null;
 let mirrorController = null;
+let releaseActivator = null;
+let recoveryManager = null;
 const beaconPeerCache = new Map();
 let lastLanSweepAt = 0;
 let localEndpoint = createLocalEndpoint({
@@ -567,6 +578,7 @@ function serializeState() {
     operation: clone(operationState),
     notifications: clone(notifications),
     activity: clone(activityFeed),
+    recovery: recoveryManager?.getState() || null,
     app: {
       windows: {
         main: Boolean(mainWindow && !mainWindow.isDestroyed()),
@@ -576,6 +588,9 @@ function serializeState() {
 }
 
 function serializeEventState(type, payload) {
+  if (type === "recovery") {
+    return { recovery: recoveryManager?.getState() || null };
+  }
   if (type === "operation") {
     return {
       operation: clone(operationState),
@@ -615,6 +630,7 @@ function sendEvent(type, payload = {}) {
     payload,
     state: serializeEventState(type, payload),
     partial: type === "operation"
+      || type === "recovery"
       || type === "explorer"
       || type === "listing"
       || type === "loading"
@@ -634,6 +650,30 @@ function sendEvent(type, payload = {}) {
 
   for (const window of windows) {
     window.webContents.send("ww:event", eventPayload);
+  }
+}
+
+function getRecoveryManager() {
+  if (!recoveryManager) {
+    recoveryManager = createDesktopRecoveryManager({
+      log: logInfo,
+      onState(_state, reason) {
+        sendEvent("recovery", { reason });
+      },
+    });
+  }
+  return recoveryManager;
+}
+
+async function startRecoverySubsystem() {
+  try {
+    await getRecoveryManager().start();
+    logInfo("[WW] Recovery workspace connected.");
+  } catch (error) {
+    // Recovery is deliberately parallel to the file desk. A controller or PXE
+    // failure must remain visible without taking down file transfer.
+    logInfo(`[WW] Recovery workspace unavailable: ${formatErrorMessage(error)}`);
+    sendEvent("recovery", { reason: "startup-error" });
   }
 }
 
@@ -1071,6 +1111,26 @@ async function attachToExistingLocalService(peer = getAttachedServicePeer(), {
   }
 }
 
+async function attachToRequestedLocalServiceWithRetry(peer, {
+  attempts = 16,
+  delayMs = 250,
+} = {}) {
+  const totalAttempts = Math.max(1, Number(attempts) || 1);
+  for (let attempt = 0; attempt < totalAttempts; attempt += 1) {
+    const attached = await attachToExistingLocalService(peer, {
+      timeoutMs: 350,
+      reportFailure: false,
+    });
+    if (attached) {
+      return attached;
+    }
+    if (attempt + 1 < totalAttempts) {
+      await wait(delayMs);
+    }
+  }
+  return null;
+}
+
 async function startLocalService() {
   attachedServicePeer = null;
   serviceError = null;
@@ -1086,6 +1146,7 @@ async function startLocalService() {
     onPairPeer: rememberIncomingPeerIdentity,
     getTrustedPeerMachineId: () => String(config.peer.machineId || "").trim(),
     recoverPortCollision: false,
+    updateBundlePath: path.join(APP_BASE_DIR, "dist", "ww", `ww-linux-${process.arch}.tar.gz`),
   });
 
   try {
@@ -1202,6 +1263,7 @@ function buildBeaconAnnouncement() {
     versions: buildInfo.versions,
     installerUrl: buildInfo.installerUrl,
     canLaunchDesktop: true,
+    updateProtocol: WW_UPDATE_PROTOCOL_VERSION,
   };
 }
 
@@ -2276,6 +2338,93 @@ function registerIpc() {
       result,
     };
   });
+  handleTrusted("ww:recovery-refresh", async (_event, options = {}) => getRecoveryManager().refresh(options));
+  handleTrusted("ww:recovery-select-agent", async (_event, agentId, options = {}) => (
+    getRecoveryManager().selectAgent(agentId, options)
+  ));
+  handleTrusted("ww:recovery-inventory", async (_event, payload = {}) => (
+    getRecoveryManager().requestInventory(payload)
+  ));
+  handleTrusted("ww:recovery-select-case", async (_event, caseId) => (
+    getRecoveryManager().selectCase(caseId)
+  ));
+  handleTrusted("ww:recovery-case-create", async (_event, payload = {}) => (
+    getRecoveryManager().createCase(payload)
+  ));
+  handleTrusted("ww:recovery-goal", async (_event, payload = {}) => (
+    getRecoveryManager().updateGoal(payload)
+  ));
+  handleTrusted("ww:recovery-case-run", async (_event, caseId = "") => (
+    getRecoveryManager().runCase(caseId)
+  ));
+  handleTrusted("ww:recovery-case-stop", async (_event, caseId = "") => (
+    getRecoveryManager().stopCase(caseId)
+  ));
+  handleTrusted("ww:recovery-case-action", async (_event, payload = {}) => (
+    getRecoveryManager().submitCaseAction(payload)
+  ));
+  handleTrusted("ww:recovery-playbook-expand", async (_event, payload = {}) => (
+    getRecoveryManager().expandPlaybook(payload)
+  ));
+  handleTrusted("ww:recovery-playbook-run", async (_event, payload = {}) => (
+    getRecoveryManager().runPlaybook(payload)
+  ));
+  handleTrusted("ww:recovery-job-submit", async (_event, payload = {}) => (
+    getRecoveryManager().submitJob(payload)
+  ));
+  handleTrusted("ww:recovery-exec", async (_event, payload = {}) => (
+    getRecoveryManager().exec(payload)
+  ));
+  handleTrusted("ww:recovery-shell", async (_event, payload = {}) => (
+    getRecoveryManager().shell(payload)
+  ));
+  handleTrusted("ww:recovery-job-cancel", async (_event, jobId) => (
+    getRecoveryManager().cancelJob(jobId)
+  ));
+  handleTrusted("ww:recovery-job-retry", async (_event, jobId) => (
+    getRecoveryManager().retryJob(jobId)
+  ));
+  handleTrusted("ww:recovery-artifact-upload", async (_event, payload = {}) => (
+    getRecoveryManager().uploadArtifact(payload)
+  ));
+  handleTrusted("ww:recovery-artifact-download", async (_event, payload = {}) => (
+    getRecoveryManager().downloadArtifact(payload)
+  ));
+  handleTrusted("ww:recovery-wake", async (_event, payload = {}) => (
+    getRecoveryManager().wake(payload)
+  ));
+  handleTrusted("ww:recovery-pxe-status", async () => getRecoveryManager().pxeStatus());
+  handleTrusted("ww:recovery-pxe-prepare", async (_event, payload = {}) => (
+    getRecoveryManager().pxePrepare(payload)
+  ));
+  handleTrusted("ww:recovery-pxe-start", async (_event, payload = {}) => (
+    getRecoveryManager().pxeStart(payload)
+  ));
+  handleTrusted("ww:recovery-pxe-stop", async () => getRecoveryManager().pxeStop());
+  handleTrusted("ww:recovery-boot-policy", async (_event, payload = {}) => (
+    getRecoveryManager().setBootPolicy(payload)
+  ));
+  handleTrusted("ww:recovery-copy-text", async (_event, value = "") => {
+    clipboard.writeText(String(value ?? ""));
+    return true;
+  });
+  handleTrusted("ww:recovery-save-text", async (event, payload = {}) => {
+    const suggestedName = path.basename(String(payload.suggestedName || "recovery-output.log"));
+    const senderWindow = BrowserWindow.fromWebContents(event.sender);
+    const choice = await dialog.showSaveDialog(senderWindow, {
+      title: "Save recovery output",
+      defaultPath: suggestedName,
+      filters: [{ name: "Log files", extensions: ["log", "txt"] }, { name: "All files", extensions: ["*"] }],
+    });
+    if (choice.canceled || !choice.filePath) return { canceled: true, path: "" };
+    await fs.promises.writeFile(choice.filePath, String(payload.text ?? ""), { mode: 0o600 });
+    return { canceled: false, path: choice.filePath };
+  });
+  handleTrusted("ww:recovery-reveal-path", async (_event, targetPath = "") => {
+    const resolved = path.resolve(String(targetPath || ""));
+    shell.showItemInFolder(resolved);
+    return resolved;
+  });
 }
 
 async function bootstrapState() {
@@ -2292,11 +2441,12 @@ async function bootstrapState() {
 }
 
 async function init() {
+  const recoveryStartup = startRecoverySubsystem();
   scheduleAutoLinkLoop();
   scheduleRemoteSyncLoop();
   const requestedServicePeer = getAttachedServicePeer();
   const attached = requestedServicePeer
-    ? await attachToExistingLocalService(requestedServicePeer)
+    ? await attachToRequestedLocalServiceWithRetry(requestedServicePeer)
     : await attachToExistingLocalService({
         host: "127.0.0.1",
         port: normalizePort(config.service.port, 4851),
@@ -2331,6 +2481,45 @@ async function init() {
       category: "peer",
     });
   }
+  await recoveryStartup;
+}
+
+async function peerHasStagedDesktopRelease(releaseInfo = {}) {
+  const peerMachineId = String(config.peer.machineId || "").trim();
+  const peerHost = String(config.peer.host || "").trim();
+  if (!peerMachineId) {
+    return true;
+  }
+  if (!peerHost) {
+    return false;
+  }
+
+  const client = createRemoteWwClient({
+    ...config.peer,
+    localMachineId: String(config.service.machineId || serviceInfo?.machineId || "").trim(),
+  });
+  const update = await client.getUpdateStatus({ timeoutMs: 3_000 });
+  if (Number(update?.protocol) !== WW_UPDATE_PROTOCOL_VERSION) {
+    throw new Error(`The paired PC does not support WorkWire update protocol ${WW_UPDATE_PROTOCOL_VERSION}.`);
+  }
+  return String(update?.source?.hash || "").trim() === String(releaseInfo?.updateHash || "").trim();
+}
+
+function startDesktopReleaseActivator() {
+  if (releaseActivator) {
+    return;
+  }
+  releaseActivator = createWwReleaseActivator({
+    log: appendLogLine,
+    isReadyToActivate: peerHasStagedDesktopRelease,
+    onActivationRequired: async (releaseInfo) => {
+      appendLogLine(`[WW] Activating ${releaseInfo.version} in the desktop.`);
+      releaseActivator?.stop();
+      app.relaunch({ args: process.argv.slice(1) });
+      app.exit(75);
+    },
+  });
+  releaseActivator.start();
 }
 
 app.on("second-instance", (_event, commandLine = []) => {
@@ -2356,10 +2545,12 @@ function beginShutdown() {
   stopAutoLinkLoop();
   stopRemoteSyncLoop();
   mainPerformanceMonitor.stop();
+  releaseActivator?.stop();
   stopPaneWatcher("local");
   stopLanBeacon().catch(() => {});
   mirrorController?.stop().catch(() => {});
   serviceController?.stop().catch(() => {});
+  recoveryManager?.stop().catch(() => {});
 }
 
 app.on("window-all-closed", () => {
@@ -2397,6 +2588,8 @@ await bootstrapState();
 await flushPendingLaunchArgs();
 registerIpc();
 createWindow();
-init().catch((error) => {
+init().then(() => {
+  startDesktopReleaseActivator();
+}).catch((error) => {
   reportRuntimeError(error, "WW startup failed.");
 });

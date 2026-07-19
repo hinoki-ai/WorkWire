@@ -17,7 +17,7 @@
   <body>
     <div class="app-shell">
       <button id="window-close" class="window-close" type="button" aria-label="Close WorkWire"></button>
-      <main class="workspace">
+      <main id="files-workspace" class="workspace">
         <section id="local-pane" class="pane pane-local" data-side="local">
           <header class="pane-header">
             <div class="pane-heading pane-heading-compact">
@@ -104,7 +104,8 @@
             <div class="control-actions">
               <button id="refresh-all" class="button button-wide" type="button">Refresh Both</button>
               <button id="delete-selection" class="button button-small" type="button">Delete</button>
-              <button id="restore-deleted" class="button button-wide" type="button">Restore deleted</button>
+              <button id="workspace-recovery" class="button button-wide" type="button" aria-pressed="false">Recovery</button>
+              <button id="restore-deleted" class="button button-wide" type="button">Trash</button>
               <button id="select-visible" class="button button-select" type="button">Select Shown</button>
               <button id="clear-selection" class="button button-small" type="button">Clear selection</button>
               <button id="toggle-active-pane" class="button button-small button-switch" type="button" aria-label="Switch active side">Switch Side</button>
@@ -165,6 +166,219 @@
         </section>
       </main>
 
+      <main id="recovery-workspace" class="recovery-workspace" hidden aria-label="Recovery workspace">
+        <section class="recovery-panel recovery-fleet" aria-labelledby="recovery-fleet-title">
+          <div class="recovery-button-row recovery-topbar">
+            <button id="workspace-files" class="button button-small" type="button" aria-pressed="true">← Files</button>
+            <span id="recovery-controller-status" class="workspace-controller-status" data-state="offline">Recovery offline</span>
+          </div>
+          <header class="recovery-panel-header">
+            <div>
+              <span class="recovery-eyebrow">Wired LAN</span>
+              <h1 id="recovery-fleet-title">Machines</h1>
+            </div>
+            <button id="recovery-refresh" class="recovery-icon-button" type="button" title="Refresh recovery state">↻</button>
+          </header>
+          <div id="recovery-agent-list" class="recovery-agent-list" role="listbox" aria-label="Recovery machines"></div>
+          <section id="recovery-agent-detail" class="recovery-detail-card" aria-live="polite">
+            <p>Select a recovery agent to inspect it.</p>
+          </section>
+
+          <section class="recovery-utility-card" aria-labelledby="recovery-wake-title">
+            <div class="recovery-card-heading">
+              <strong id="recovery-wake-title">Wake-on-LAN</strong>
+              <span>standby power required</span>
+            </div>
+            <label class="recovery-field">
+              <span>MAC address</span>
+              <input id="recovery-wake-mac" type="text" inputmode="text" placeholder="00:11:22:33:44:55" autocomplete="off">
+            </label>
+            <label class="recovery-field">
+              <span>Broadcast</span>
+              <input id="recovery-wake-broadcast" type="text" placeholder="auto" autocomplete="off">
+            </label>
+            <button id="recovery-wake" class="button button-wide" type="button">Send wake packet</button>
+          </section>
+
+          <section class="recovery-utility-card" aria-labelledby="recovery-pxe-title">
+            <div class="recovery-card-heading">
+              <strong id="recovery-pxe-title">PXE boot plane</strong>
+              <span id="recovery-pxe-status">Stopped</span>
+            </div>
+            <label class="recovery-field">
+              <span>Wired interface</span>
+              <input id="recovery-pxe-interface" type="text" placeholder="eno1" autocomplete="off">
+            </label>
+            <output id="recovery-pxe-controller" class="recovery-command-preview">Controller and boot URLs unavailable</output>
+            <span id="recovery-pxe-artifacts" class="recovery-row-meta">No verified boot artifacts</span>
+            <div class="recovery-button-row">
+              <button id="recovery-pxe-start" class="button button-small" type="button">Start</button>
+              <button id="recovery-pxe-stop" class="button button-small" type="button">Stop</button>
+              <button id="recovery-pxe-rebuild" class="button button-small" type="button">Rebuild</button>
+            </div>
+            <div class="recovery-button-row">
+              <button id="recovery-pxe-arm" class="button button-small" type="button">PXE next boot</button>
+              <button id="recovery-pxe-local" class="button button-small" type="button">Local next boot</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="recovery-panel recovery-target" aria-labelledby="recovery-target-title">
+          <header class="recovery-panel-header">
+            <div>
+              <span class="recovery-eyebrow">Selected target</span>
+              <h2 id="recovery-target-title">Disks and health</h2>
+            </div>
+            <button id="recovery-inventory" class="button button-small" type="button">Collect inventory</button>
+          </header>
+          <div id="recovery-inventory-summary" class="recovery-inventory-summary">
+            Hardware, storage, RAID, LVM, encryption, filesystem, and boot facts appear here.
+          </div>
+          <div id="recovery-disk-list" class="recovery-disk-list" role="listbox" aria-label="Target disks"></div>
+          <section class="recovery-utility-card recovery-action-card" aria-labelledby="recovery-action-title">
+            <div class="recovery-card-heading">
+              <strong id="recovery-action-title">Typed recovery action</strong>
+              <span id="recovery-device-identity">No device selected</span>
+            </div>
+            <label class="recovery-field">
+              <span>Action</span>
+              <select id="recovery-action-name">
+                <option value="disk.read.sample">Read and hash samples</option>
+                <option value="disk.table.backup">Back up partition table</option>
+                <option value="disk.inventory">Refresh device graph</option>
+                <option value="filesystem.identify">Detect filesystem</option>
+                <option value="filesystem.check">Check filesystem</option>
+                <option value="filesystem.repair">Repair filesystem</option>
+                <option value="filesystem.mount">Mount filesystem</option>
+                <option value="boot.detect">Inspect boot configuration</option>
+                <option value="disk.smart.read">Inspect SMART / NVMe health</option>
+              </select>
+            </label>
+            <label class="recovery-field">
+              <span>Parameters (JSON)</span>
+              <textarea id="recovery-action-params" rows="5" spellcheck="false">{}</textarea>
+            </label>
+            <output id="recovery-generated-command" class="recovery-command-preview">Select a disk to resolve its stable identity.</output>
+            <button id="recovery-run-action" class="button button-wide" type="button">Run typed action</button>
+          </section>
+        </section>
+
+        <section class="recovery-panel recovery-control" aria-labelledby="recovery-control-title">
+          <header class="recovery-panel-header">
+            <div>
+              <span class="recovery-eyebrow">Case control</span>
+              <h2 id="recovery-control-title">Goal and console</h2>
+            </div>
+            <select id="recovery-case-select" aria-label="Recovery case">
+              <option value="">New case</option>
+            </select>
+          </header>
+          <label class="recovery-field recovery-goal-field">
+            <span>Recovery goal</span>
+            <textarea id="recovery-goal" rows="5" placeholder="Describe the complete outcome for this target…"></textarea>
+          </label>
+          <div class="recovery-button-row recovery-case-actions">
+            <button id="recovery-run-case" class="button button-copy" type="button">Run autonomous</button>
+            <button id="recovery-resume-case" class="button" type="button">Resume</button>
+            <button id="recovery-stop-case" class="button" type="button">Stop</button>
+          </div>
+
+          <section class="recovery-utility-card recovery-playbook-card" aria-labelledby="recovery-playbook-title">
+            <div class="recovery-card-heading">
+              <strong id="recovery-playbook-title">Recovery playbook</strong>
+              <span>expand, inspect, execute</span>
+            </div>
+            <label class="recovery-field">
+              <span>Template</span>
+              <select id="recovery-playbook-select"><option value="">Select playbook</option></select>
+            </label>
+            <label class="recovery-field">
+              <span>Inputs (JSON)</span>
+              <input id="recovery-playbook-inputs" type="text" value="{}" spellcheck="false">
+            </label>
+            <output id="recovery-playbook-plan" class="recovery-command-preview">Expanded steps appear here before execution.</output>
+            <button id="recovery-playbook-run" class="button button-wide" type="button">Expand and run playbook</button>
+          </section>
+
+          <div class="recovery-console-tabs" role="tablist" aria-label="Recovery console mode">
+            <button id="recovery-command-tab" class="recovery-tab is-active" type="button" role="tab" aria-selected="true">Raw argv</button>
+            <button id="recovery-shell-tab" class="recovery-tab" type="button" role="tab" aria-selected="false">Bash script</button>
+            <label class="recovery-force" for="recovery-force">
+              <input id="recovery-force" type="checkbox">
+              <span>force</span>
+            </label>
+          </div>
+          <section id="recovery-command-editor" class="recovery-console-editor">
+            <label class="recovery-field">
+              <span>Exact argv · JSON array or shell-style tokens</span>
+              <input id="recovery-command" type="text" placeholder='["lsblk","-J","-O"]' autocomplete="off" spellcheck="false">
+            </label>
+            <output id="recovery-command-exact" class="recovery-command-preview">argv: []</output>
+            <button id="recovery-execute" class="button button-copy button-wide" type="button">Execute now</button>
+          </section>
+          <section id="recovery-shell-editor" class="recovery-console-editor" hidden>
+            <label class="recovery-field">
+              <span>Unrestricted Bash</span>
+              <textarea id="recovery-shell" rows="9" placeholder="set -euo pipefail&#10;lsblk -f" spellcheck="false"></textarea>
+            </label>
+            <button id="recovery-shell-execute" class="button button-copy button-wide" type="button">Run Bash now</button>
+          </section>
+          <p id="recovery-message" class="inline-message" hidden></p>
+        </section>
+
+        <section class="recovery-panel recovery-observatory" aria-label="Jobs, output, events, and artifacts">
+          <section class="recovery-observe-column">
+            <header class="recovery-subheader">
+              <strong>Jobs</strong>
+              <span id="recovery-job-count">0</span>
+            </header>
+            <div id="recovery-job-list" class="recovery-job-list"></div>
+          </section>
+          <section class="recovery-observe-column recovery-output-column">
+            <header class="recovery-subheader">
+              <strong>Live output</strong>
+              <span class="recovery-inline-controls">
+                <label><input id="recovery-output-autoscroll" type="checkbox" checked> follow</label>
+                <button id="recovery-output-copy" type="button">Copy</button>
+                <button id="recovery-output-save" type="button">Save</button>
+                <button id="recovery-output-clear" type="button">Clear view</button>
+              </span>
+            </header>
+            <pre id="recovery-output" class="recovery-output" aria-live="polite"></pre>
+          </section>
+          <section class="recovery-observe-column">
+            <header class="recovery-subheader">
+              <strong>Event timeline</strong>
+              <select id="recovery-event-filter" aria-label="Filter recovery events">
+                <option value="">All</option>
+                <option value="agent">Agent</option>
+                <option value="job">Job</option>
+                <option value="step">Step</option>
+                <option value="planner">Planner</option>
+                <option value="artifact">Artifact</option>
+              </select>
+            </header>
+            <div id="recovery-event-list" class="recovery-event-list"></div>
+          </section>
+          <section class="recovery-observe-column">
+            <header class="recovery-subheader">
+              <strong>Artifacts</strong>
+              <span id="recovery-artifact-count">0</span>
+            </header>
+            <div id="recovery-artifact-list" class="recovery-artifact-list"></div>
+            <label class="recovery-field recovery-compact-field">
+              <span>Local upload path</span>
+              <input id="recovery-upload-path" type="text" placeholder="/path/to/file" autocomplete="off">
+            </label>
+            <button id="recovery-upload" class="button button-small" type="button">Upload artifact</button>
+            <label class="recovery-field recovery-compact-field">
+              <span>Download destination</span>
+              <input id="recovery-download-path" type="text" placeholder="/path/to/save" autocomplete="off">
+            </label>
+          </section>
+        </section>
+      </main>
+
       <div id="explorer-layer" class="explorer-layer" hidden>
         <section class="explorer-panel" role="dialog" aria-modal="true" aria-label="Explore this PC">
           <header class="explorer-header">
@@ -204,7 +418,7 @@
         <section class="restore-drawer" role="dialog" aria-modal="true" aria-labelledby="restore-title">
           <header class="restore-header">
             <div class="pane-heading">
-              <span class="pane-title">Recovery</span>
+              <span class="pane-title">Trash</span>
               <strong id="restore-title" class="pane-summary">Recently deleted</strong>
               <p id="restore-meta" class="pane-path">Items are permanently deleted after 5 days.</p>
             </div>

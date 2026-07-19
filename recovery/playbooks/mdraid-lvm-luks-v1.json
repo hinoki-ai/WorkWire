@@ -1,0 +1,17 @@
+{
+  "id": "mdraid-lvm-luks-v1",
+  "title": "mdraid, LVM, and LUKS stack",
+  "inputs": ["array", "members", "luksPath", "luksName", "passphrase"],
+  "steps": [
+    { "id": "inventory", "action": "inventory.collect", "params": { "raw": true } },
+    { "id": "raid-detail", "action": "raid.detail", "params": { "array": "${input.array}" } },
+    { "id": "raid-assemble", "action": "raid.assemble", "params": { "array": "${input.array}", "members": "${input.members}" } },
+    { "id": "lvm-scan", "action": "lvm.scan", "params": {} },
+    { "id": "lvm-activate", "action": "lvm.activate", "params": {} },
+    { "id": "luks-dump", "action": "luks.dump", "params": { "path": "${input.luksPath}" } },
+    { "id": "luks-open", "action": "luks.open", "params": { "path": "${input.luksPath}", "name": "${input.luksName}", "passphrase": "${input.passphrase}" } },
+    { "id": "inventory-topology", "action": "inventory.collect", "params": { "raw": true } }
+  ],
+  "verification": ["Dependency graph resolves to the intended top-level filesystem", "Member UUIDs and array UUID agree"],
+  "plannerHints": ["Deactivate and close layers in reverse order after recovery"]
+}

@@ -50,4 +50,28 @@ test("ww linux build config only includes WW runtime surfaces", () => {
   assert.ok(config.files.includes("desktop/ww/**/*"));
   assert.ok(config.files.includes("lib/ww*.mjs"));
   assert.ok(config.files.includes("lib/electron-app-argv.mjs"));
+  assert.ok(config.files.includes("lib/recovery/**/*.mjs"));
+  assert.ok(config.files.includes("recovery/**/*"));
+  // The recovery runtime ships as a single staged tree so electron-builder does
+  // not exclude lib/package.json from the asar (extraResources `from` paths are
+  // dropped from the asar to avoid duplication). The packaging script stages
+  // dist/recovery-runtime before the build.
+  assert.deepEqual(config.extraResources, [
+    { from: "dist/recovery-runtime", to: "recovery-runtime" },
+    { from: "node_modules/ws", to: "recovery-runtime/node_modules/ws" },
+  ]);
+});
+
+test("ww linux packager stages the recovery runtime it ships as resources", () => {
+  const packagerSource = fs.readFileSync(
+    path.join(__dirname, "..", "scripts", "package-ww-linux.mjs"),
+    "utf8",
+  );
+  assert.match(packagerSource, /RECOVERY_STAGING_DIR\s*=\s*path\.join\([^)]*"dist",\s*"recovery-runtime"\)/);
+  assert.match(packagerSource, /stageRecoveryRuntime\(\)/);
+  // The staged tree must carry the source the spawned recovery subprocesses run
+  // (ws ships via a dedicated extraResources entry, asserted on the config above).
+  assert.match(packagerSource, /"lib"[\s\S]*RECOVERY_STAGING_DIR, "lib"/);
+  assert.match(packagerSource, /"recovery"[\s\S]*RECOVERY_STAGING_DIR, "recovery"/);
+  assert.match(packagerSource, /package\.json[\s\S]*RECOVERY_STAGING_DIR,\s*\n?\s*"package\.json"/);
 });

@@ -2,7 +2,7 @@
   "name": "workwire",
   "productName": "WorkWire",
   "version": "0.1.0",
-  "description": "Self-contained Linux bundle for the WorkWire two-machine file desk.",
+  "description": "Self-contained WorkWire two-machine file desk and LAN recovery portal.",
   "desktopName": "workwire.desktop",
   "main": "desktop/ww-runtime.cjs",
   "type": "module",
@@ -24,6 +24,14 @@
     "ww:autostart": "node ./scripts/install-ww-autostart.mjs",
     "dist:linux": "node ./scripts/package-ww-linux.mjs",
     "ww:lan-installer": "node ./scripts/serve-ww-lan-installer.mjs",
+    "recovery:controller": "node ./ww.mjs recovery controller start --foreground",
+    "recovery:agent": "node ./ww.mjs recovery agent run",
+    "recovery:host-install": "bash ./scripts/install-ww-recovery-host.sh install",
+    "recovery:agent-install": "bash ./scripts/install-ww-recovery-agent.sh install",
+    "recovery:agent-windows-bundle": "node ./scripts/package-ww-recovery-agent-windows.mjs",
+    "recovery:image-build": "bash ./scripts/build-ww-recovery-image.sh",
+    "recovery:image-verify": "bash ./scripts/verify-ww-recovery-image.sh",
+    "recovery:test:qemu": "node ./scripts/test-ww-recovery-qemu.mjs",
     "perf:portal": "node --expose-gc ./scripts/performance/portal-search-benchmark.mjs",
     "perf:portal:electron": "node ./scripts/performance/electron-portal-benchmark.mjs",
     "perf:filesystem": "node --expose-gc ./scripts/performance/filesystem-benchmark.mjs",
@@ -43,6 +51,7 @@
     "desktop/**/*",
     "lib/**/*",
     "scripts/**/*",
+    "recovery/**/*",
     "README.md",
     "docs/**/*"
   ],
@@ -53,5 +62,8 @@
     "electron": "^43.1.1",
     "electron-builder": "^26.8.1",
     "jsdom": "^29.0.2"
+  },
+  "dependencies": {
+    "ws": "^8.21.1"
   }
 }

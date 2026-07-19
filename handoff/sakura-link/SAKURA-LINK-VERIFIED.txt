@@ -1,0 +1,35 @@
+WORKWIRE HINOKI -> SAKURA TWO-PHASE HANDOFF
+Prepared: 2026-07-17
+Status: PHASE 1 COMPLETE; PHASE 2 READY FOR ONE SAKURA RUN
+
+HINOKI phase completed:
+- Permanent authenticated cross-build update channel implemented.
+- Mirror no longer stops merely because running app versions differ.
+- Update protocol is independently pinned at version 1.
+- Both PCs activate only after their stable source fingerprints match.
+- systemd/desktop restart into the synchronized checkout automatically.
+- HINOKI identity and Sakura pairing were preserved.
+- HINOKI service is active at 192.168.8.104:4851.
+- HINOKI launcher targets resolve to /home/hinoki/WorkWire/scripts/launch-workwire.sh.
+- Authenticated bootstrap download endpoint is live.
+
+One-time Sakura bootstrap:
+- Release: 0.1.0+ww1.e162d87d1b3d
+- Archive: HINOKI GET /v1/update-bundle
+- SHA-256: fe991aff3c9f3b0f89d87d1e30288ded822cad0eaa40c440cc6e4ed1c0bc557e
+- Size verified from the endpoint: 125885431 bytes
+
+Verification completed on HINOKI:
+- Complete test suite passed at the updater/recovery integration checkpoint.
+- Packaged headless service smoke passed with app 0.1.0+ww1.e162d87d1b3d,
+  protocol 1, and update protocol 1.
+- Installed HINOKI bootstrap, checkout launcher, managed service, discovery,
+  authenticated update status, and authenticated archive bytes were verified.
+
+The source version can be newer than the bootstrap because additional source
+may already be staged on HINOKI. That is intentional: Sakura installs the fixed
+bootstrap once, WorkWire mirrors the current source, and the handoff verifies
+both machines reach one dynamic running/source hash before declaring success.
+
+Run FINAL-PROMPT-SAKURA.md once on Sakura. It is the entire remaining phase.
+There is no third relay, no re-pair, and no future manual two-PC activation.

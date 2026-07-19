@@ -1,0 +1,33 @@
+#!/bin/sh
+set -u
+printf '%s\n' '=== WorkWire Recovery ==='
+printf 'Kernel: '; uname -a
+controller="$(sed -n 's/.*\bww\.controller=\([^ ]*\).*/\1/p' /proc/cmdline)"
+token="$(sed -n 's/.*\bww\.token=\([^ ]*\).*/\1/p' /proc/cmdline)"
+printf 'Controller: %s\n' "${controller:-not supplied on kernel command line}"
+if [ -n "$controller" ]; then
+  if [ -n "$token" ]; then
+    curl -fsS --max-time 3 -H "Authorization: Bearer $token" "$controller/v1/recovery/info" >/tmp/workwire-controller-info.json 2>/dev/null
+    controller_status=$?
+  else
+    curl -fsS --max-time 3 "$controller/v1/recovery/info" >/tmp/workwire-controller-info.json 2>/dev/null
+    controller_status=$?
+  fi
+  if [ "$controller_status" -eq 0 ]; then
+    printf 'Controller reachability: online\n'
+  else
+    printf 'Controller reachability: waiting (agent retries forever)\n'
+  fi
+fi
+if [ -r /etc/workwire-recovery-build.json ]; then
+  printf '%s\n' '--- Image build ---'
+  jq '{appVersion,recoveryProtocol,nodeVersion,gitRevision,builtAt,optionalMissing}' /etc/workwire-recovery-build.json || true
+fi
+printf '%s\n' '--- Network ---'
+ip -brief address || true
+ip route || true
+printf '%s\n' '--- Agent ---'
+systemctl --no-pager --full status workwire-recovery-agent.service || true
+journalctl --no-pager -u workwire-recovery-agent.service -n 40 || true
+printf '%s\n' '--- Disks ---'
+lsblk -o NAME,PATH,SIZE,TYPE,FSTYPE,LABEL,UUID,MOUNTPOINTS,MODEL,SERIAL || true

@@ -19,6 +19,7 @@ const APP_BASE_DIR = path.resolve(__dirname, "..");
 const BUILD_CONFIG_PATH = path.join(APP_BASE_DIR, "electron-builder.linux.json");
 const ELECTRON_BUILDER_CLI_PATH = path.join(APP_BASE_DIR, "node_modules", "electron-builder", "cli.js");
 const DIST_DIR = path.join(APP_BASE_DIR, "dist", "ww");
+const RECOVERY_STAGING_DIR = path.join(APP_BASE_DIR, "dist", "recovery-runtime");
 const LINUX_UNPACKED_DIR = path.join(DIST_DIR, "linux-unpacked");
 const BUNDLE_DIR = path.join(DIST_DIR, "ww");
 const BUNDLE_INSTALLER_SOURCE = path.join(APP_BASE_DIR, "scripts", "install-ww-bundle.sh");
@@ -77,6 +78,57 @@ function buildElectronArgs(target) {
   ];
 }
 
+// The recovery agent, CLI, and PXE/image scripts run as real subprocesses at
+// runtime, so they must live as unpacked files under resources/recovery-runtime
+// (spawned node/bash cannot execute from inside the asar). electron-builder
+// excludes every extraResources `from` path from the asar to avoid duplicating
+// bytes — which would strip package.json and lib/**/*.mjs out of the app itself.
+// So we stage a self-contained copy at a path that does not overlap the asar's
+// own sources, and point extraResources at that single staged directory.
+function stageRecoveryRuntime() {
+  fs.rmSync(RECOVERY_STAGING_DIR, { recursive: true, force: true });
+  fs.mkdirSync(RECOVERY_STAGING_DIR, { recursive: true });
+
+  fs.cpSync(path.join(APP_BASE_DIR, "lib"), path.join(RECOVERY_STAGING_DIR, "lib"), {
+    recursive: true,
+    filter: (src) => fs.statSync(src).isDirectory() || src.endsWith(".mjs"),
+  });
+
+  const recoveryRoot = path.join(APP_BASE_DIR, "recovery");
+  const recoveryExcluded = [
+    path.join("image", ".build"),
+    path.join("image", "binary"),
+    path.join("image", "chroot"),
+    path.join("image", "cache"),
+  ];
+  fs.cpSync(recoveryRoot, path.join(RECOVERY_STAGING_DIR, "recovery"), {
+    recursive: true,
+    filter: (src) => {
+      if (src.endsWith(".iso")) return false;
+      const relative = path.relative(recoveryRoot, src);
+      return !recoveryExcluded.some(
+        (excluded) => relative === excluded || relative.startsWith(`${excluded}${path.sep}`),
+      );
+    },
+  });
+
+  const stagedScriptsDir = path.join(RECOVERY_STAGING_DIR, "scripts");
+  fs.mkdirSync(stagedScriptsDir, { recursive: true });
+  for (const entry of fs.readdirSync(path.join(APP_BASE_DIR, "scripts"))) {
+    if (entry.includes("ww-recovery") || entry === "run-ww-pxe.mjs") {
+      fs.copyFileSync(path.join(APP_BASE_DIR, "scripts", entry), path.join(stagedScriptsDir, entry));
+    }
+  }
+
+  fs.copyFileSync(
+    path.join(APP_BASE_DIR, "package.json"),
+    path.join(RECOVERY_STAGING_DIR, "package.json"),
+  );
+  // `ws` is not staged here: electron-builder strips node_modules encountered
+  // while copying a directory tree, so it ships instead via a dedicated
+  // extraResources entry whose `from` points straight at node_modules/ws.
+}
+
 function ensureBundleContents() {
   fs.rmSync(BUNDLE_DIR, { recursive: true, force: true });
   fs.cpSync(LINUX_UNPACKED_DIR, BUNDLE_DIR, { recursive: true });
@@ -114,6 +166,7 @@ function main() {
   try {
     fs.rmSync(DIST_DIR, { recursive: true, force: true });
     fs.mkdirSync(DIST_DIR, { recursive: true });
+    stageRecoveryRuntime();
 
     runNodeCli(ELECTRON_BUILDER_CLI_PATH, buildElectronArgs("dir"));
 
@@ -152,6 +205,7 @@ function main() {
     }
   } finally {
     fs.rmSync(restoreDir, { recursive: true, force: true });
+    fs.rmSync(RECOVERY_STAGING_DIR, { recursive: true, force: true });
     if (!succeeded) {
       fs.rmSync(DIST_DIR, { recursive: true, force: true });
     }
