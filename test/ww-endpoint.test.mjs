@@ -200,6 +200,28 @@ test("ww local endpoint keeps the previous destination intact when an upload fai
   });
 });
 
+test("ww upload preserves an existing POSIX executable mode", async (context) => {
+  if (process.platform === "win32") {
+    context.skip("POSIX executable modes are not available on Windows.");
+    return;
+  }
+
+  await withTempDir(async (rootPath) => {
+    const targetPath = path.join(rootPath, "launcher.mjs");
+    await fs.writeFile(targetPath, "export const version = 1;\n", { mode: 0o755 });
+    const endpoint = createLocalEndpoint({ rootPath, name: "test-box" });
+
+    await endpoint.uploadFileStream(
+      targetPath,
+      Readable.from(["export const version = 2;\n"]),
+      { overwrite: true },
+    );
+
+    assert.equal((await fs.stat(targetPath)).mode & 0o777, 0o755);
+    assert.equal(await fs.readFile(targetPath, "utf8"), "export const version = 2;\n");
+  });
+});
+
 test("ww upload atomically replaces a directory only after the full file arrives", async () => {
   await withTempDir(async (rootPath) => {
     const targetPath = path.join(rootPath, "switch-kind");

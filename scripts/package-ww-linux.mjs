@@ -12,6 +12,7 @@ import {
   WW_BUILD_HASH,
   WW_RELEASE_INFO,
 } from "../lib/ww-release.mjs";
+import { isWwMirrorConflictBasename } from "../lib/ww-fs.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,7 +92,8 @@ function stageRecoveryRuntime() {
 
   fs.cpSync(path.join(APP_BASE_DIR, "lib"), path.join(RECOVERY_STAGING_DIR, "lib"), {
     recursive: true,
-    filter: (src) => fs.statSync(src).isDirectory() || src.endsWith(".mjs"),
+    filter: (src) => !isWwMirrorConflictBasename(path.basename(src))
+      && (fs.statSync(src).isDirectory() || src.endsWith(".mjs")),
   });
 
   const recoveryRoot = path.join(APP_BASE_DIR, "recovery");
@@ -104,6 +106,7 @@ function stageRecoveryRuntime() {
   fs.cpSync(recoveryRoot, path.join(RECOVERY_STAGING_DIR, "recovery"), {
     recursive: true,
     filter: (src) => {
+      if (isWwMirrorConflictBasename(path.basename(src))) return false;
       if (src.endsWith(".iso")) return false;
       const relative = path.relative(recoveryRoot, src);
       return !recoveryExcluded.some(
@@ -115,7 +118,10 @@ function stageRecoveryRuntime() {
   const stagedScriptsDir = path.join(RECOVERY_STAGING_DIR, "scripts");
   fs.mkdirSync(stagedScriptsDir, { recursive: true });
   for (const entry of fs.readdirSync(path.join(APP_BASE_DIR, "scripts"))) {
-    if (entry.includes("ww-recovery") || entry === "run-ww-pxe.mjs") {
+    if (
+      !isWwMirrorConflictBasename(entry)
+      && (entry.includes("ww-recovery") || entry === "run-ww-pxe.mjs")
+    ) {
       fs.copyFileSync(path.join(APP_BASE_DIR, "scripts", entry), path.join(stagedScriptsDir, entry));
     }
   }

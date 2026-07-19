@@ -10,6 +10,7 @@ import {
   isMirrorLeader,
   planMirrorActions,
   scanLocalMirrorTree,
+  scanRemoteMirrorTree,
 } from "../lib/ww-mirror.mjs";
 import { createWwService } from "../lib/ww-service.mjs";
 import { createRemoteWwClient } from "../lib/ww-client.mjs";
@@ -97,6 +98,63 @@ test("ww mirror elects one stable leader and creates deterministic conflict name
     buildMirrorConflictPath("docs/report.txt", "b-machine", record("file", 5, 1234)),
     /^docs\/report \(WW conflict [a-f0-9]{8}-1234\)\.txt$/,
   );
+});
+
+test("ww mirror scans Windows peer paths with the peer path flavor", async () => {
+  const rootPath = "C:\\Users\\Sakura\\WorkWire";
+  const docsPath = `${rootPath}\\docs`;
+  const requested = [];
+  const records = await scanRemoteMirrorTree({
+    async listDirectory({ path: requestedPath }) {
+      requested.push(requestedPath);
+      return requestedPath === rootPath
+        ? { items: [{ name: "docs", path: docsPath, kind: "directory", size: 0, mtimeMs: 10 }] }
+        : { items: [{ name: "note.txt", path: `${docsPath}\\note.txt`, kind: "file", size: 4, mtimeMs: 20 }] };
+    },
+  }, rootPath);
+
+  assert.deepEqual(requested, [rootPath, docsPath]);
+  assert.deepEqual([...records.keys()], ["docs", "docs/note.txt"]);
+});
+
+test("ww mirror writes Windows peer paths and compares their roots case-insensitively", async () => {
+  await withTempDir(async (baseDir) => {
+    const localRoot = path.join(baseDir, "local");
+    await fs.mkdir(localRoot, { recursive: true });
+    await fs.writeFile(path.join(localRoot, "payload.txt"), "safe\n");
+    const uploadedPaths = [];
+    const listedPaths = [];
+    const remoteRoot = "C:\\Users\\Sakura\\WorkWire";
+    const mirror = createWwMirror({
+      rootPath: localRoot,
+      statePath: path.join(baseDir, "state", "mirror.json"),
+      peer: { host: "sakura", machineId: "b-machine", token: "mirror-token" },
+      machineId: "a-machine",
+      expectedRemoteRootPath: "c:\\users\\sakura\\workwire\\",
+      intervalMs: 60_000,
+      clientFactory() {
+        return {
+          async connectForUpdate() {
+            return { machineId: "b-machine", rootPath: remoteRoot };
+          },
+          async listDirectory({ path: requestedPath }) {
+            listedPaths.push(requestedPath);
+            return { items: [] };
+          },
+          async stat() { return null; },
+          async uploadFileStream(targetPath, readable) {
+            uploadedPaths.push(targetPath);
+            for await (const _chunk of readable) {}
+          },
+        };
+      },
+    });
+
+    await mirror.syncNow();
+    assert.equal(mirror.getStatus().error, "");
+    assert.deepEqual(uploadedPaths, [`${remoteRoot}\\payload.txt`]);
+    assert.deepEqual(listedPaths, [remoteRoot, remoteRoot]);
+  });
 });
 
 test("ww mirror follows a refreshed peer route and preserves simultaneous edits", async () => {

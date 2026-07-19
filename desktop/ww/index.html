@@ -47,6 +47,7 @@
             <button id="copy-to-other" class="button button-copy button-wide" type="button">Copy to Other PC</button>
             <button id="move-to-other" class="button button-move button-wide" type="button">Move to Other PC</button>
             <button id="explore-machine" class="button button-wide" type="button">Explore This PC</button>
+            <button id="explore-remote-machine" class="button button-wide" type="button">Explore Other PC</button>
           </section>
 
           <section
@@ -380,15 +381,16 @@
       </main>
 
       <div id="explorer-layer" class="explorer-layer" hidden>
-        <section class="explorer-panel" role="dialog" aria-modal="true" aria-label="Explore this PC">
+        <section class="explorer-panel" role="dialog" aria-modal="true" aria-labelledby="explorer-title">
           <header class="explorer-header">
             <div class="pane-heading">
-              <span class="pane-title">This PC · File Explorer</span>
+              <span id="explorer-title" class="pane-title">This PC · File Explorer</span>
               <strong id="explorer-meta" class="pane-summary"></strong>
               <p id="explorer-path-value" class="pane-path"></p>
             </div>
             <div class="pane-actions">
               <button id="explorer-home" class="button button-small" type="button">Home</button>
+              <button id="explorer-roots" class="button button-small" type="button">Disks</button>
               <button id="explorer-up" class="button button-small" type="button">Up</button>
               <button id="explorer-refresh" class="button button-small" type="button">Refresh</button>
               <button id="explorer-close" class="button button-small" type="button">Close</button>

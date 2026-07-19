@@ -6,6 +6,7 @@ dist/
 
 # Local runtime state and transfer payloads
 .workwire/
+Portal/
 link/
 runtime/
 

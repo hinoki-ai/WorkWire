@@ -28,7 +28,11 @@ import {
 import { WW_BEACON_PORTS, createWwLanBeacon } from "../lib/ww-beacon.mjs";
 import { buildWwBuildInfo } from "../lib/ww-compat.mjs";
 import { discoverLanPeers } from "../lib/ww-discovery.mjs";
-import { createLocalEndpoint, createRemoteEndpoint } from "../lib/ww-endpoint.mjs";
+import {
+  WW_MACHINE_ROOT_PATH,
+  createLocalEndpoint,
+  createRemoteEndpoint,
+} from "../lib/ww-endpoint.mjs";
 import {
   collectLanInterfaceRecords,
   selectReachableLanAddressForPeer,
@@ -200,6 +204,7 @@ const paneState = {
 };
 const explorerState = {
   open: false,
+  side: "local",
   homePath: os.homedir(),
   path: "",
   listing: null,
@@ -515,6 +520,9 @@ function pushActivity(title, detail = "", {
 function describeSide(side) {
   if (side === "machine") {
     return "This PC files";
+  }
+  if (side === "remote-machine") {
+    return "Other PC files";
   }
   return side === "local" ? "This PC" : "Other PC";
 }
@@ -1879,8 +1887,10 @@ async function runTransfer({
     throw error;
   }
 
-  const machineImport = fromSide === "machine";
-  const sourceEndpoint = machineImport || fromSide === "local" ? localEndpoint : remoteEndpoint;
+  const localMachineImport = fromSide === "machine";
+  const remoteMachineImport = fromSide === "remote-machine";
+  const machineImport = localMachineImport || remoteMachineImport;
+  const sourceEndpoint = localMachineImport || fromSide === "local" ? localEndpoint : remoteEndpoint;
   const destinationEndpoint = machineImport
     ? localEndpoint
     : fromSide === "local" ? remoteEndpoint : localEndpoint;
@@ -2065,20 +2075,33 @@ async function runTransfer({
   }
 }
 
-async function openMachineExplorer(targetPath = "") {
+async function openMachineExplorer(targetPath = "", side = explorerState.side || "local") {
+  const sourceSide = side === "remote" ? "remote" : "local";
+  const endpoint = sourceSide === "remote" ? remoteEndpoint : localEndpoint;
+  if (!endpoint) {
+    throw new Error(sourceSide === "remote" ? "The other PC is not connected." : "This PC is unavailable.");
+  }
+  if (sourceSide === "remote" && remoteInfo?.capabilities?.machineBrowse !== true) {
+    throw new Error("The other PC needs the current WorkWire build for disk browsing.");
+  }
+  const changedSide = explorerState.side !== sourceSide;
   const requestedPath = String(
     targetPath
-      || explorerState.path
-      || explorerState.homePath,
+      || (changedSide ? "" : explorerState.path)
+      || (changedSide ? "" : explorerState.homePath),
   ).trim();
 
   try {
-    const listing = await localEndpoint.listDirectory({
+    const listing = await endpoint.listDirectory({
       path: requestedPath,
       scope: "machine",
       includeHidden: Boolean(config.ui.showHidden),
     });
     explorerState.open = true;
+    explorerState.side = sourceSide;
+    explorerState.homePath = changedSide || !explorerState.homePath
+      ? listing.path
+      : explorerState.homePath;
     explorerState.path = listing.path;
     explorerState.listing = listing;
     explorerState.error = null;
@@ -2086,7 +2109,8 @@ async function openMachineExplorer(targetPath = "") {
     return clone(explorerState);
   } catch (error) {
     explorerState.open = true;
-    explorerState.error = String(error?.message || "Unable to browse this PC.");
+    explorerState.side = sourceSide;
+    explorerState.error = String(error?.message || `Unable to browse the ${sourceSide === "remote" ? "other" : "local"} PC.`);
     sendEvent("explorer");
     throw error;
   }
@@ -2101,13 +2125,13 @@ function closeMachineExplorer() {
 
 async function fetchFromMachineExplorer({ targetPaths = [] } = {}) {
   const result = await runTransfer({
-    fromSide: "machine",
+    fromSide: explorerState.side === "remote" ? "remote-machine" : "machine",
     targetPaths,
     move: false,
     sourceScope: "machine",
   });
   pushActivity(
-    "Imported files into Portal",
+    `Imported ${explorerState.side === "remote" ? "other PC" : "local"} files into Portal`,
     `${summarizePaths(targetPaths)} -> ${paneState.local.path}`,
     {
       level: "success",
@@ -2323,8 +2347,12 @@ function registerIpc() {
       result,
     };
   });
-  handleTrusted("ww:explorer-open", async (_event, targetPath = "") => {
-    await openMachineExplorer(targetPath);
+  handleTrusted("ww:explorer-open", async (_event, targetPath = "", side = "local") => {
+    await openMachineExplorer(targetPath, side);
+    return serializeState();
+  });
+  handleTrusted("ww:explorer-open-roots", async (_event, side = "local") => {
+    await openMachineExplorer(WW_MACHINE_ROOT_PATH, side);
     return serializeState();
   });
   handleTrusted("ww:explorer-close", async () => {
@@ -2527,6 +2555,7 @@ app.on("second-instance", (_event, commandLine = []) => {
     createWindow();
     focusMainWindow();
     await queueLaunchArgs(commandLine);
+    await requestPeerDesktopLaunch();
   }).catch((error) => {
     appendLogLine(`[WW] Unable to handle second-instance launch: ${formatErrorMessage(error)}`);
   });

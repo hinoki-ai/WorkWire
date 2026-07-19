@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import net from "node:net";
 import { once } from "node:events";
 import { WebSocket } from "ws";
 import { createRecoveryController } from "../lib/recovery/ww-recovery-controller.mjs";
@@ -74,6 +75,45 @@ async function connectAgent(info, agentId, { token = "", bootId = `${agentId}-bo
   const welcome = await next((message) => message.type === "controller.welcome");
   return { socket, next, welcome, queue };
 }
+
+test("recovery controller stop drains active HTTP connections", async () => {
+  const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "ww-recovery-shutdown-"));
+  const controller = createRecoveryController({
+    config: {
+      stateDir,
+      host: "127.0.0.1",
+      port: 0,
+      bootHost: "127.0.0.1",
+      bootPort: 0,
+      heartbeatMs: 100,
+      staleAfterMs: 500,
+      offlineAfterMs: 1_000,
+    },
+  });
+  const info = await controller.start();
+  const socket = net.createConnection({ host: "127.0.0.1", port: info.port });
+  socket.on("error", () => {});
+  await once(socket, "connect");
+  socket.write("GET /v1/recovery/events HTTP/1.1\r\nHost: 127.0.0.1\r\n");
+
+  const stopPromise = controller.stop();
+  let timeout;
+  try {
+    await Promise.race([
+      stopPromise,
+      new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error("Recovery controller stop timed out.")), 1_000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeout);
+    socket.destroy();
+    await stopPromise;
+    await fs.rm(stateDir, { recursive: true, force: true });
+  }
+
+  assert.equal(socket.destroyed, true);
+});
 
 test("recovery controller routes separate durable jobs to two agents", async () => {
   await withController(async (controller, info) => {

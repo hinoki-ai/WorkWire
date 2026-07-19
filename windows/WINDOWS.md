@@ -66,6 +66,42 @@ through the WorkWire recovery plane.
   agent readJson strips BOM. A failed `recovery get` right after agent (re)start
   may be transient — retry once before debugging.
 - Mutating recovery jobs may need `--force`.
+- **WW desktop app on Sakura-Windows: LIVE 2026-07-19.** Runs FROM SOURCE like
+  Linux: portal `C:\Users\Sakura\WorkWire` (mirror-synced), config
+  `C:\Users\Sakura\.config\workwire\ww-config.json` (Sakura identity
+  `RQn5hi_GTBHwvC6bQmmTYg`, shared token), service = scheduled task
+  "WorkWire Serve" (logon, direct auto-restarting node.exe ww.mjs serve;
+  node.exe borrowed from the recovery agent install), GUI = desktop shortcut →
+  `%LOCALAPPDATA%\WorkWire\app\WorkWire.exe` (vanilla Electron 43.1.1;
+  `resources\app` is an NTFS junction to the portal, so GUI runs live source
+  too; old asar kept as app.asar.bak). Desktop and Start-menu `WorkWire.lnk`
+  launch the live app and use the dedicated `WorkWire.ico`; phase 2 also repairs
+  matching pinned-taskbar shortcuts (including a stale `Electron.lnk`) so they
+  never fall back to Electron's icon or SYSTEM-profile target.
+  Reinstall one-liners on HINOKI:8800:
+  winapp.ps1 (phase 1) + winapp2.ps1 (phase 2). Windows firewall allows 4851.
+  `node_modules\ws` is staged at portal root (root node_modules is
+  mirror-excluded, stays local).
+- **Auto-update now proven end-to-end**: mirror syncs source cross-version via
+  the update protocol; each side's release activator restarts its service when
+  both PCs stage the same source hash. Cross-platform mirror path fix
+  2026-07-19 (`remotePathFor`/`normalizeRemoteRootPath` in lib/ww-mirror.mjs +
+  `expectedRemoteRootPath` from peer.remotePath in ww.mjs) — without it the
+  mirror pauses on root-path mismatch between OSes.
+- **Linked desktop + disk browsing:** opening WorkWire on either paired PC opens
+  or focuses it on the other PC too, including repeat icon launches. The action
+  rail exposes `Explore This PC` and `Explore Other PC`; `Disks` reaches Windows
+  drive roots and selected files can be brought into the local Portal. Machine
+  scope is read-only and accepted only from the pinned paired machine ID.
+- **Update shutdown fix 2026-07-19:** the file service and recovery controller
+  force-drain active HTTP/SSE connections during release activation, preventing
+  `server.close()` from hanging while the supervisor waits to restart and
+  allowing ports 4851–4853 to be reclaimed promptly.
+- **Gotchas**: HINOKI's recovery controller (4852) runs INSIDE workwire-ww
+  serve — every auto-update activation bounces it (agents auto-reconnect;
+  in-flight recovery CLI calls die with fetch failed/ECONNRESET — just retry).
+  Seeding a portal with tar truncates mtimes to seconds → first sync creates
+  "(WW conflict …)" duplicates; delete them on HINOKI, deletions propagate.
 
 ## LAN boot (PXE) — Sakura, works, use PXELINUX only
 

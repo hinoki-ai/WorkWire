@@ -10,6 +10,7 @@ import {
   WW_BUILD_HASH,
   WW_PACKAGE_VERSION,
   WW_RELEASE_INFO,
+  collectWwReleaseSourceFiles,
   sanitizeWwArtifactVersion,
 } from "../lib/ww-release.mjs";
 
@@ -31,6 +32,20 @@ test("ww release info fingerprints the WW runtime and keeps file-safe artifact n
   assert.equal(WW_RELEASE_INFO.files.includes("package.json"), true);
   assert.equal(WW_RELEASE_INFO.files.includes("scripts/install-ww-bundle.sh"), true);
   assert.equal(WW_RELEASE_INFO.files.some((file) => file.includes("/ops/")), false);
+  assert.equal(WW_RELEASE_INFO.files.some((file) => file.includes("(WW conflict ")), false);
+});
+
+test("ww release collection excludes preserved mirror conflicts", async (context) => {
+  const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "ww-release-conflicts-"));
+  context.after(() => fs.rm(fixtureRoot, { recursive: true, force: true }));
+  await fs.mkdir(path.join(fixtureRoot, "scripts"), { recursive: true });
+  await fs.writeFile(path.join(fixtureRoot, "scripts", "tool.mjs"), "export const live = true;\n");
+  await fs.writeFile(
+    path.join(fixtureRoot, "scripts", "tool (WW conflict deadbeef-1234).mjs"),
+    "export const stale = true;\n",
+  );
+
+  assert.deepEqual(await collectWwReleaseSourceFiles(fixtureRoot), ["scripts/tool.mjs"]);
 });
 
 test("ww release identity survives Electron's packaged metadata rewrite", async (context) => {

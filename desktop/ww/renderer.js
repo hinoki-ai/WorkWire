@@ -70,10 +70,13 @@ const refs = {
   compareDifferent: document.getElementById("compare-different"),
   compareMatch: document.getElementById("compare-match"),
   exploreMachine: document.getElementById("explore-machine"),
+  exploreRemoteMachine: document.getElementById("explore-remote-machine"),
   explorerLayer: document.getElementById("explorer-layer"),
+  explorerTitle: document.getElementById("explorer-title"),
   explorerMeta: document.getElementById("explorer-meta"),
   explorerPathValue: document.getElementById("explorer-path-value"),
   explorerHome: document.getElementById("explorer-home"),
+  explorerRoots: document.getElementById("explorer-roots"),
   explorerUp: document.getElementById("explorer-up"),
   explorerRefresh: document.getElementById("explorer-refresh"),
   explorerClose: document.getElementById("explorer-close"),
@@ -983,6 +986,7 @@ function renderTransferPanelVisibility(operation) {
 
 function transferSideLabel(side = "") {
   if (side === "machine") return "This PC files";
+  if (side === "remote-machine") return "Other PC files";
   if (side === "local") return "This PC";
   if (side === "remote") return "Other PC";
   return "";
@@ -1063,13 +1067,14 @@ function renderOperation() {
   const hasSkippedFiles = progress.skippedFiles > 0;
 
   refs.transferPanel.dataset.state = panelState;
+  const machineImport = operation.fromSide === "machine" || operation.fromSide === "remote-machine";
   refs.transferPanel.dataset.direction = operation.fromSide === "remote"
     ? "reverse"
-    : operation.fromSide === "machine" ? "import" : "forward";
+    : machineImport ? "import" : "forward";
   refs.transferPanel.setAttribute("aria-busy", String(Boolean(operation.active)));
   refs.operationArrow.textContent = operation.fromSide === "remote"
     ? "←"
-    : operation.fromSide === "machine" ? "↓" : "→";
+    : machineImport ? "↓" : "→";
   refs.operationLabel.textContent = panelState === "idle" ? "Idle" : transferTitle(operation);
   refs.operationPercent.textContent = percentLabel;
   refs.operationCurrent.textContent = currentText;
@@ -1174,7 +1179,7 @@ function explorerEmptyMessage(snapshot, filteredEntries) {
     return snapshot.error;
   }
   if (!snapshot?.listing) {
-    return "Loading the other PC...";
+    return `Loading ${snapshot?.side === "remote" ? "the other PC" : "this PC"}...`;
   }
   if (filteredEntries.length > 0) {
     return "";
@@ -1227,7 +1232,9 @@ function createExplorerRow(entry, position, totalEntries) {
   labelWrap.title = entry.path;
   labelWrap.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (entry.kind === "directory") void runAction(() => api().explorerOpen(entry.path));
+    if (entry.kind === "directory") {
+      void runAction(() => api().explorerOpen(entry.path, explorerSnapshot()?.side || "local"));
+    }
     else toggleExplorerSelection(entry.path);
   });
   labelWrap.append(createElement(
@@ -1274,7 +1281,9 @@ function renderExplorer() {
   const entries = visibleExplorerEntries();
   const totalEntries = explorerEntries().length;
   const selection = selectedExplorerStats();
+  const explorerSide = snapshot?.side === "remote" ? "remote" : "local";
 
+  refs.explorerTitle.textContent = `${explorerSide === "remote" ? "Other PC" : "This PC"} · File Explorer`;
   refs.explorerPathValue.textContent = snapshot?.path || "";
   refs.explorerMeta.textContent = snapshot?.error
     ? formatUserFacingError(new Error(snapshot.error))
@@ -1443,6 +1452,9 @@ function renderActionRail() {
   refs.copyToOther.textContent = `Copy to ${destinationLabel}`;
   refs.moveToOther.textContent = `Move to ${destinationLabel}`;
   refs.exploreMachine.disabled = false;
+  refs.exploreRemoteMachine.disabled = transferActive
+    || !remoteConnected
+    || uiState.snapshot?.peer?.info?.capabilities?.machineBrowse !== true;
 }
 
 function render() {
@@ -1553,23 +1565,30 @@ function bindPaneActions() {
   refs.windowClose.addEventListener("pointerenter", () => refs.windowClose.classList.add("is-hovered"));
   refs.windowClose.addEventListener("pointerleave", () => refs.windowClose.classList.remove("is-hovered"));
 
-  refs.exploreMachine.addEventListener("click", () => void runAction(() => api().explorerOpen()));
+  refs.exploreMachine.addEventListener("click", () => void runAction(() => api().explorerOpen("", "local")));
+  refs.exploreRemoteMachine.addEventListener("click", () => void runAction(() => api().explorerOpen("", "remote")));
   refs.explorerClose.addEventListener("click", () => void runAction(() => api().explorerClose()));
   refs.explorerRefresh.addEventListener("click", () => {
+    const side = explorerSnapshot()?.side || "local";
     const currentPath = explorerSnapshot()?.path || "";
-    void runAction(() => api().explorerOpen(currentPath));
+    void runAction(() => api().explorerOpen(currentPath, side));
   });
   refs.explorerUp.addEventListener("click", () => {
+    const side = explorerSnapshot()?.side || "local";
     const parent = explorerSnapshot()?.listing?.parentPath;
     if (parent) {
-      void runAction(() => api().explorerOpen(parent));
+      void runAction(() => api().explorerOpen(parent, side));
     }
   });
   refs.explorerHome.addEventListener("click", () => {
+    const side = explorerSnapshot()?.side || "local";
     const homeDir = explorerSnapshot()?.homePath || "";
     if (homeDir) {
-      void runAction(() => api().explorerOpen(homeDir));
+      void runAction(() => api().explorerOpen(homeDir, side));
     }
+  });
+  refs.explorerRoots.addEventListener("click", () => {
+    void runAction(() => api().explorerOpenRoots(explorerSnapshot()?.side || "local"));
   });
   refs.explorerLayer.addEventListener("click", (event) => {
     if (event.target === refs.explorerLayer) {

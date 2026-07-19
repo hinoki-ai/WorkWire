@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { deriveWwTrustId } from "../lib/ww-config-store.mjs";
+import { buildDefaultWwConfig, deriveWwTrustId } from "../lib/ww-config-store.mjs";
 import { WW_APP_VERSION } from "../lib/ww-compat.mjs";
 import {
   buildWwDesktopLaunchArgsFromPeerRequest,
@@ -44,6 +44,28 @@ test("ww launcher builds the local electron desktop command", () => {
         DISPLAY: ":1",
       },
       stdio: "inherit",
+    },
+  });
+});
+
+test("ww launcher uses the installed Windows desktop executable", () => {
+  const spec = buildWwDesktopLaunchSpec({
+    argv: ["--peer", "192.168.8.104:4851"],
+    env: {
+      LOCALAPPDATA: "C:\\Users\\Sakura\\AppData\\Local",
+    },
+    platform: "win32",
+  });
+
+  assert.deepEqual(spec, {
+    command: "C:\\Users\\Sakura\\AppData\\Local\\WorkWire\\app\\WorkWire.exe",
+    args: ["--peer", "192.168.8.104:4851"],
+    options: {
+      env: {
+        LOCALAPPDATA: "C:\\Users\\Sakura\\AppData\\Local",
+      },
+      stdio: "ignore",
+      detached: true,
     },
   });
 });
@@ -522,6 +544,9 @@ test("ww serve keeps the background service running while it opens the desktop a
   let serviceStopped = 0;
   let launchedWith = null;
   let childUnrefCount = 0;
+  let mirrorOptions = null;
+  const config = buildDefaultWwConfig({ homeDir: "/tmp/ww-home", hostName: "desk-box" });
+  config.peer.remotePath = "C:\\Users\\Sakura\\WorkWire";
 
   const result = await runServeCommand({
     flags: {
@@ -535,6 +560,7 @@ test("ww serve keeps the background service running while it opens the desktop a
       write() {},
     },
     keepAlive: false,
+    loadWwConfigImpl: async () => config,
     setTimeoutImpl(callback, delay) {
       scheduledLaunch = callback;
       scheduledDelay = delay;
@@ -571,7 +597,8 @@ test("ww serve keeps the background service running while it opens the desktop a
         },
       };
     },
-    createWwMirrorImpl() {
+    createWwMirrorImpl(options) {
+      mirrorOptions = options;
       return {
         start() {},
         async stop() {},
@@ -593,6 +620,7 @@ test("ww serve keeps the background service running while it opens the desktop a
   });
 
   assert.equal(result?.serviceInfo?.name, "Desk Box");
+  assert.equal(mirrorOptions?.expectedRemoteRootPath, "C:\\Users\\Sakura\\WorkWire");
   assert.equal(typeof capturedLaunchRequest, "function");
   assert.equal(beaconAnnouncement?.name, "Desk Box");
   assert.equal(beaconAnnouncement?.port, 4851);

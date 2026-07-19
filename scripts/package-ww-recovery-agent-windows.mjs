@@ -9,6 +9,7 @@ import path from "node:path";
 import process from "node:process";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { isWwMirrorConflictBasename } from "../lib/ww-fs.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactsDir = path.join(repoRoot, "artifacts");
@@ -29,7 +30,10 @@ await fs.mkdir(path.join(stageDir, "node_modules"), { recursive: true });
 // Ship the whole lib/ tree like the Linux installer: lib/recovery imports
 // sibling modules from lib/ (ww-config-store, ww-network), so cherry-picking
 // lib/recovery alone produces ERR_MODULE_NOT_FOUND on the target.
-await fs.cp(path.join(repoRoot, "lib"), path.join(stageDir, "lib"), { recursive: true });
+await fs.cp(path.join(repoRoot, "lib"), path.join(stageDir, "lib"), {
+  recursive: true,
+  filter: (source) => !isWwMirrorConflictBasename(path.basename(source)),
+});
 await fs.cp(path.join(repoRoot, "node_modules", "ws"), path.join(stageDir, "node_modules", "ws"), { recursive: true });
 await fs.copyFile(path.join(repoRoot, "package.json"), path.join(stageDir, "package.json"));
 await fs.copyFile(

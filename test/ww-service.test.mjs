@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import http from "node:http";
+import net from "node:net";
 import { once } from "node:events";
 import { Readable } from "node:stream";
 import {
@@ -15,7 +16,11 @@ import { deriveWwTrustId } from "../lib/ww-config-store.mjs";
 import { createWwService } from "../lib/ww-service.mjs";
 import { WW_UPDATE_PROTOCOL_VERSION } from "../lib/ww-update.mjs";
 import { createRemoteWwClient } from "../lib/ww-client.mjs";
-import { createLocalEndpoint, createRemoteEndpoint } from "../lib/ww-endpoint.mjs";
+import {
+  WW_MACHINE_ROOT_PATH,
+  createLocalEndpoint,
+  createRemoteEndpoint,
+} from "../lib/ww-endpoint.mjs";
 import { transferSelections } from "../lib/ww-transfer.mjs";
 
 async function withTempDir(run) {
@@ -45,6 +50,39 @@ function createJsonResponse(status, payload) {
     },
   };
 }
+
+test("ww service stop drains active peer connections", async () => {
+  await withTempDir(async (baseDir) => {
+    const service = createWwService({
+      host: "127.0.0.1",
+      port: 0,
+      token: "shutdown-token",
+      name: "Shutdown Box",
+      rootPath: baseDir,
+    });
+    const info = await service.start();
+    const socket = net.createConnection({ host: "127.0.0.1", port: info.port });
+    await once(socket, "connect");
+    socket.write("GET /v1/ping HTTP/1.1\r\nHost: 127.0.0.1\r\n");
+
+    const stopPromise = service.stop();
+    let timeout;
+    try {
+      await Promise.race([
+        stopPromise,
+        new Promise((_, reject) => {
+          timeout = setTimeout(() => reject(new Error("WW service stop timed out.")), 1_000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timeout);
+      socket.destroy();
+      await stopPromise;
+    }
+
+    assert.equal(socket.destroyed, true);
+  });
+});
 
 test("ww service supports remote CRUD over loopback", async () => {
   await withTempDir(async (baseDir) => {
@@ -339,6 +377,13 @@ test("ww local machine explorer browses outside the portal and imports selection
     assert.equal(listing.scope, "machine");
     assert.deepEqual(listing.items.map((entry) => entry.name), ["project"]);
 
+    const roots = await localEndpoint.listDirectory({
+      path: WW_MACHINE_ROOT_PATH,
+      scope: "machine",
+    });
+    assert.equal(roots.scope, "machine");
+    assert.equal(roots.path, path.parse(os.homedir()).root);
+
     const result = await transferSelections({
       sourceEndpoint: localEndpoint,
       destinationEndpoint: localEndpoint,
@@ -369,25 +414,51 @@ test("ww local machine explorer browses outside the portal and imports selection
   });
 });
 
-test("ww service does not expose whole-machine browsing to remote clients", async () => {
+test("ww service exposes whole-machine browsing only to its pinned peer", async () => {
   await withTempDir(async (baseDir) => {
+    const machineFolder = path.join(baseDir, "machine-files");
+    await fs.mkdir(machineFolder, { recursive: true });
+    await fs.writeFile(path.join(machineFolder, "notes.txt"), "paired access\n");
     const service = createWwService({
       host: "127.0.0.1",
       port: 0,
-      token: "local-only-explorer-token",
+      machineId: "service-machine",
+      token: "paired-explorer-token",
       rootPath: path.join(baseDir, "portal"),
+      getTrustedPeerMachineId: () => "paired-machine",
     });
     const info = await service.start();
     try {
-      const client = createRemoteWwClient({
+      const pairedClient = createRemoteWwClient({
         host: "127.0.0.1",
         port: info.port,
-        token: "local-only-explorer-token",
+        token: "paired-explorer-token",
+        localMachineId: "paired-machine",
+      });
+      const listing = await pairedClient.listDirectory({
+        path: machineFolder,
+        scope: "machine",
+      });
+      assert.deepEqual(listing.items.map((item) => item.name), ["notes.txt"]);
+
+      const unpinnedService = createWwService({
+        host: "127.0.0.1",
+        port: 0,
+        token: "unpinned-explorer-token",
+        rootPath: path.join(baseDir, "other-portal"),
+      });
+      const unpinnedInfo = await unpinnedService.start();
+      const unpinnedClient = createRemoteWwClient({
+        host: "127.0.0.1",
+        port: unpinnedInfo.port,
+        token: "unpinned-explorer-token",
+        localMachineId: "unknown-machine",
       });
       await assert.rejects(
-        client.listDirectory({ path: baseDir, scope: "machine" }),
-        /not available over the WorkWire service/,
+        unpinnedClient.listDirectory({ path: machineFolder, scope: "machine" }),
+        /only to the pinned WorkWire peer/,
       );
+      await unpinnedService.stop();
     } finally {
       await service.stop();
     }

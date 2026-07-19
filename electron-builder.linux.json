@@ -48,6 +48,7 @@
     "!recovery/image/chroot/**/*",
     "!recovery/image/cache/**/*",
     "!recovery/image/*.iso",
+    "!**/* (WW conflict *)*",
     "!desktop/**/*.map",
     "!**/*.log"
   ],

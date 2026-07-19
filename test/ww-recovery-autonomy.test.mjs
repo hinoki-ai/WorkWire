@@ -104,3 +104,18 @@ test("recovery playbooks load and expand conditional input without removing forc
   assert.equal(expanded.steps.find((step) => step.id === "filesystem-repair").force, true);
   assert.equal(expanded.steps.find((step) => step.id === "verify-marker").params.path, "/mnt/workwire/patient/etc/os-release");
 });
+
+test("recovery playbook loading ignores preserved WW conflict copies", async (context) => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "ww-recovery-playbooks-"));
+  context.after(() => fs.rm(directory, { recursive: true, force: true }));
+  await fs.writeFile(
+    path.join(directory, "safe-v1.json"),
+    JSON.stringify({ id: "safe-v1", steps: [] }),
+  );
+  await fs.writeFile(
+    path.join(directory, "safe-v1 (WW conflict deadbeef-1234).json"),
+    "this preserved losing version is intentionally not runtime JSON",
+  );
+
+  assert.deepEqual(await loadRecoveryPlaybooks({ directory }), [{ id: "safe-v1", steps: [] }]);
+});

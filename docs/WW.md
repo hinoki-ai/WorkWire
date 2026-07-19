@@ -10,7 +10,7 @@ The repository launcher uses the checkout itself as its portal root. A packaged 
 
 The desktop desk browses only the portal environment, the `Portal/` directory inside the portal root. It is created automatically on both machines, both panes are clamped to it (navigation, launch intents, and saved paths that fall outside it snap back to `Portal/`), and everything else in the root stays backend-only: reachable by the service, the mirror, and the CLI, but never shown in the frontend. User files exchanged through the desk therefore live under `Portal/` and are mirrored like any other portal content.
 
-`Explore This PC` opens a copy-only file browser for the local machine outside its portal. Select files or folders and choose `Bring into Portal`; WorkWire copies them into the currently open folder on This PC's `Portal/` pane. The source is never moved or deleted, and normal portal synchronization can then carry the imported content to the paired PC. Whole-machine browsing is local-only and is not exposed by the network service.
+`Explore This PC` and `Explore Other PC` open copy-only file browsers outside the corresponding portal. Select files or folders and choose `Bring into Portal`; WorkWire copies them into the currently open folder on This PC's `Portal/` pane. The source is never moved or deleted, and normal portal synchronization can then carry the imported content to the paired PC. Remote machine scope exposes only list, stat, manifest, and download operations, and the service accepts it only from the bearer-authenticated, pinned peer machine ID. The `Disks` action reaches filesystem roots (and Windows drive roots).
 
 The background mirror elects exactly one of the two machine IDs as the active synchronizer. This avoids two mirror engines racing over the same change. It refreshes its route from authenticated-compatible beacon data, so DHCP changes and fallback ports do not require a restart.
 
@@ -18,7 +18,7 @@ The background mirror elects exactly one of the two machine IDs as the active sy
 
 Ordinary files and directories are synchronized recursively, including deletions. Symbolic links are intentionally ignored and cannot be transferred through the service.
 
-These root names are local-only and inaccessible through the WorkWire API:
+These root names are excluded from the portal-scope API and background mirror:
 
 - `.workwire/`
 - `.codex/`
@@ -98,6 +98,7 @@ Pairing replaces shared trust but preserves the local machine identity.
 - Electron uses context isolation, sandboxing, no Node integration, denied permission requests, blocked navigation/new windows, a private app protocol, and a restrictive content security policy.
 - Packaged builds disable Run-as-Node, Node option/inspector injection, and privileged `file:` behavior while enabling cookie encryption, ASAR-only loading, and embedded ASAR integrity validation.
 - Filesystem paths are lexical- and realpath-checked against the portal root; symlink escapes and portal-root mutation are blocked.
+- Whole-machine scope is read-only (list, stat, manifest, and download), requires the bearer token plus the pinned peer machine ID, and is never accepted before pairing.
 - Requests require the shared bearer token and the pinned peer machine ID after pairing.
 - JSON requests, headers, and transfers have bounded sizes or timeouts.
 - WorkWire is intended for a trusted private LAN; the LAN publisher is HTTP, so use a trusted network and verify the displayed checksum when transporting artifacts outside that LAN.

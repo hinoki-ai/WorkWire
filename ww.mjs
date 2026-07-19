@@ -414,6 +414,23 @@ export function buildWwDesktopLaunchSpec({
   env = process.env,
   platform = process.platform,
 } = {}) {
+  if (platform === "win32") {
+    const userProfile = String(env.USERPROFILE || "").trim();
+    const localAppData = String(env.LOCALAPPDATA || "").trim()
+      || (userProfile ? path.win32.join(userProfile, "AppData", "Local") : "");
+    const executable = String(env.WW_DESKTOP_EXECUTABLE || "").trim()
+      || path.win32.join(localAppData, "WorkWire", "app", "WorkWire.exe");
+    return {
+      command: executable,
+      args: [...argv],
+      options: {
+        env,
+        stdio: "ignore",
+        detached: true,
+      },
+    };
+  }
+
   const electronCliPath = path.join(baseDir, "node_modules", "electron", "cli.js");
   const launchEnv = buildLinuxLaunchEnv(env, platform, LINUX_WW_DESKTOP_ENTRY_NAME);
   const desktopEntryPath = path.join(baseDir, "desktop", "ww-main.cjs");
@@ -489,11 +506,15 @@ export function launchWwDesktop({
     platform,
   });
 
-  if (!existsImpl(spec.args[0])) {
+  if (platform === "win32" && !existsImpl(spec.command)) {
+    throw new Error(`WorkWire desktop executable not found at ${spec.command}.`);
+  }
+
+  if (platform !== "win32" && !existsImpl(spec.args[0])) {
     throw new Error(`Electron CLI not found at ${spec.args[0]}. Run npm install first.`);
   }
 
-  if (!existsImpl(spec.args[1])) {
+  if (platform !== "win32" && !existsImpl(spec.args[1])) {
     throw new Error(`WorkWire desktop entry not found at ${spec.args[1]}.`);
   }
 
@@ -509,6 +530,7 @@ export async function runServeCommand({
   createWwLanBeaconImpl = createWwLanBeacon,
   createWwMirrorImpl = createWwMirror,
   createWwReleaseActivatorImpl = createWwReleaseActivator,
+  loadWwConfigImpl = loadWwConfig,
   loadRecoveryConfigImpl = loadRecoveryConfig,
   createRecoveryControllerImpl = createRecoveryController,
   enableRecovery = createWwServiceImpl === createWwService,
@@ -516,7 +538,7 @@ export async function runServeCommand({
   processImpl = process,
   keepAlive = true,
 } = {}) {
-  let config = await loadWwConfig();
+  let config = await loadWwConfigImpl();
   let desktopLaunchPending = false;
   let service = null;
   let mirror = null;
@@ -729,7 +751,7 @@ export async function runServeCommand({
     peer: config.peer,
     getPeer: () => config.peer,
     machineId: config.service.machineId,
-    expectedRemoteRootPath: serviceInfo.rootPath,
+    expectedRemoteRootPath: String(config.peer.remotePath || "").trim() || serviceInfo.rootPath,
     log: serviceLog,
   });
   mirror.start();

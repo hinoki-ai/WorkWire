@@ -52,6 +52,7 @@ test("ww linux build config only includes WW runtime surfaces", () => {
   assert.ok(config.files.includes("lib/electron-app-argv.mjs"));
   assert.ok(config.files.includes("lib/recovery/**/*.mjs"));
   assert.ok(config.files.includes("recovery/**/*"));
+  assert.ok(config.files.includes("!**/* (WW conflict *)*"));
   // The recovery runtime ships as a single staged tree so electron-builder does
   // not exclude lib/package.json from the asar (extraResources `from` paths are
   // dropped from the asar to avoid duplication). The packaging script stages

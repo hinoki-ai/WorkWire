@@ -60,10 +60,13 @@ test("ww desktop shell exposes the two-pane workspace with a narrow center actio
   assert.ok(document.getElementById("operation-eta"));
   assert.ok(document.getElementById("operation-dismiss"));
   assert.ok(document.getElementById("explore-machine"));
+  assert.ok(document.getElementById("explore-remote-machine"));
   assert.ok(document.getElementById("explorer-layer"));
+  assert.ok(document.getElementById("explorer-roots"));
   assert.ok(document.getElementById("explorer-list"));
   assert.equal(document.getElementById("explorer-fetch")?.textContent?.trim(), "Bring into Portal");
   assert.equal(document.getElementById("explore-machine")?.textContent?.trim(), "Explore This PC");
+  assert.equal(document.getElementById("explore-remote-machine")?.textContent?.trim(), "Explore Other PC");
   const controlsPanel = document.getElementById("settings")?.closest(".rail-panel");
   assert.ok(controlsPanel);
   for (const id of ["select-visible", "toggle-active-pane", "delete-selection", "clear-selection"]) {
@@ -72,6 +75,7 @@ test("ww desktop shell exposes the two-pane workspace with a narrow center actio
   assert.equal(document.querySelector(".rail-panel-selection"), null);
   assert.equal(document.querySelectorAll(".rail-panel-kpi .rail-chip").length, 4);
   assert.ok(document.querySelector(".action-rail .rail-panel:first-of-type #explore-machine"));
+  assert.ok(document.querySelector(".action-rail .rail-panel:first-of-type #explore-remote-machine"));
   assert.ok(document.querySelector(".action-rail .rail-panel:first-of-type #copy-to-other"));
   assert.ok(document.querySelector(".action-rail .rail-panel:first-of-type #move-to-other"));
   assert.equal(document.getElementById("service-name"), null);
@@ -190,15 +194,19 @@ test("ww desk suppresses stale refreshes and sends incremental high-frequency st
   assert.match(rendererSource, /function mergeSnapshotPatch/);
 });
 
-test("ww machine explorer is local, copy-only, and routes selections into the local portal pane", () => {
+test("ww machine explorer browses either paired PC and imports into the local portal", () => {
   assert.match(mainSource, /scope: "machine"/);
-  assert.match(mainSource, /localEndpoint\.listDirectory/);
-  assert.match(mainSource, /fromSide: "machine"/);
+  assert.match(mainSource, /remoteMachineImport/);
+  assert.match(mainSource, /sourceSide === "remote" \? remoteEndpoint : localEndpoint/);
+  assert.match(mainSource, /explorerState\.side === "remote" \? "remote-machine" : "machine"/);
+  assert.match(mainSource, /"remote-machine"/);
   assert.match(mainSource, /move: false/);
   assert.match(mainSource, /sourceScope: "machine"/);
   assert.match(mainSource, /destinationDir: destinationPane\.path/);
   assert.match(stylesSource, /\.explorer-layer\[hidden\]/);
-  assert.doesNotMatch(mainSource, /remoteSupportsMachineBrowse/);
+  assert.match(rendererSource, /exploreRemoteMachine/);
+  assert.match(rendererSource, /explorerOpenRoots/);
+  assert.match(mainSource, /await requestPeerDesktopLaunch\(\);/);
 });
 
 test("ww default peer recovery copy stays non-technical even when pairing or version checks fail", () => {

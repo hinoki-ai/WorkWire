@@ -19,7 +19,8 @@ contextBridge.exposeInMainWorld("wwApi", {
   listDeletedItems: (side) => ipcRenderer.invoke("ww:list-deleted-items", side),
   restoreDeletedItem: (side, payload) => ipcRenderer.invoke("ww:restore-deleted-item", side, payload),
   transfer: (payload) => ipcRenderer.invoke("ww:transfer", payload),
-  explorerOpen: (targetPath = "") => ipcRenderer.invoke("ww:explorer-open", targetPath),
+  explorerOpen: (targetPath = "", side = "local") => ipcRenderer.invoke("ww:explorer-open", targetPath, side),
+  explorerOpenRoots: (side = "local") => ipcRenderer.invoke("ww:explorer-open-roots", side),
   explorerClose: () => ipcRenderer.invoke("ww:explorer-close"),
   explorerFetch: (payload) => ipcRenderer.invoke("ww:explorer-fetch", payload),
   recovery: Object.freeze({

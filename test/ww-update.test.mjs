@@ -3,10 +3,15 @@ import assert from "node:assert/strict";
 
 import {
   WW_UPDATE_PROTOCOL_VERSION,
+  WW_UPDATE_SOURCE_INFO,
   assessWwUpdateCompatibility,
   buildWwUpdateStatus,
   createWwReleaseActivator,
 } from "../lib/ww-update.mjs";
+
+test("ww update source excludes preserved mirror conflicts", () => {
+  assert.equal(WW_UPDATE_SOURCE_INFO.files.some((file) => file.includes("(WW conflict ")), false);
+});
 
 test("ww update compatibility survives ordinary app mismatches but remains protocol-pinned", () => {
   const compatible = assessWwUpdateCompatibility({
