@@ -172,8 +172,12 @@ through the WorkWire recovery plane.
    selection via F12 or GRUB os-prober chainload. Then: HINOKI BIOS → AC
    Recovery = Power On + enable WoL, and test HINOKI's own wake caps (newer
    board, S5 may genuinely work) → Sakura⇄HINOKI symmetric wake.
-6. **Intel PROSet driver on Sakura-Windows** (optional; inbox driver works,
-   PROSet adds the Advanced WoL knobs. Last version supporting 82579LM ≈ 26.2).
+6. ~~Intel PROSet driver~~ **DO NOT CHASE — dead end (verified 2026-07-19).**
+   PROSet's only relevant feature is "Wake on Magic Packet from power-off (S5),"
+   which is FIRMWARE-CAPPED on this OptiPlex 990 (GLAN arms S4 only; BIOS A24 is
+   final) — no driver can override it. S4 hibernate-wake already works on the
+   inbox driver. PROSet buys nothing here; don't swap the NIC driver (it's the
+   only remote lifeline) for a firmware-blocked feature.
 7. ~~Reconcile uncommitted code~~ **DONE 2026-07-19**: tests updated to the new
    config (pxelinux.0, user=root, tag:!ipxe, rule ordering); full suite 188/188
    green. Still uncommitted — do not commit/push without the user's OK.
