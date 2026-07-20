@@ -1,0 +1,41 @@
+{
+  "ok": true,
+  "checkedAt": "2026-07-20T01:20:09.344Z",
+  "durationMs": 109352,
+  "systemAgentId": "wwra_xCR5XgqeHAd2RkAzsp81bWPo",
+  "checks": {
+    "preflight": true,
+    "dependenciesTransferred": true,
+    "nativeSuite": true,
+    "cleanup": true
+  },
+  "evidence": {
+    "preflight": {
+      "agentId": "wwra_xCR5XgqeHAd2RkAzsp81bWPo",
+      "identity": "NT AUTHORITY\\SYSTEM",
+      "bootId": "win32-boot-00000006",
+      "dependencyPackages": 39,
+      "dependencyArchiveBytes": 4208084,
+      "dependencyArtifactId": "wwa_00mrsjcwkbRFxGxsixCU63",
+      "dependencyArtifactHash": "sha256:3d58ca589495b566bd7221802cc7c169f7e402a5861c2849f75edcfde04305bf"
+    },
+    "dependencyDownloadJobId": "wwj_00mrsjcwniVa8QkRy5MjZf",
+    "nativeSuite": {
+      "jobId": "wwj_00mrsjdmg3lvSpEZ_HOHiK",
+      "identity": "NT AUTHORITY\\SYSTEM",
+      "platform": "win32",
+      "nodeVersion": "v22.23.1",
+      "testFiles": 58,
+      "selectedTestFiles": [],
+      "tests": 292,
+      "suites": 0,
+      "pass": 281,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 11,
+      "todo": 0,
+      "durationMs": 59580.1468
+    }
+  },
+  "error": null
+}

@@ -10,6 +10,23 @@ builder_tag="localhost/workwire-recovery-builder:bookworm-v1"
 reuse_rootfs=0
 if [[ "${1:-}" == "--reuse-rootfs" ]]; then reuse_rootfs=1; fi
 
+copy_tree_without_ww_conflicts() {
+  local source_tree="$1"
+  local target_tree="$2"
+  local conflict_path=""
+  mkdir -p -- "$target_tree"
+  tar \
+    --exclude='* (WW conflict *)*' \
+    --exclude='WW conflict *' \
+    --exclude='*/WW conflict *' \
+    -C "$source_tree" -cf - . | tar -C "$target_tree" -xf -
+  conflict_path="$(find "$target_tree" \( -name '* (WW conflict *)*' -o -name 'WW conflict *' \) -print -quit)"
+  if [[ -n "$conflict_path" ]]; then
+    printf 'Refusing recovery image input containing WW conflict artifact: %s\n' "$conflict_path" >&2
+    exit 6
+  fi
+}
+
 command -v podman >/dev/null 2>&1 || { printf 'Podman is required.\n' >&2; exit 6; }
 staging="$(mktemp -d "${TMPDIR:-/tmp}/ww-recovery-image.XXXXXX")"
 cleanup() { rm -rf -- "$staging"; }
@@ -20,7 +37,7 @@ if [[ "$reuse_rootfs" -eq 1 ]]; then work_dir="$cache_dir/live-build-work"; fi
 mkdir -p -- "$work_dir/config/includes.chroot/opt/workwire/agent"
 cp -a -- "$repo_root/recovery/image/." "$work_dir/"
 rm -rf -- "$work_dir/config/includes.chroot/opt/workwire/agent/lib" "$work_dir/config/includes.chroot/opt/workwire/agent/node_modules/ws"
-cp -a -- "$repo_root/lib" "$work_dir/config/includes.chroot/opt/workwire/agent/lib"
+copy_tree_without_ww_conflicts "$repo_root/lib" "$work_dir/config/includes.chroot/opt/workwire/agent/lib"
 cp -a -- "$repo_root/package.json" "$work_dir/config/includes.chroot/opt/workwire/agent/package.json"
 mkdir -p -- "$work_dir/config/includes.chroot/opt/workwire/agent/node_modules"
 cp -a -- "$repo_root/node_modules/ws" "$work_dir/config/includes.chroot/opt/workwire/agent/node_modules/ws"
@@ -55,9 +72,40 @@ podman build -t "$builder_tag" -f "$repo_root/recovery/image/Containerfile" "$re
 builder_digest="$(podman image inspect "$builder_tag" --format '{{.Digest}}' 2>/dev/null || true)"
 live_build_command='cd /work && lb clean --purge && lb config && lb build'
 if [[ "$reuse_rootfs" -eq 1 ]]; then live_build_command='cd /work && lb clean && lb config && lb build'; fi
+podman_mounts=(-v "$work_dir:/work:Z")
+# A rootless container cannot recreate cached character devices on a bind mount,
+# even with --privileged. live-build mounts the container's real /dev before it
+# enters the chroot, so hide only the cached /dev entries while restoring the
+# reusable bootstrap tree. The cache itself remains untouched.
+if [[ "$(podman info --format '{{.Host.Security.Rootless}}' 2>/dev/null || true)" == "true" ]]; then
+  if [[ "$reuse_rootfs" -eq 1 && -d "$work_dir/cache/bootstrap/dev" ]]; then
+    rootless_empty_dev="$staging/rootless-empty-dev"
+    rootless_empty_journal="$staging/rootless-empty-journal"
+    mkdir -p -- "$rootless_empty_dev"
+    mkdir -p -- "$rootless_empty_journal"
+    podman_mounts+=(-v "$rootless_empty_dev:/work/cache/bootstrap/dev:ro,Z")
+    # The cached journald directory carries a named `adm` ACL that rootless cp
+    # cannot reproduce across the user namespace. It contains no build input.
+    podman_mounts+=(-v "$rootless_empty_journal:/work/cache/bootstrap/var/log/journal:ro,Z")
+  fi
+  # Rootless builds run the live-build stages explicitly. A fresh debootstrap
+  # sees the container's /dev, then a device-free bootstrap cache is saved for
+  # installer assembly. The chroot stage gets /dev again and releases it before
+  # live-build copies the filesystem into its binary layout.
+  live_build_command='cd /work && lb clean && lb config && cache_present=0 && if [ -d cache/bootstrap ]; then cache_present=1; fi && mkdir -p chroot/dev && lb bootstrap && if mountpoint -q chroot/dev; then umount -R chroot/dev; fi && if [ "$cache_present" -eq 0 ]; then cp -a chroot cache/bootstrap; fi && mount --rbind /dev chroot/dev && lb chroot && if mountpoint -q chroot/dev; then umount -R chroot/dev; fi && lb binary && lb source'
+  # Cached device/ACL overlays are intentionally read-only. Skip live-build's
+  # redundant bootstrap save pass so it never tries to remove nested mounts.
+  # binary_rootfs temporarily swaps its outer bootstrap and full live chroots;
+  # release /dev before that swap, restore it for bootloader tooling, and then
+  # release it again at the binary stage's final cleanup boundary.
+  rootless_cache_setup='sed -i '\''/^shift$/a if [ "${_ACTION}" = "save" ]; then exit 0; fi'\'' /usr/lib/live/build/bootstrap_cache; sed -i '\''/^lb bootstrap_cache restore/a if ! mountpoint -q chroot/dev; then mount --rbind /dev chroot/dev; fi'\'' /usr/lib/live/build/bootstrap; sed -i '\''/^lb binary_chroot/a mount --rbind /dev chroot/dev'\'' /usr/lib/live/build/binary; sed -i '\''/^[[:space:]]*lb chroot_prep remove all mode-archives-binary/a if mountpoint -q chroot/dev; then umount -R chroot/dev; fi'\'' /usr/lib/live/build/binary_rootfs; sed -i '\''/^[[:space:]]*lb chroot_prep install all mode-archives-binary/i mount --rbind /dev chroot/dev'\'' /usr/lib/live/build/binary_rootfs; sed -i '\''/^lb chroot_prep remove "${CHROOT_PREP_MOUNTS}"/i if mountpoint -q chroot/dev; then umount -R chroot/dev; fi'\'' /usr/lib/live/build/binary'
+  # debootstrap's LXC path verifies executability without demanding host-level
+  # device-node creation, then binds the already populated container /dev.
+  live_build_command="$rootless_cache_setup; export container=lxc; $live_build_command"
+fi
 podman run --rm --privileged \
   -e "WW_RECOVERY_ROOT_PASSWORD=${WW_RECOVERY_ROOT_PASSWORD:-workwire}" \
-  -v "$work_dir:/work:Z" \
+  "${podman_mounts[@]}" \
   "$builder_tag" -lc "$live_build_command"
 
 kernel_path="$(find "$work_dir/binary/live" -maxdepth 1 -type f -name 'vmlinuz*' | sort | head -1)"

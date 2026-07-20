@@ -32,6 +32,10 @@
     "lib/electron-app-argv.mjs",
     "lib/ww*.mjs",
     "lib/recovery/**/*.mjs",
+    "lib/continuity/**/*.mjs",
+    "lib/sync/**/*.mjs",
+    "lib/imaging/**/*.mjs",
+    "lib/salvage/**/*.mjs",
     "recovery/**/*",
     "scripts/build-ww-recovery-image.sh",
     "scripts/install-ww-recovery-agent.sh",
@@ -49,6 +53,7 @@
     "!recovery/image/cache/**/*",
     "!recovery/image/*.iso",
     "!**/* (WW conflict *)*",
+    "!**/WW conflict *",
     "!desktop/**/*.map",
     "!**/*.log"
   ],

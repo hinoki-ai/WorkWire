@@ -30,9 +30,9 @@ test("ww config defaults are local-first and tokenized", () => {
     hostName: "alpha-box",
   });
 
-  assert.equal(config.ui.localPath, `/home/tester/${WW_PORTAL_DIRNAME}`);
+  assert.equal(config.ui.localPath, path.join("/home/tester", WW_PORTAL_DIRNAME));
   assert.equal(config.service.name, "alpha-box");
-  assert.equal(config.service.rootPath, `/home/tester/${WW_PORTAL_DIRNAME}`);
+  assert.equal(config.service.rootPath, path.join("/home/tester", WW_PORTAL_DIRNAME));
   assert.match(config.service.machineId, /^[A-Za-z0-9_-]{12,}$/);
   assert.match(config.service.token, /^[A-Za-z0-9_-]{20,}$/);
   assert.equal(config.peer.machineId, "");
@@ -45,20 +45,20 @@ test("ww config paths respect explicit standalone env overrides", () => {
     WW_PORTAL_PATH: "/srv/workwire/app",
   };
 
-  assert.equal(resolveWwHomeDir({ env, homeDir: "/home/tester" }), "/srv/workwire/.workwire");
-  assert.equal(resolveWwConfigPath({ env, homeDir: "/home/tester" }), "/srv/workwire/.workwire/config/ww-config.json");
-  assert.equal(resolveWwPortalRoot("/home/tester", { env }), "/srv/workwire/app");
+  assert.equal(resolveWwHomeDir({ env, homeDir: "/home/tester" }), path.resolve(env.WW_HOME_DIR));
+  assert.equal(resolveWwConfigPath({ env, homeDir: "/home/tester" }), path.resolve(env.WW_CONFIG_DIR, "ww-config.json"));
+  assert.equal(resolveWwPortalRoot("/home/tester", { env }), path.resolve(env.WW_PORTAL_PATH));
 });
 
 test("ww portal environment lives inside the portal root", () => {
   assert.equal(
     resolveWwPortalEnvironmentRoot("/home/tester/WorkWire"),
-    `/home/tester/WorkWire/${WW_PORTAL_ENVIRONMENT_DIRNAME}`,
+    path.join("/home/tester/WorkWire", WW_PORTAL_ENVIRONMENT_DIRNAME),
   );
   assert.equal(resolveWwPortalEnvironmentRoot(""), "");
   assert.equal(
     resolveWwPortalEnvironmentRoot(resolveWwPortalRoot("/home/tester")),
-    `/home/tester/${WW_PORTAL_DIRNAME}/${WW_PORTAL_ENVIRONMENT_DIRNAME}`,
+    path.join("/home/tester", WW_PORTAL_DIRNAME, WW_PORTAL_ENVIRONMENT_DIRNAME),
   );
 });
 
@@ -356,8 +356,10 @@ test("ww saveWwConfig writes only the zero-config state model", async () => {
 
     const persisted = JSON.parse(await fs.readFile(configPath, "utf8"));
     assert.deepEqual(persisted, buildPersistedWwConfig(saved, defaults));
-    assert.equal((await fs.stat(configPath)).mode & 0o777, 0o600);
-    assert.equal((await fs.stat(path.dirname(configPath))).mode & 0o777, 0o700);
+    if (process.platform !== "win32") {
+      assert.equal((await fs.stat(configPath)).mode & 0o777, 0o600);
+      assert.equal((await fs.stat(path.dirname(configPath))).mode & 0o777, 0o700);
+    }
     assert.equal(Object.hasOwn(persisted.ui, "localPath"), false);
     assert.equal(Object.hasOwn(persisted.service, "rootPath"), false);
   } finally {

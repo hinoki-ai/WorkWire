@@ -95,6 +95,11 @@ test("ww service supports remote CRUD over loopback", async () => {
       rootPath: baseDir,
     });
     const info = await service.start();
+    assert.deepEqual(service.getActivityStatus(), {
+      activeRequests: 0,
+      lastMutationAt: 0,
+      lastRequestCompletedAt: 0,
+    });
     const client = createRemoteWwClient({
       host: "127.0.0.1",
       port: info.port,
@@ -108,6 +113,8 @@ test("ww service supports remote CRUD over loopback", async () => {
 
     const remoteRoot = path.join(baseDir, "remote");
     await client.createDirectory({ path: remoteRoot });
+    assert.equal(service.getActivityStatus().activeRequests, 0);
+    assert.equal(service.getActivityStatus().lastMutationAt > 0, true);
     await client.createFile({
       path: path.join(remoteRoot, "hello.txt"),
       contents: "hello world",
@@ -321,10 +328,17 @@ test("ww service exposes an authenticated permanent-update status", async () => 
       name: "Update Box",
       rootPath: baseDir,
       updateBundlePath,
+      getMirrorStatus: () => ({
+        role: "leader",
+        instanceId: "0123456789abcdef",
+        completedCycles: 7,
+      }),
     });
     const info = await service.start();
     const unauthorized = await fetch(`http://127.0.0.1:${info.port}/v1/update-status`);
     assert.equal(unauthorized.status, 401);
+    const unauthorizedMirror = await fetch(`http://127.0.0.1:${info.port}/v1/mirror-status`);
+    assert.equal(unauthorizedMirror.status, 401);
 
     const client = createRemoteWwClient({
       host: "127.0.0.1",
@@ -333,11 +347,17 @@ test("ww service exposes an authenticated permanent-update status", async () => 
     });
     const updatePeer = await client.connectForUpdate();
     const status = await client.getUpdateStatus();
+    const mirrorStatus = await client.getMirrorStatus();
     assert.equal(updatePeer.capabilities.updateProtocol, WW_UPDATE_PROTOCOL_VERSION);
     assert.equal(updatePeer.capabilities.downloadUpdate, true);
     assert.equal(status.protocol, WW_UPDATE_PROTOCOL_VERSION);
     assert.match(status.running.hash, /^[a-f0-9]{64}$/);
     assert.match(status.source.hash, /^[a-f0-9]{64}$/);
+    assert.deepEqual(mirrorStatus, {
+      role: "leader",
+      instanceId: "0123456789abcdef",
+      completedCycles: 7,
+    });
 
     const bundleResponse = await fetch(`http://127.0.0.1:${info.port}/v1/update-bundle`, {
       headers: {
@@ -382,7 +402,12 @@ test("ww local machine explorer browses outside the portal and imports selection
       scope: "machine",
     });
     assert.equal(roots.scope, "machine");
-    assert.equal(roots.path, path.parse(os.homedir()).root);
+    if (process.platform === "win32") {
+      assert.equal(roots.path, WW_MACHINE_ROOT_PATH);
+      assert.ok(roots.items.some((entry) => entry.path === path.parse(os.homedir()).root));
+    } else {
+      assert.equal(roots.path, path.parse(os.homedir()).root);
+    }
 
     const result = await transferSelections({
       sourceEndpoint: localEndpoint,
@@ -545,6 +570,33 @@ test("ww client treats older peers without connect negotiation as incompatible",
   }
 });
 
+test("ww client retries transient failures only for idempotent control calls", async () => {
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  globalThis.fetch = async (input) => {
+    assert.match(String(input), /\/v1\/info$/u);
+    attempts += 1;
+    if (attempts === 1) {
+      const error = new TypeError("fetch failed");
+      error.cause = { code: "ECONNRESET" };
+      throw error;
+    }
+    return createJsonResponse(200, {
+      ok: true,
+      service: { machineId: "retry-peer", versions: { protocol: WW_PROTOCOL_VERSION, app: WW_APP_VERSION } },
+    });
+  };
+
+  try {
+    const client = createRemoteWwClient({ host: "192.0.2.10", port: 4851, token: "retry-token" });
+    const info = await client.getInfo({ timeoutMs: 1_000 });
+    assert.equal(info.machineId, "retry-peer");
+    assert.equal(attempts, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("ww service pairs the first authenticated machine and rejects other pinned peers", async () => {
   await withTempDir(async (baseDir) => {
     let trustedPeerMachineId = "";
@@ -700,6 +752,33 @@ test("ww transfer engine copies folders, resolves conflicts, and supports move",
       "spacing preserved",
     );
 
+    // Repeating a folder transfer must merge into the existing folder. In
+    // particular, files removed from the destination are restored instead of
+    // the entire source folder being skipped or placed in a sibling copy.
+    await fs.rm(path.join(remoteRoot, "nest", "alpha.txt"));
+    const repeatFolderResult = await transferSelections({
+      sourceEndpoint: localEndpoint,
+      destinationEndpoint: remoteEndpoint,
+      sourcePaths: [path.join(localRoot, "nest")],
+      destinationDir: remoteRoot,
+      conflictPolicy: "rename",
+    });
+    assert.equal(repeatFolderResult.transferredFiles, 2);
+    assert.equal(await fs.readFile(path.join(remoteRoot, "nest", "alpha.txt"), "utf8"), "nested alpha");
+    await assert.rejects(fs.access(path.join(remoteRoot, "nest (copy)")));
+
+    await fs.rm(path.join(remoteRoot, "nest", "alpha.txt"));
+    const refillFolderResult = await transferSelections({
+      sourceEndpoint: localEndpoint,
+      destinationEndpoint: remoteEndpoint,
+      sourcePaths: [path.join(localRoot, "nest")],
+      destinationDir: remoteRoot,
+      conflictPolicy: "skip",
+    });
+    assert.equal(refillFolderResult.transferredFiles, 1);
+    assert.equal(refillFolderResult.skippedFiles, 1);
+    assert.equal(await fs.readFile(path.join(remoteRoot, "nest", "alpha.txt"), "utf8"), "nested alpha");
+
     const skipStages = [];
     const skipResult = await transferSelections({
       sourceEndpoint: localEndpoint,
@@ -732,6 +811,61 @@ test("ww transfer engine copies folders, resolves conflicts, and supports move",
     assert.equal(await fs.readFile(path.join(remoteRoot, "move-me.txt"), "utf8"), "move me");
 
     await service.stop();
+  });
+});
+
+test("ww folder transfers skip symbolic links without failing or losing a moved source", async (context) => {
+  await withTempDir(async (baseDir) => {
+    const sourceRoot = path.join(baseDir, "source");
+    const destinationRoot = path.join(baseDir, "destination");
+    const sourceFolder = path.join(sourceRoot, "favicons");
+    await fs.mkdir(sourceFolder, { recursive: true });
+    await fs.mkdir(destinationRoot, { recursive: true });
+    await fs.writeFile(path.join(sourceFolder, "favicon.png"), "image bytes");
+    try {
+      await fs.symlink("favicon.png", path.join(sourceFolder, "current-favicon"));
+      await fs.symlink(sourceFolder, path.join(sourceRoot, "favicons-link"), "dir");
+    } catch (error) {
+      if (error?.code === "EPERM" || error?.code === "EACCES") {
+        context.skip("symlink creation is unavailable");
+        return;
+      }
+      throw error;
+    }
+
+    const sourceEndpoint = createLocalEndpoint({ name: "Source", rootPath: sourceRoot });
+    const destinationEndpoint = createLocalEndpoint({ name: "Destination", rootPath: destinationRoot });
+    const folderResult = await transferSelections({
+      sourceEndpoint,
+      destinationEndpoint,
+      sourcePaths: [sourceFolder],
+      destinationDir: destinationRoot,
+      conflictPolicy: "rename",
+      move: true,
+    });
+
+    assert.equal(folderResult.transferredFiles, 1);
+    assert.equal(folderResult.skippedLinks, 1);
+    assert.equal(folderResult.totals.skippedLinks, 1);
+    assert.equal(folderResult.items[0].deletedSource, false);
+    assert.match(folderResult.items[0].message, /1 symbolic link was skipped/);
+    assert.equal(
+      await fs.readFile(path.join(destinationRoot, "favicons", "favicon.png"), "utf8"),
+      "image bytes",
+    );
+    assert.equal((await fs.lstat(sourceFolder)).isDirectory(), true);
+    await assert.rejects(fs.lstat(path.join(destinationRoot, "favicons", "current-favicon")));
+
+    const linkResult = await transferSelections({
+      sourceEndpoint,
+      destinationEndpoint,
+      sourcePaths: [path.join(sourceRoot, "favicons-link")],
+      destinationDir: destinationRoot,
+    });
+    assert.equal(linkResult.transferredFiles, 0);
+    assert.equal(linkResult.skippedLinks, 1);
+    assert.equal(linkResult.items[0].skipped, true);
+    assert.match(linkResult.items[0].message, /skipped for safety/);
   });
 });
 
@@ -956,6 +1090,7 @@ test("ww transfer coalesces tiny-chunk progress while preserving exact output", 
       },
     };
     const events = [];
+    const transferStartedAt = Date.now();
     const result = await transferSelections({
       sourceEndpoint,
       destinationEndpoint: createLocalEndpoint({ name: "destination", rootPath: destinationRoot }),
@@ -978,7 +1113,9 @@ test("ww transfer coalesces tiny-chunk progress while preserving exact output", 
     assert.equal(result.processedFiles, 1);
     assert.equal((await fs.stat(path.join(destinationRoot, "tiny-chunks.bin"))).size, totalBytes);
     assert.ok(progressEvents >= 2, `expected periodic progress, got ${progressEvents}`);
-    assert.ok(progressEvents <= 10, `progress event flood: ${progressEvents}`);
+    const transferDurationMs = Date.now() - transferStartedAt;
+    const maximumProgressEvents = Math.ceil(transferDurationMs / 80) + 2;
+    assert.ok(progressEvents <= maximumProgressEvents, `progress event flood: ${progressEvents} in ${transferDurationMs}ms`);
     assert.ok(events.some((event) => (
       event.stage === "transfer-progress"
       && event.liveTransferredBytes > 0

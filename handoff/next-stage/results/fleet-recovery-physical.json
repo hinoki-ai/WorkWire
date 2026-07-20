@@ -1,0 +1,70 @@
+{
+  "ok": true,
+  "checkedAt": "2026-07-20T01:12:01.368Z",
+  "durationMs": 46044,
+  "rootAgentId": "wwra_AQwelJu3cxhVk0h1GXvmbaCf",
+  "systemAgentId": "wwra_xCR5XgqeHAd2RkAzsp81bWPo",
+  "checks": {
+    "controllerAndPinnedAgents": true,
+    "linuxInteractive": true,
+    "windowsInteractive": true,
+    "sakuraLocalTunnel": true,
+    "fleetUnrestrictedIdentity": true,
+    "autonomousProofs": true
+  },
+  "evidence": {
+    "controller": {
+      "fleet": true,
+      "interactive": true,
+      "tcpTunnel": true
+    },
+    "linuxInteractive": {
+      "terminalMode": "linux-pty-script",
+      "rootUid": 0,
+      "cwd": "/var/tmp",
+      "environment": true,
+      "resize": true,
+      "signal": "SIGWINCH",
+      "detachReconnect": true,
+      "sessionFileBytes": 8
+    },
+    "windowsInteractive": {
+      "terminalMode": "powershell-pipes",
+      "identity": "NT AUTHORITY\\SYSTEM",
+      "cwd": "C:\\ProgramData\\WorkWire\\staging",
+      "environment": true,
+      "resize": false,
+      "signals": false,
+      "detachReconnect": true,
+      "sessionFileBytes": 8
+    },
+    "tunnel": {
+      "target": "127.0.0.1:4851",
+      "httpStatus": 200,
+      "serviceName": "Sakura",
+      "machineId": "RQn5hi_GTBHwvC6bQmmTYg",
+      "appVersion": "0.1.0+ww1.2a95d730b96d"
+    },
+    "fleet": {
+      "runId": "wwfr_00mrsj3x1jxmC-rpmoqqJU",
+      "state": "succeeded",
+      "hinoki": "root",
+      "sakura": "NT AUTHORITY\\SYSTEM"
+    },
+    "autonomy": {
+      "hinoki": {
+        "caseId": "wwc_00mrsj3xjbx3J33lqDDQwC",
+        "state": "completed",
+        "actionProved": true,
+        "procedureExported": true
+      },
+      "sakura": {
+        "caseId": "wwc_00mrsj4114nlic4Fgwi8Y2",
+        "state": "completed",
+        "actionProved": true,
+        "procedureExported": true
+      }
+    }
+  },
+  "error": null
+}

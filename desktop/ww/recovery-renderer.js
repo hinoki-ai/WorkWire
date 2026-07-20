@@ -15,6 +15,14 @@ const ids = [
   "recovery-job-count", "recovery-job-list", "recovery-output-autoscroll", "recovery-output-copy", "recovery-output-save",
   "recovery-output-clear", "recovery-output", "recovery-event-filter", "recovery-event-list",
   "recovery-artifact-count", "recovery-artifact-list", "recovery-upload-path", "recovery-upload", "recovery-download-path",
+  "recovery-command-palette-open", "recovery-command-palette", "recovery-command-palette-query", "recovery-command-palette-results", "recovery-command-palette-close",
+  "recovery-fleet-targets", "recovery-fleet-group", "recovery-fleet-query", "recovery-fleet-rollout", "recovery-fleet-concurrency",
+  "recovery-fleet-command", "recovery-fleet-execute", "recovery-fleet-inventory", "recovery-fleet-results", "recovery-schedule-spec", "recovery-schedule-save", "recovery-schedule-list",
+  "recovery-session-open", "recovery-session-cwd", "recovery-session-tabs", "recovery-session-output", "recovery-session-input", "recovery-session-send",
+  "recovery-session-interrupt", "recovery-session-detach", "recovery-session-reconnect", "recovery-session-terminate",
+  "recovery-tunnel-host", "recovery-tunnel-port", "recovery-tunnel-open", "recovery-tunnel-list",
+  "recovery-console-adapter", "recovery-console-target", "recovery-console-open", "recovery-manual-takeover", "recovery-plan-graph", "recovery-proof-summary", "recovery-next-stage-panels",
+  "recovery-next-stage-input", "recovery-next-stage-output",
 ];
 
 function element(tag, className = "", text = "") {
@@ -193,6 +201,7 @@ export function createRecoveryRenderer({
   let lastAgentId = "";
   let bound = false;
   const downloadedArtifactPaths = new Map();
+  const selectedFleetTargets = new Set();
 
   function api() {
     const value = recoveryApi();
@@ -516,6 +525,209 @@ export function createRecoveryRenderer({
     refs.pxe_stop.disabled = !pxe.running;
   }
 
+  function renderFleet() {
+    const fleet = snapshot?.fleet || {};
+    const machines = fleet.machines || snapshot?.agents || [];
+    for (const id of [...selectedFleetTargets]) if (!machines.some((machine) => machine.agentId === id)) selectedFleetTargets.delete(id);
+    const targets = machines.map((machine) => {
+      const label = element("label", `recovery-fleet-target${selectedFleetTargets.has(machine.agentId) ? " is-selected" : ""}`);
+      const input = element("input");
+      input.type = "checkbox";
+      input.checked = selectedFleetTargets.has(machine.agentId);
+      input.dataset.fleetTarget = machine.agentId;
+      const active = (snapshot?.jobs || []).filter((job) => job.targetAgentId === machine.agentId && !TERMINAL_JOB_STATES.has(job.state)).length;
+      const health = Number(machine.healthFindings || machine.recommendations?.length || 0);
+      label.append(input, element("span", "", machine.alias || machine.hostname || machine.agentId), stateBadge(machine.state), element("small", "", `${active} active · ${health} findings · boot ${machine.bootId || "unknown"}`));
+      return label;
+    });
+    if (!targets.length) targets.push(element("p", "recovery-row-meta", "No fleet machines are known."));
+    replaceChildren(refs.fleet_targets, ...targets);
+    const selectedGroup = refs.fleet_group.value;
+    const groupOptions = [element("option", "", "Selected machines")];
+    groupOptions[0].value = "";
+    for (const group of fleet.groups || []) {
+      const option = element("option", "", group.name || group.id);
+      option.value = group.id;
+      groupOptions.push(option);
+    }
+    replaceChildren(refs.fleet_group, ...groupOptions);
+    if ([...refs.fleet_group.options].some((option) => option.value === selectedGroup)) refs.fleet_group.value = selectedGroup;
+    const runs = (fleet.runs || []).slice().sort((left, right) => String(right.createdAt).localeCompare(String(left.createdAt))).slice(0, 8);
+    replaceChildren(refs.fleet_results, ...runs.map((run) => {
+      const row = element("article", "recovery-event-row");
+      const values = Object.values(run.targets || {});
+      row.dataset.fleetRun = run.id;
+      row.append(stateBadge(run.state), element("span", "recovery-event-detail", `${run.name || run.id} · ${values.filter((target) => target.state === "succeeded").length}/${values.length} succeeded${run.stopReason ? ` · ${run.stopReason}` : ""}`));
+      if (["failed", "partial"].includes(run.state)) {
+        const retry = element("button", "", "Retry failed");
+        retry.type = "button";
+        retry.dataset.retryFleet = run.id;
+        row.append(retry);
+      }
+      return row;
+    }));
+    const schedules = (fleet.schedules || []).map((schedule) => element("article", "recovery-event-row", `${schedule.enabled ? "ON" : "OFF"} · ${schedule.name || schedule.id} · ${schedule.nextRunAt || "complete"}`));
+    if (!schedules.length) schedules.push(element("p", "recovery-row-meta", "No saved schedules."));
+    replaceChildren(refs.schedule_list, ...schedules);
+  }
+
+  function renderSessions() {
+    const sessions = snapshot?.sessions || [];
+    const selectedId = snapshot?.selectedSessionId || sessions[0]?.id || "";
+    const tabs = sessions.map((session) => {
+      const button = element("button", `recovery-tab${session.id === selectedId ? " is-active" : ""}`, `${session.title || session.agentId} · ${session.state}`);
+      button.type = "button";
+      button.dataset.sessionId = session.id;
+      return button;
+    });
+    if (!tabs.length) tabs.push(element("span", "recovery-row-meta", "No terminal sessions."));
+    replaceChildren(refs.session_tabs, ...tabs);
+    const output = (snapshot?.sessionEvents || []).filter((event) => event.type === "session.output").map((event) => decodeOutput(event)).join("");
+    refs.session_output.textContent = output || "Open a terminal on the selected machine. Output survives detach and reconnect within the advertised ring window.";
+    refs.session_output.scrollTop = refs.session_output.scrollHeight;
+    const disabled = !selectedId;
+    for (const target of [refs.session_send, refs.session_interrupt, refs.session_detach, refs.session_reconnect, refs.session_terminate]) target.disabled = disabled;
+    const tunnels = (snapshot?.tunnels || []).map((tunnel) => {
+      const row = element("article", "recovery-event-row", `${tunnel.state} · 127.0.0.1:${tunnel.listenPort} → ${tunnel.targetHost}:${tunnel.targetPort}`);
+      if (tunnel.state === "open") {
+        const close = element("button", "", "Close");
+        close.type = "button";
+        close.dataset.closeTunnel = tunnel.id;
+        row.append(close);
+      }
+      return row;
+    });
+    replaceChildren(refs.tunnel_list, ...tunnels);
+    const selectedAdapter = refs.console_adapter.value;
+    const adapters = (snapshot?.consoleAdapters || []).filter((adapter) => adapter.available);
+    const adapterOptions = adapters.map((adapter) => {
+      const option = element("option", "", `${adapter.protocol.toUpperCase()} · ${adapter.id}`);
+      option.value = adapter.id;
+      option.dataset.protocol = adapter.protocol;
+      return option;
+    });
+    if (!adapterOptions.length) {
+      const option = element("option", "", "No installed console adapter");
+      option.value = "";
+      adapterOptions.push(option);
+    }
+    replaceChildren(refs.console_adapter, ...adapterOptions);
+    if ([...refs.console_adapter.options].some((option) => option.value === selectedAdapter)) refs.console_adapter.value = selectedAdapter;
+  }
+
+  function renderIntelligence() {
+    const graph = snapshot?.planGraph;
+    if (graph?.nodes?.length) {
+      const nodes = graph.nodes.map((node) => {
+        const row = element("article", `recovery-plan-node recovery-plan-${node.type || "fact"}`);
+        row.append(element("strong", "", node.label || node.action || node.id), stateBadge(node.verified === true ? "succeeded" : node.state || "observed"), element("span", "recovery-row-meta", node.expectedObservation || node.summary || ""));
+        return row;
+      });
+      replaceChildren(refs.plan_graph, ...nodes);
+      const proofs = graph.nodes.filter((node) => node.type === "proof");
+      refs.proof_summary.textContent = `${proofs.filter((node) => node.verified).length}/${proofs.length} proofs verified · current hypothesis ${graph.currentHypothesisId || "none"} · next action ${graph.nextActionId || "none"}`;
+    } else {
+      refs.plan_graph.textContent = "No autonomous plan graph has been recorded.";
+      refs.proof_summary.textContent = "Final repair proof is required; exit zero alone is insufficient.";
+    }
+    const lanes = snapshot?.nextStage || {};
+    const panels = [];
+    const laneOperations = {
+      continuity: [
+        ["Machines", "store", "listMachines"], ["Timeline", "store", "getTimeline"], ["Inventory diff", "store", "diffMachine"], ["Health", "health", "recommendations"],
+        ["Vault snapshots", "vault", "listSnapshots"], ["Vault diff", "vault", "diffSnapshots"], ["Vault scrub", "vault", "scrub"], ["Vault restore", "vault", "restoreSnapshot"], ["Vault capacity", "vault", "getStats"],
+      ],
+      sync: [
+        ["Folder status", "engine", "getFolderStatus"], ["Peer status", "engine", "getPeerStatus"], ["Conflicts", "engine", "getConflicts"], ["Resolve conflict", "engine", "resolveConflict"],
+        ["Versions", "engine", "getVersions"], ["Run sync", "engine", "sync"], ["Pause", "engine", "pause"], ["Resume", "engine", "resume"],
+      ],
+      imaging: [
+        ["Image catalog", "catalog", "list"], ["Capture", "catalog", "capture"], ["Verify image", "catalog", "verify"], ["Inspect", "catalog", "inspect"],
+        ["Deployment plan", "provisioning", "planDeployment"], ["Deploy plan", "provisioning", "deploy"],
+      ],
+      salvage: [
+        ["Inventory", "engine", "inventory"], ["Capacity plan", "engine", "estimateCapacity"], ["Build plan", "engine", "plan"], ["Start", "engine", "start"], ["Resume", "engine", "resume"],
+        ["Progress", "engine", "getProgress"], ["Preview", "engine", "preview"], ["Manifest", "engine", "getManifest"],
+      ],
+    };
+    for (const [lane, adapter] of Object.entries(lanes)) {
+      if (!adapter.available) continue;
+      const panel = element("section", "recovery-utility-card");
+      panel.append(element("strong", "", `${lane} · active`), element("span", "recovery-row-meta", stringify(adapter.capabilities || {})));
+      const controls = element("div", "recovery-button-row");
+      for (const [label, component, method] of laneOperations[lane] || []) {
+        const button = element("button", "button button-small", label);
+        button.type = "button";
+        button.dataset.lane = lane;
+        button.dataset.component = component;
+        button.dataset.method = method;
+        controls.append(button);
+      }
+      panel.append(controls);
+      panels.push(panel);
+    }
+    if (!panels.length) panels.push(element("p", "recovery-row-meta", "Optional continuity, sync, imaging, and salvage lanes activate automatically when installed."));
+    replaceChildren(refs.next_stage_panels, ...panels);
+  }
+
+  const paletteOperations = [
+    ["fleet", "Execute fleet command", "fleet-command"], ["inventory", "Refresh machine health", "inventory"], ["terminal", "Open interactive terminal", "terminal"],
+    ["tunnel", "Open TCP tunnel", "tunnel"], ["console", "Launch strongest console", "console"], ["autonomy", "Run autonomous case", "autonomy"],
+    ["takeover", "Manual takeover", "takeover"], ["argv", "Execute raw argv", "argv"], ["shell", "Run unrestricted shell", "shell"],
+    ["artifact", "Upload artifact", "artifact"], ["wake", "Send Wake-on-LAN", "wake"], ["pxe", "Start PXE plane", "pxe"],
+    ["vault", "Browse continuity vault", "lane-continuity"], ["sync", "Inspect sync convergence", "lane-sync"], ["image", "Open image catalog", "lane-imaging"], ["salvage", "Open salvage planner", "lane-salvage"],
+  ];
+
+  function laneOperationArgs(lane, method, input = {}) {
+    const selected = input.machineId || snapshot?.selectedAgentId || "";
+    if (["listMachines", "getStats", "list"].includes(method)) return method === "listMachines" ? [input.query || {}] : method === "list" ? [input.query || {}] : [];
+    if (method === "getTimeline") return [selected, input.query || {}];
+    if (method === "diffMachine") return [selected, input.from, input.to];
+    if (method === "recommendations") return [selected];
+    if (method === "listSnapshots") return [input.query || {}];
+    if (method === "diffSnapshots") return [input.left || input.leftSnapshotId, input.right || input.rightSnapshotId];
+    if (method === "scrub") return [input.options || input];
+    if (method === "restoreSnapshot") return [input.snapshotId, input.destination, input.options || {}];
+    if (["getFolderStatus", "sync", "pause", "resume"].includes(method) && lane === "sync") return [input.folderId, input.options || {}];
+    if (method === "getPeerStatus") return [input.peerId];
+    if (method === "getConflicts") return [input.folderId, input.query || {}];
+    if (method === "resolveConflict") return [input.conflictId, input.resolution];
+    if (method === "getVersions") return [input.path || "", input.query || {}];
+    if (method === "capture") return [input.source, input.options || {}];
+    if (["verify", "inspect"].includes(method)) return [input.imageId, input.options || {}];
+    if (method === "planDeployment") return [input.plan || input];
+    if (method === "deploy") return [input.plan || input, input.options || {}];
+    if (method === "inventory") return [input.source, input.options || {}];
+    if (method === "estimateCapacity") return [input.inventory || input.inventoryId, input.destinations || [], input.options || {}];
+    if (method === "plan") return [input.inventory || input.inventoryId, input.destinations || [], input.options || {}];
+    if (["start", "resume"].includes(method) && lane === "salvage") return [input.job || input.jobId, input.options || {}];
+    if (method === "getProgress") return [input.jobId];
+    if (method === "preview") return [input.path, input.options || {}];
+    if (method === "getManifest") return [input.jobId, input.options || {}];
+    return Array.isArray(input.args) ? input.args : [];
+  }
+
+  function renderPalette() {
+    const query = refs.command_palette_query.value.trim().toLowerCase();
+    const matches = paletteOperations.filter((record) => !query || record.slice(0, 2).join(" ").toLowerCase().includes(query));
+    replaceChildren(refs.command_palette_results, ...matches.map(([key, label, operation]) => {
+      const button = element("button", "recovery-command-palette-item", label);
+      button.type = "button";
+      button.dataset.paletteOperation = operation;
+      button.append(element("kbd", "", key));
+      return button;
+    }));
+  }
+
+  function togglePalette(open) {
+    refs.command_palette.hidden = !open;
+    if (open) {
+      refs.command_palette_query.value = "";
+      renderPalette();
+      refs.command_palette_query.focus();
+    }
+  }
+
   function renderBusy() {
     const unavailable = !snapshot?.controller?.connected;
     const busy = Object.keys(snapshot?.busy || {}).length > 0;
@@ -530,6 +742,11 @@ export function createRecoveryRenderer({
     refs.stop_case.disabled = refs.stop_case.disabled || unavailable || busy;
     refs.upload.disabled = unavailable || busy;
     refs.wake.disabled = unavailable || busy || !refs.wake_mac.value.trim();
+    refs.fleet_execute.disabled = unavailable || busy;
+    refs.fleet_inventory.disabled = unavailable || busy;
+    refs.session_open.disabled = unavailable || busy || !snapshot?.selectedAgentId;
+    refs.tunnel_open.disabled = unavailable || busy || !snapshot?.selectedAgentId;
+    refs.console_open.disabled = unavailable || busy || !refs.console_adapter.value;
   }
 
   function render() {
@@ -544,6 +761,9 @@ export function createRecoveryRenderer({
     renderEvents();
     renderArtifacts();
     renderPxe();
+    renderFleet();
+    renderSessions();
+    renderIntelligence();
     renderBusy();
   }
 
@@ -618,6 +838,50 @@ export function createRecoveryRenderer({
     } catch (error) {
       refs.command_exact.textContent = error.message;
     }
+  }
+
+  function fleetRequest(operation) {
+    return {
+      targetIds: [...selectedFleetTargets],
+      groupId: refs.fleet_group.value || "",
+      query: refs.fleet_query.value.trim() || "",
+      operation,
+      rollout: {
+        mode: refs.fleet_rollout.value,
+        concurrency: Math.max(1, Number(refs.fleet_concurrency.value) || 1),
+        canaryCount: 1,
+        stop: refs.fleet_rollout.value === "canary" ? { onAnyFailure: true } : {},
+      },
+    };
+  }
+
+  async function executeFleetCommand() {
+    const argv = parseArgv(refs.fleet_command.value);
+    if (!argv.length) throw new Error("Enter exact fleet argv first.");
+    return perform(() => api().executeFleet(fleetRequest({ type: "command", argv, force: refs.force.checked })), { success: `Fleet rollout submitted to ${selectedFleetTargets.size || refs.fleet_group.value || "query"}.` });
+  }
+
+  async function openTerminal() {
+    if (!snapshot?.selectedAgentId) throw new Error("Select a recovery machine first.");
+    return perform(() => api().openSession({ agentId: snapshot.selectedAgentId, caseId: snapshot.selectedCaseId || "", cwd: refs.session_cwd.value.trim() || "" }), { success: "Interactive terminal opened." });
+  }
+
+  function paletteOperation(operation) {
+    togglePalette(false);
+    if (operation === "fleet-command") { refs.fleet_command.focus(); return; }
+    if (operation === "inventory") { refs.inventory.click(); return; }
+    if (operation === "terminal") { refs.session_open.click(); return; }
+    if (operation === "tunnel") { refs.tunnel_port.focus(); return; }
+    if (operation === "console") { refs.console_target.focus(); return; }
+    if (operation === "autonomy") { refs.run_case.click(); return; }
+    if (operation === "takeover") { refs.manual_takeover.click(); return; }
+    if (operation === "argv") { setConsoleMode("command"); refs.command.focus(); return; }
+    if (operation === "shell") { setConsoleMode("shell"); refs.shell.focus(); return; }
+    if (operation === "artifact") { refs.upload_path.focus(); return; }
+    if (operation === "wake") { refs.wake_mac.focus(); return; }
+    if (operation === "pxe") { refs.pxe_start.click(); return; }
+    const lane = operation.replace(/^lane-/, "");
+    refs.next_stage_panels.querySelector(`[data-lane="${lane}"]`)?.click();
   }
 
   function bind() {
@@ -715,6 +979,67 @@ export function createRecoveryRenderer({
     refs.pxe_local.addEventListener("click", () => void perform(() => api().setBootPolicy({
       mac: refs.wake_mac.value.trim(), next: "local", after: "local", name: snapshot?.selectedAgent?.hostname || "",
     }), { success: "Selected MAC is set to local boot." }).catch(() => {}));
+    refs.fleet_targets.addEventListener("change", (event) => {
+      const input = event.target.closest("[data-fleet-target]");
+      if (!input) return;
+      if (input.checked) selectedFleetTargets.add(input.dataset.fleetTarget);
+      else selectedFleetTargets.delete(input.dataset.fleetTarget);
+      renderFleet();
+    });
+    refs.fleet_execute.addEventListener("click", () => void executeFleetCommand().catch((error) => showMessage(error.message, "error")));
+    refs.fleet_inventory.addEventListener("click", () => void perform(() => api().executeFleet(fleetRequest({ type: "health-refresh" })), { success: "Fleet health refresh submitted." }).catch(() => {}));
+    refs.fleet_results.addEventListener("click", (event) => {
+      const retry = event.target.closest("[data-retry-fleet]");
+      if (retry) void perform(() => api().retryFleetFailed(retry.dataset.retryFleet), { success: "Failed fleet targets queued again." }).catch(() => {});
+    });
+    refs.schedule_save.addEventListener("click", () => void perform(() => {
+      const spec = JSON.parse(refs.schedule_spec.value || "{}");
+      if (!spec.at && !spec.everyMs && !spec.timing?.everyMs) throw new Error("Schedule JSON requires at or everyMs.");
+      return api().saveFleetSchedule({ ...spec, selection: fleetRequest({}).selection || { targetIds: [...selectedFleetTargets], groupId: refs.fleet_group.value, query: refs.fleet_query.value.trim() }, operation: spec.operation || { type: "command", argv: parseArgv(refs.fleet_command.value) }, rollout: spec.rollout || fleetRequest({}).rollout });
+    }, { success: "Restart-safe fleet schedule saved." }).catch((error) => showMessage(error.message, "error")));
+    refs.session_open.addEventListener("click", () => void openTerminal().catch((error) => showMessage(error.message, "error")));
+    refs.session_tabs.addEventListener("click", (event) => {
+      const tab = event.target.closest("[data-session-id]");
+      if (tab) void perform(() => api().selectSession(tab.dataset.sessionId), { refresh: false }).then(setState).catch(() => {});
+    });
+    refs.session_send.addEventListener("click", () => void perform(() => api().sessionInput({ sessionId: snapshot?.selectedSessionId, data: refs.session_input.value }), { success: "Terminal input sent." }).then(() => { refs.session_input.value = ""; }).catch(() => {}));
+    refs.session_interrupt.addEventListener("click", () => void perform(() => api().sessionSignal({ sessionId: snapshot?.selectedSessionId, signal: "SIGINT" }), { success: "SIGINT delivered." }).catch(() => {}));
+    refs.session_detach.addEventListener("click", () => void perform(() => api().sessionDetach(snapshot?.selectedSessionId), { success: "Terminal detached; process remains on the agent." }).catch(() => {}));
+    refs.session_reconnect.addEventListener("click", () => void perform(() => api().sessionReconnect(snapshot?.selectedSessionId), { success: "Terminal output replayed from the last sequence." }).catch(() => {}));
+    refs.session_terminate.addEventListener("click", () => void perform(() => api().sessionTerminate(snapshot?.selectedSessionId), { success: "Terminal termination requested." }).catch(() => {}));
+    refs.tunnel_open.addEventListener("click", () => void perform(() => api().openTunnel({ agentId: snapshot?.selectedAgentId, targetHost: refs.tunnel_host.value.trim(), targetPort: Number(refs.tunnel_port.value), listenHost: "127.0.0.1" }), { success: "TCP tunnel opened through selected agent." }).catch(() => {}));
+    refs.tunnel_list.addEventListener("click", (event) => {
+      const close = event.target.closest("[data-close-tunnel]");
+      if (close) void perform(() => api().closeTunnel(close.dataset.closeTunnel), { success: "Tunnel closed." }).catch(() => {});
+    });
+    refs.console_open.addEventListener("click", () => void perform(() => {
+      const option = refs.console_adapter.selectedOptions[0];
+      return api().launchConsole({ adapterId: refs.console_adapter.value, protocol: option?.dataset.protocol || "ssh", target: refs.console_target.value.trim() });
+    }, { success: "Console adapter launched with exact configured argv." }).catch(() => {}));
+    refs.manual_takeover.addEventListener("click", () => void perform(async () => {
+      if (!snapshot?.selectedCaseId) throw new Error("Select an autonomous case first.");
+      try { await api().submitCaseAction({ caseId: snapshot.selectedCaseId, action: { type: "planner.takeover", reason: "desktop-manual-takeover" } }); }
+      catch { await api().stopCase(snapshot.selectedCaseId); }
+    }, { success: "Autonomy stopped for unrestricted manual takeover." }).catch(() => {}));
+    refs.next_stage_panels.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-lane][data-method]");
+      if (!button) return;
+      let input;
+      try { input = JSON.parse(refs.next_stage_input.value.trim() || "{}"); }
+      catch (error) { showMessage(`Lane operation JSON: ${error.message}`, "error"); return; }
+      const args = laneOperationArgs(button.dataset.lane, button.dataset.method, input);
+      void perform(() => api().invokeNextStage({ lane: button.dataset.lane, component: button.dataset.component, method: button.dataset.method, args }), { refresh: false }).then((result) => {
+        refs.next_stage_output.textContent = stringify(result);
+        showMessage(`${button.textContent} completed.`, "success");
+      }).catch(() => {});
+    });
+    refs.command_palette_open.addEventListener("click", () => togglePalette(true));
+    refs.command_palette_close.addEventListener("click", () => togglePalette(false));
+    refs.command_palette_query.addEventListener("input", renderPalette);
+    refs.command_palette_results.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-palette-operation]");
+      if (button) paletteOperation(button.dataset.paletteOperation);
+    });
     updateCommandPreview();
     setConsoleMode("command");
   }
@@ -729,6 +1054,17 @@ export function createRecoveryRenderer({
     if (commandKey && !event.altKey && event.key === "2") {
       event.preventDefault();
       switchWorkspace("recovery");
+      return true;
+    }
+    if (commandKey && !event.altKey && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      switchWorkspace("recovery");
+      togglePalette(true);
+      return true;
+    }
+    if (!refs.command_palette.hidden && event.key === "Escape") {
+      event.preventDefault();
+      togglePalette(false);
       return true;
     }
     if (workspace !== "recovery") return false;

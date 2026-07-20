@@ -1,5 +1,10 @@
 # WorkWire LAN recovery portal
 
+For the live HINOKI/Sakura fleet topology, autonomous convergence, privilege
+parity proofs, and shutdown gate, follow
+[AGENT-OPERATIONS.md](./AGENT-OPERATIONS.md). This document defines the general
+recovery product surface.
+
 WorkWire Recovery is a parallel, root-capable control plane for operator-owned machines on a private wired LAN. It does not replace or weaken the paired file desk: file synchronization remains on port 4851, while recovery uses its own controller, identities, durable state, and protocol on ports 4852 and 4853.
 
 The recovery plane can discover installed or PXE-live agents, collect hardware and storage inventory, run unrestricted argv or Bash as the agent's actual user (normally root), execute typed disk/filesystem/boot actions, move resumable artifacts, wake machines, and drive an autonomous case loop. Do not expose these ports through an internet router.
@@ -30,6 +35,12 @@ sudo npm run recovery:agent-install -- --controller http://192.168.8.104:4852
 The installer is idempotent. `ww recovery agent status` reports the unit; `ww recovery agent uninstall` stops and removes the unit/runtime but preserves `/var/lib/workwire-recovery` by default.
 
 ## Desktop workspace
+
+By default a desk uses its local embedded controller. Set
+`WW_RECOVERY_CONTROLLER_URL`, or `extensions.clientUrl` in `controller.json`, to
+attach it to a fleet controller. An explicit remote controller is authoritative:
+if unavailable, the desk reports the failure and does not silently create a
+local split-brain controller.
 
 Open WorkWire and switch between Files and Recovery with the compact switch, or use:
 
@@ -117,7 +128,11 @@ The recovery agent is pure Node + `ws` and runs natively on Windows. On `win32` 
 npm run recovery:agent-windows-bundle -- --download-node   # artifacts/ww-recovery-agent-windows.zip (self-contained, embeds node.exe)
 ```
 
-Transfer the zip to the target (USB, share, or `cd artifacts && python3 -m http.server 8800` on the controller host and download from the target's browser). Unpack, then in an **elevated** PowerShell inside the folder:
+Bootstrap a new target through any operator-controlled transport. Once a target
+agent is online, all upgrades use `recovery put` plus `recovery exec`; no browser,
+interactive elevation, or human-local console is required. Build the bundle,
+upload it to a named staging directory, validate the PowerShell parser result,
+and invoke the installer through the existing root/SYSTEM agent:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File install-ww-recovery-agent-windows.ps1 install -Controller http://192.168.8.104:4852
@@ -125,7 +140,17 @@ powershell -ExecutionPolicy Bypass -File install-ww-recovery-agent-windows.ps1 s
 powershell -ExecutionPolicy Bypass -File install-ww-recovery-agent-windows.ps1 uninstall
 ```
 
-The installer registers a `WorkWire Recovery Agent` scheduled task (SYSTEM, at startup, restarts every minute on failure, no time limit, survives battery transitions). Hibernate/resume keeps the process alive; the agent's reconnect loop restores the socket. Uninstall preserves config, agent-id, and state.
+The installer fully stages a new runtime, then delegates the live swap to the
+separate `WorkWire Recovery Agent Update` SYSTEM task. Stopping the agent task
+would terminate its child processes, so the independent updater is required for
+a truthful self-update. It preserves the previous runtime, rolls back and
+restarts it on failure, and records a redacted JSON result under
+`%ProgramData%\WorkWire`. The installed `WorkWire Recovery Agent` task runs as
+SYSTEM with startup, restart-on-failure, and repeated one-minute triggers. The
+Windows file service also watches that exact companion task and starts it when
+the process is absent. Hibernate/resume keeps the process alive; the agent's
+reconnect loop restores the socket. Uninstall preserves config, agent-id, and
+state.
 
 ## Fedora PXE host
 
@@ -157,7 +182,12 @@ The Fedora host builds through a pinned Debian bookworm live-build container. It
 
 `--reuse-rootfs` retains live-build caches between iterations. Generated multi-gigabyte artifacts live in the recovery state directory and are excluded from the normal Electron package.
 
-The prototype live console is root-capable and starts SSH as a fallback. The build-time `WW_RECOVERY_ROOT_PASSWORD` controls its root password; the documented prototype default is `workwire`. Change it for any environment beyond the isolated lab. The live system never auto-mounts patient filesystems or enables patient swap; mdraid/LVM/LUKS activation remains an explicit job or shell command.
+The prototype live console is root-capable and starts SSH as a fallback. The
+build-time `WW_RECOVERY_ROOT_PASSWORD` supplies its console credential; inject it
+from protected state and never record the value in source, argv, logs, or
+documentation. The live system never auto-mounts patient filesystems or enables
+patient swap; mdraid/LVM/LUKS activation remains an explicit job or shell
+command.
 
 ## QEMU validation
 
@@ -171,9 +201,9 @@ npm run recovery:test:qemu -- --image /path/to/boot/live --disk-size 6G --memory
 
 The harness creates only a named qcow2 inside a timestamped workspace output directory, boots the live kernel/initrd with user networking, waits for the agent, partitions/formats/mounts a disposable virtio disk, writes and reads a marker, backs up and deliberately corrupts/restores GPT, repairs ext4, round-trips artifacts, verifies stable agent ID with a new boot ID after reboot, and powers off through WorkWire. It retains controller/serial/summary logs but removes the disposable qcow2. KVM is used when accessible; otherwise QEMU TCG is used.
 
-## Physical facts and remaining lab validation
+## Physical validation contract
 
-Software cannot power a machine whose NIC/motherboard has no standby power, and it cannot change generic firmware settings that the firmware does not expose. Before the first physical target test:
+Software cannot power a machine whose NIC/motherboard has no standby power, and it cannot change generic firmware settings that the firmware does not expose. An autonomous agent must distinguish that external physical condition from software failure and continue every software/QEMU/disposable-fixture gate. Before the first physical target test:
 
 1. Connect controller and disposable target by wired LAN and confirm the subnet/router DHCP.
 2. Enable PXE/network boot and Wake-on-LAN once in UEFI/BIOS; disable Secure Boot only if unsigned iPXE is rejected.

@@ -1,0 +1,63 @@
+{
+  "benchmark": "recovery-fleet-commander-real-loopback",
+  "generatedAt": "2026-07-20T00:34:55.568Z",
+  "platform": {
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v22.22.0"
+  },
+  "configuration": {
+    "agents": 3,
+    "rounds": 6,
+    "rolloutConcurrency": 2
+  },
+  "registration": {
+    "allAgentsOnlineMs": 833.069
+  },
+  "fleetEndToEnd": {
+    "all-at-once": {
+      "samples": 2,
+      "minMs": 253.925,
+      "medianMs": 253.925,
+      "p95Ms": 415.66,
+      "maxMs": 415.66
+    },
+    "bounded": {
+      "samples": 2,
+      "minMs": 288.088,
+      "medianMs": 288.088,
+      "p95Ms": 353.915,
+      "maxMs": 353.915
+    },
+    "canary": {
+      "samples": 2,
+      "minMs": 274.388,
+      "medianMs": 274.388,
+      "p95Ms": 397.584,
+      "maxMs": 397.584
+    }
+  },
+  "interactive": {
+    "openRoundTripMs": 19.962,
+    "inputToObservedOutputMs": 13.073,
+    "eventCount": 4,
+    "terminalMode": "linux-pty-script"
+  },
+  "evidence": {
+    "exactTargetResults": 18,
+    "exactOutputEvents": 18,
+    "lostTargetResults": 0,
+    "terminalOutputGap": false
+  },
+  "optionalLanes": {
+    "continuity": true,
+    "sync": true,
+    "imaging": true,
+    "salvage": true
+  },
+  "assertions": {
+    "threeOrMoreRealAgents": true,
+    "everyTargetHadExactEvidence": true,
+    "terminalRoundTripObserved": true
+  }
+}

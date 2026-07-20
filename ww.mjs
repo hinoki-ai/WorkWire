@@ -23,11 +23,15 @@ import {
 import { WW_BEACON_PORTS, createWwLanBeacon } from "./lib/ww-beacon.mjs";
 import { createRemoteWwClient } from "./lib/ww-client.mjs";
 import { WW_APP_VERSION, buildWwBuildInfo } from "./lib/ww-compat.mjs";
-import { createWwMirror } from "./lib/ww-mirror.mjs";
+import {
+  WW_MIRROR_MUTATION_IDLE_MS,
+  createWwMirror,
+} from "./lib/ww-mirror.mjs";
 import { createWwService } from "./lib/ww-service.mjs";
 import { loadRecoveryConfig } from "./lib/recovery/ww-recovery-config.mjs";
 import { createRecoveryController } from "./lib/recovery/ww-recovery-controller.mjs";
 import { runRecoveryCli } from "./lib/recovery/ww-recovery-cli.mjs";
+import { createWindowsRecoveryAgentCompanionWatchdog } from "./lib/recovery/ww-recovery-companion-watchdog.mjs";
 import {
   WW_UPDATE_PROTOCOL_VERSION,
   createWwReleaseActivator,
@@ -431,9 +435,9 @@ export function buildWwDesktopLaunchSpec({
     };
   }
 
-  const electronCliPath = path.join(baseDir, "node_modules", "electron", "cli.js");
+  const electronCliPath = path.posix.join(baseDir, "node_modules", "electron", "cli.js");
   const launchEnv = buildLinuxLaunchEnv(env, platform, LINUX_WW_DESKTOP_ENTRY_NAME);
-  const desktopEntryPath = path.join(baseDir, "desktop", "ww-main.cjs");
+  const desktopEntryPath = path.posix.join(baseDir, "desktop", "ww-main.cjs");
   return {
     command: nodePath,
     args: [electronCliPath, desktopEntryPath, ...argv],
@@ -533,6 +537,7 @@ export async function runServeCommand({
   loadWwConfigImpl = loadWwConfig,
   loadRecoveryConfigImpl = loadRecoveryConfig,
   createRecoveryControllerImpl = createRecoveryController,
+  createRecoveryCompanionWatchdogImpl = createWindowsRecoveryAgentCompanionWatchdog,
   enableRecovery = createWwServiceImpl === createWwService,
   setTimeoutImpl = setTimeout,
   processImpl = process,
@@ -546,6 +551,7 @@ export async function runServeCommand({
   let releaseActivator = null;
   let recoveryController = null;
   let recoveryInfo = null;
+  let recoveryCompanionWatchdog = null;
   let shutdownPromise = null;
   let peerUpdatePromise = Promise.resolve();
   const serviceLog = (message = "") => writeWwLog(stdout, message);
@@ -642,6 +648,7 @@ export async function runServeCommand({
     onLaunchDesktop: queueDesktopLaunch,
     onPairPeer: rememberIncomingPeerIdentity,
     getTrustedPeerMachineId: () => String(config.peer.machineId || "").trim(),
+    getMirrorStatus: () => mirror?.getStatus?.() || null,
     updateBundlePath: path.join(__dirname, "dist", "ww", `ww-linux-${process.arch}.tar.gz`),
   });
 
@@ -660,6 +667,12 @@ export async function runServeCommand({
       return current;
     });
   }
+
+  recoveryCompanionWatchdog = createRecoveryCompanionWatchdogImpl({
+    platform: processImpl.platform || process.platform,
+    log: serviceLog,
+  });
+  recoveryCompanionWatchdog?.start?.();
 
   if (enableRecovery) {
     try {
@@ -752,6 +765,12 @@ export async function runServeCommand({
     getPeer: () => config.peer,
     machineId: config.service.machineId,
     expectedRemoteRootPath: String(config.peer.remotePath || "").trim() || serviceInfo.rootPath,
+    isReadyToSync: () => {
+      const activity = service?.getActivityStatus?.();
+      if (!activity) return true;
+      return Number(activity.activeRequests) === 0
+        && Date.now() - Number(activity.lastMutationAt || 0) >= WW_MIRROR_MUTATION_IDLE_MS;
+    },
     log: serviceLog,
   });
   mirror.start();
@@ -774,6 +793,7 @@ export async function runServeCommand({
       await peerUpdatePromise.catch(() => {});
       await mirror?.stop().catch(() => {});
       await beaconController?.stop().catch(() => {});
+      recoveryCompanionWatchdog?.stop?.();
       await recoveryController?.stop().catch(() => {});
       await service.stop().catch(() => {});
       processImpl.exit(Number(exitCode) || 0);

@@ -11,6 +11,7 @@ import { createRecoveryInventoryCollector, parseWindowsDisks } from "../lib/reco
 import {
   collectInterfaceMacAddresses,
   resolveRecoveryAgentIdentity,
+  resolveWindowsBootId,
 } from "../lib/recovery/ww-recovery-agent-id.mjs";
 
 test("recovery platform defaults route Windows state into ProgramData", () => {
@@ -158,6 +159,38 @@ test("recovery identity falls back to runtime interface MACs and persists on Win
   assert.equal(first.agentId, second.agentId);
   assert.equal(second.stability, "installed-persistent");
   await fs.rm(root, { recursive: true, force: true });
+});
+
+test("Windows recovery boot identity survives process restart and changes only with the OS boot counter", async () => {
+  const calls = [];
+  const registry = (value) => (file, args, options, callback) => {
+    calls.push({ file, args, options });
+    callback(null, `HKEY_LOCAL_MACHINE\\...\r\n    BootId    REG_DWORD    0x${value}\r\n`, "");
+  };
+  const first = await resolveWindowsBootId({ execFileImpl: registry("6") });
+  const restarted = await resolveWindowsBootId({ execFileImpl: registry("6") });
+  const rebooted = await resolveWindowsBootId({ execFileImpl: registry("7") });
+  assert.equal(first, "win32-boot-00000006");
+  assert.equal(restarted, first);
+  assert.notEqual(rebooted, first);
+  assert.equal(calls.every((call) => call.file === "reg.exe" && call.args.at(-1) === "BootId"), true);
+});
+
+test("Windows recovery boot identity falls back to stable CIM last-boot time", async () => {
+  const execFileImpl = (file, args, options, callback) => {
+    if (file === "reg.exe") {
+      const error = new Error("missing registry value");
+      error.code = 1;
+      callback(error, "", "missing");
+      return;
+    }
+    assert.equal(file, "powershell.exe");
+    callback(null, "2026-07-19T05:39:56.6323620Z\r\n", "");
+  };
+  const first = await resolveWindowsBootId({ execFileImpl, hostnameImpl: () => "SAKURA" });
+  const restarted = await resolveWindowsBootId({ execFileImpl, hostnameImpl: () => "SAKURA" });
+  assert.match(first, /^win32-cim-[0-9a-f]{24}$/u);
+  assert.equal(restarted, first);
 });
 
 test("recovery actions on win32 hibernate by default and translate process and service verbs", async () => {

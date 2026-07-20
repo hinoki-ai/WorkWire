@@ -48,6 +48,7 @@ export function createDesktopRecoveryManager({
   createControllerImpl = createRecoveryController,
   createClientImpl = createRecoveryClient,
   createBootManagerImpl = createRecoveryBootManager,
+  env = process.env,
   onState = () => {},
   log = () => {},
   refreshIntervalMs = REFRESH_INTERVAL_MS,
@@ -66,6 +67,7 @@ export function createDesktopRecoveryManager({
   let refreshQueued = false;
   let pxeStartedHere = false;
   let clientUrl = "";
+  let explicitClientUrl = "";
 
   const state = {
     controller: {
@@ -87,6 +89,21 @@ export function createDesktopRecoveryManager({
     artifacts: [],
     playbooks: [],
     playbookPlan: null,
+    planGraph: null,
+    procedure: null,
+    nextStage: {},
+    fleet: {
+      machines: [],
+      groups: [],
+      queries: [],
+      schedules: [],
+      runs: [],
+    },
+    sessions: [],
+    selectedSessionId: "",
+    sessionEvents: [],
+    tunnels: [],
+    consoleAdapters: [],
     pxe: {
       configured: false,
       running: false,
@@ -276,7 +293,7 @@ export function createDesktopRecoveryManager({
       if (!quiet) setBusy("refresh", true);
       try {
         const activeClient = requireClient();
-        const [info, agents, cases, playbooks, macAddresses] = await Promise.all([
+        const [info, agents, cases, playbooks, macAddresses, nextStage, fleet, sessions, tunnels, consoleAdapters] = await Promise.all([
           activeClient.getInfo(),
           activeClient.listAgents(),
           activeClient.listCases(),
@@ -284,6 +301,11 @@ export function createDesktopRecoveryManager({
           typeof activeClient.listMacAddresses === "function"
             ? activeClient.listMacAddresses().catch(() => state.macAddresses)
             : Promise.resolve(state.macAddresses),
+          typeof activeClient.getNextStage === "function" ? activeClient.getNextStage().catch(() => state.nextStage) : Promise.resolve(state.nextStage),
+          typeof activeClient.getFleet === "function" ? activeClient.getFleet().catch(() => state.fleet) : Promise.resolve(state.fleet),
+          typeof activeClient.listSessions === "function" ? activeClient.listSessions().catch(() => state.sessions) : Promise.resolve(state.sessions),
+          typeof activeClient.listTunnels === "function" ? activeClient.listTunnels().catch(() => state.tunnels) : Promise.resolve(state.tunnels),
+          typeof activeClient.discoverConsoles === "function" ? activeClient.discoverConsoles().catch(() => state.consoleAdapters) : Promise.resolve(state.consoleAdapters),
         ]);
         state.controller.info = info;
         state.controller.connected = true;
@@ -292,6 +314,25 @@ export function createDesktopRecoveryManager({
         state.cases = sortNewest(cases);
         state.playbooks = Array.isArray(playbooks) ? playbooks : [];
         state.macAddresses = Array.isArray(macAddresses) ? macAddresses : [];
+        state.nextStage = nextStage || {};
+        const fleetState = fleet || state.fleet;
+        state.fleet = {
+          ...fleetState,
+          groups: Array.isArray(fleetState.groups) ? fleetState.groups : Object.values(fleetState.groups || {}),
+          queries: Array.isArray(fleetState.queries) ? fleetState.queries : Object.values(fleetState.queries || {}),
+          schedules: Array.isArray(fleetState.schedules) ? fleetState.schedules : Object.values(fleetState.schedules || {}),
+          runs: Array.isArray(fleetState.runs) ? fleetState.runs : Object.values(fleetState.runs || {}),
+        };
+        state.fleet.machines = state.agents.map((agent) => {
+          const metadata = fleetState.machines?.find?.((candidate) => candidate.agentId === agent.agentId) || fleetState.machines?.[agent.agentId] || {};
+          return { ...agent, ...metadata };
+        });
+        state.sessions = Array.isArray(sessions) ? sessions : [];
+        state.tunnels = Array.isArray(tunnels) ? tunnels : [];
+        state.consoleAdapters = Array.isArray(consoleAdapters) ? consoleAdapters : [];
+        if (state.selectedSessionId && typeof activeClient.listSessionEvents === "function") {
+          state.sessionEvents = await activeClient.listSessionEvents(state.selectedSessionId).catch(() => state.sessionEvents);
+        }
         if (state.selectedCaseId && !eventSubscription) subscribeToCase(state.selectedCaseId);
 
         if (state.selectedAgentId && !state.agents.some((agent) => agent.agentId === state.selectedAgentId)) {
@@ -311,6 +352,8 @@ export function createDesktopRecoveryManager({
             state.selectedCase = detail.case;
             state.jobs = sortNewest(detail.jobs);
             state.artifacts = sortNewest(detail.artifacts);
+            state.planGraph = detail.planGraph || null;
+            state.procedure = detail.procedure || null;
           }
         }
         await refreshPxeStatus();
@@ -341,9 +384,18 @@ export function createDesktopRecoveryManager({
     setBusy("startup", true);
     try {
       config = await loadConfigImpl();
+      explicitClientUrl = String(
+        env.WW_RECOVERY_CONTROLLER_URL
+        || config.extensions?.clientUrl
+        || "",
+      ).trim();
+      clientUrl = explicitClientUrl;
       try {
         await attachClient();
       } catch (attachError) {
+        // An explicit remote controller is a fleet invariant. Starting a local
+        // fallback here would create a split-brain cockpit with fewer agents.
+        if (explicitClientUrl) throw attachError;
         try {
           const info = await startEmbeddedController();
           clientUrl = info.localUrl || `http://127.0.0.1:${info.port}`;
@@ -425,6 +477,8 @@ export function createDesktopRecoveryManager({
     state.jobs = [];
     state.artifacts = [];
     state.events = [];
+    state.planGraph = null;
+    state.procedure = null;
     if (!id) {
       emit("case-cleared");
       return getState();
@@ -440,6 +494,8 @@ export function createDesktopRecoveryManager({
       state.selectedAgentId = detail.case.targetAgentId;
       state.jobs = sortNewest(detail.jobs);
       state.artifacts = sortNewest(detail.artifacts);
+      state.planGraph = detail.planGraph || null;
+      state.procedure = detail.procedure || null;
       for (const event of events.slice(-MAX_VISIBLE_EVENTS)) appendEvent(event);
       subscribeToCase(id);
       emit("case-selected");
@@ -671,6 +727,121 @@ export function createDesktopRecoveryManager({
     return result;
   }
 
+  async function setFleetMachine({ agentId, patch = {} } = {}) {
+    const record = await requireClient().setFleetMachine(requireAgentId(agentId), patch);
+    scheduleRefresh();
+    return record;
+  }
+
+  async function saveFleetGroup(input = {}) {
+    const record = await requireClient().saveFleetGroup(input);
+    scheduleRefresh();
+    return record;
+  }
+
+  async function saveFleetQuery(input = {}) {
+    const record = await requireClient().saveFleetQuery(input);
+    scheduleRefresh();
+    return record;
+  }
+
+  async function executeFleet(input = {}) {
+    const run = await requireClient().executeFleet(input);
+    scheduleRefresh();
+    return run;
+  }
+
+  async function retryFleetFailed(runId, input = {}) {
+    const run = await requireClient().retryFleetFailed(String(runId || ""), input);
+    scheduleRefresh();
+    return run;
+  }
+
+  async function fleetSummary(runId) {
+    return requireClient().getFleetSummary(String(runId || ""));
+  }
+
+  async function saveFleetSchedule(input = {}) {
+    const record = await requireClient().saveFleetSchedule(input);
+    scheduleRefresh();
+    return record;
+  }
+
+  async function openSession(input = {}) {
+    const record = await requireClient().openSession({ ...clone(input), agentId: requireAgentId(input.agentId) });
+    state.selectedSessionId = record.id;
+    state.sessions = [record, ...state.sessions.filter((session) => session.id !== record.id)];
+    state.sessionEvents = [];
+    emit("session-opened");
+    return record;
+  }
+
+  async function selectSession(sessionId = "") {
+    const id = String(sessionId || "");
+    state.selectedSessionId = id;
+    state.sessionEvents = id && typeof requireClient().listSessionEvents === "function" ? await requireClient().listSessionEvents(id) : [];
+    emit("session-selected");
+    return getState();
+  }
+
+  async function sessionInput({ sessionId = state.selectedSessionId, data = "", encoding = "utf8" } = {}) {
+    const result = await requireClient().sessionInput(String(sessionId || ""), String(data ?? ""), { encoding });
+    scheduleRefresh();
+    return result;
+  }
+
+  async function sessionResize({ sessionId = state.selectedSessionId, rows, cols } = {}) {
+    const result = await requireClient().sessionResize(String(sessionId || ""), rows, cols);
+    scheduleRefresh();
+    return result;
+  }
+
+  async function sessionSignal({ sessionId = state.selectedSessionId, signal = "SIGINT" } = {}) {
+    const result = await requireClient().sessionSignal(String(sessionId || ""), signal);
+    scheduleRefresh();
+    return result;
+  }
+
+  async function sessionDetach(sessionId = state.selectedSessionId) {
+    const result = await requireClient().detachSession(String(sessionId || ""));
+    scheduleRefresh();
+    return result;
+  }
+
+  async function sessionReconnect(sessionId = state.selectedSessionId) {
+    const result = await requireClient().reconnectSession(String(sessionId || ""));
+    scheduleRefresh();
+    return result;
+  }
+
+  async function sessionTerminate(sessionId = state.selectedSessionId) {
+    const result = await requireClient().terminateSession(String(sessionId || ""));
+    scheduleRefresh();
+    return result;
+  }
+
+  async function openTunnel(input = {}) {
+    const tunnel = await requireClient().openTunnel({ ...clone(input), agentId: requireAgentId(input.agentId) });
+    scheduleRefresh();
+    return tunnel;
+  }
+
+  async function closeTunnel(tunnelId) {
+    const tunnel = await requireClient().closeTunnel(String(tunnelId || ""));
+    scheduleRefresh();
+    return tunnel;
+  }
+
+  async function launchConsole(input = {}) {
+    return requireClient().launchConsole(input);
+  }
+
+  async function invokeNextStage(input = {}) {
+    const result = await requireClient().invokeNextStage(input.lane, input.component, input.method, input.args || []);
+    scheduleRefresh();
+    return result;
+  }
+
   async function pxeStatus() {
     await refreshPxeStatus();
     emit("pxe");
@@ -755,6 +926,25 @@ export function createDesktopRecoveryManager({
     uploadArtifact,
     downloadArtifact,
     wake,
+    setFleetMachine,
+    saveFleetGroup,
+    saveFleetQuery,
+    executeFleet,
+    retryFleetFailed,
+    fleetSummary,
+    saveFleetSchedule,
+    openSession,
+    selectSession,
+    sessionInput,
+    sessionResize,
+    sessionSignal,
+    sessionDetach,
+    sessionReconnect,
+    sessionTerminate,
+    openTunnel,
+    closeTunnel,
+    launchConsole,
+    invokeNextStage,
     pxeStatus,
     pxePrepare,
     pxeStart,

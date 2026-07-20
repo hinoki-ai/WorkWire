@@ -9,11 +9,11 @@ export const WORKWIRE_WINDOW_CLASS = "workwire";
 export const WORKWIRE_APP_COMMENT = "Local two-machine file desk for the WorkWire portal.";
 export const LINUX_WW_DESKTOP_ENTRY_NAME = "workwire.desktop";
 export const LINUX_WW_SERVICE_UNIT_NAME = "workwire-ww.service";
-export const WORKWIRE_LAUNCHER_RELATIVE_PATH = path.join("scripts", "launch-workwire.sh");
+export const WORKWIRE_LAUNCHER_RELATIVE_PATH = path.posix.join("scripts", "launch-workwire.sh");
 
 const WORKWIRE_ICON_CANDIDATE_RELATIVE_PATHS = [
-  path.join("desktop", "assets", "workwire", "icon.png"),
-  path.join("desktop", "assets", "workwire", "icon.ico"),
+  path.posix.join("desktop", "assets", "workwire", "icon.png"),
+  path.posix.join("desktop", "assets", "workwire", "icon.ico"),
 ];
 
 export function configureWwElectronAppIdentity(electronApp, {
@@ -37,7 +37,7 @@ export function configureWwElectronAppIdentity(electronApp, {
   env.CHROME_DESKTOP ||= desktopEntryName;
   // Keep Electron's Chromium profile separate from WW's lowercase
   // ~/.config/workwire application/config directory.
-  const userDataPath = path.join(electronApp.getPath("appData"), appName);
+  const userDataPath = path.posix.join(electronApp.getPath("appData"), appName);
   electronApp.setDesktopName(desktopEntryName);
   electronApp.setPath("userData", userDataPath);
   electronApp.commandLine.appendSwitch("class", windowClass);

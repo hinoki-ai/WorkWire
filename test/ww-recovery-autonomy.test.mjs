@@ -57,7 +57,7 @@ test("autonomous recovery loop observes a real remote action and completes with 
     caseRecord = await store.updateCase(caseRecord.id, { state: "running" });
     const planner = createDeterministicPlanner([
       { type: "planner.note", note: "Run a non-mutating marker command." },
-      { type: "planner.action", requestId: "marker-1", action: "command.exec", params: { argv: ["printf", "%s", "AUTONOMY-MARKER"] }, expectedObservation: "stdout contains marker" },
+      { type: "planner.action", requestId: "marker-1", action: "command.exec", params: { argv: [process.execPath, "-e", "process.stdout.write('AUTONOMY-MARKER')"] }, expectedObservation: "stdout contains marker" },
       { type: "planner.complete", outcome: "Marker observed exactly.", verification: ["remote exit 0", "stdout marker"] },
     ]);
     const engine = createRecoveryAutonomyEngine({ store, controller, plannerConfig: { maxIterations: 10, iterationTimeoutMs: 5_000 }, pollMs: 20 });

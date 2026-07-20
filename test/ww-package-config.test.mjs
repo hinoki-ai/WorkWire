@@ -53,6 +53,7 @@ test("ww linux build config only includes WW runtime surfaces", () => {
   assert.ok(config.files.includes("lib/recovery/**/*.mjs"));
   assert.ok(config.files.includes("recovery/**/*"));
   assert.ok(config.files.includes("!**/* (WW conflict *)*"));
+  assert.ok(config.files.includes("!**/WW conflict *"));
   // The recovery runtime ships as a single staged tree so electron-builder does
   // not exclude lib/package.json from the asar (extraResources `from` paths are
   // dropped from the asar to avoid duplication). The packaging script stages
@@ -75,4 +76,23 @@ test("ww linux packager stages the recovery runtime it ships as resources", () =
   assert.match(packagerSource, /"lib"[\s\S]*RECOVERY_STAGING_DIR, "lib"/);
   assert.match(packagerSource, /"recovery"[\s\S]*RECOVERY_STAGING_DIR, "recovery"/);
   assert.match(packagerSource, /package\.json[\s\S]*RECOVERY_STAGING_DIR,\s*\n?\s*"package\.json"/);
+});
+
+test("deployment archive packagers stage privately and publish atomically", () => {
+  const sourcePackager = fs.readFileSync(
+    path.join(__dirname, "..", "scripts", "package-ww-source.mjs"),
+    "utf8",
+  );
+  const windowsPackager = fs.readFileSync(
+    path.join(__dirname, "..", "scripts", "package-ww-recovery-agent-windows.mjs"),
+    "utf8",
+  );
+  for (const source of [sourcePackager, windowsPackager]) {
+    assert.match(source, /mkdtemp\(path\.join\(os\.tmpdir\(\)/u);
+    assert.match(source, /\.next/u);
+    assert.match(source, /WW conflict artifact/u);
+  }
+  assert.doesNotMatch(sourcePackager, /stageDir\s*=\s*path\.join\(artifactsDir/u);
+  assert.doesNotMatch(windowsPackager, /stageDir\s*=\s*path\.join\(artifactsDir/u);
+  assert.match(windowsPackager, /node_modules[\s\S]*ws[\s\S]*filter:/u);
 });

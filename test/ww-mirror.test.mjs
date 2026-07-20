@@ -100,6 +100,46 @@ test("ww mirror elects one stable leader and creates deterministic conflict name
   );
 });
 
+test("ww mirror pauses while file-plane activity is not quiescent", async () => {
+  await withTempDir(async (rootPath) => {
+    let ready = false;
+    let clientCreations = 0;
+    const mirror = createWwMirror({
+      rootPath,
+      statePath: path.join(rootPath, "state.json"),
+      peer: { host: "sakura", machineId: "b-machine", token: "mirror-token" },
+      machineId: "a-machine",
+      expectedRemoteRootPath: "C:\\Users\\Sakura\\WorkWire",
+      intervalMs: 60_000,
+      isReadyToSync: () => ready,
+      clientFactory() {
+        clientCreations += 1;
+        return {
+          async connectForUpdate() {
+            return { machineId: "b-machine", rootPath: "C:\\Users\\Sakura\\WorkWire" };
+          },
+          async listDirectory() { return { items: [] }; },
+        };
+      },
+    });
+
+    await mirror.syncNow();
+    assert.equal(mirror.getStatus().role, "paused");
+    assert.equal(clientCreations, 0);
+    ready = true;
+    await mirror.syncNow();
+    const status = mirror.getStatus();
+    assert.equal(status.role, "leader");
+    assert.equal(status.completedCycles, 1);
+    assert.match(status.instanceId, /^[a-f0-9]{16}$/u);
+    assert.match(status.lastStartedAt, /^\d{4}-\d{2}-\d{2}T/u);
+    assert.match(status.lastCompletedAt, /^\d{4}-\d{2}-\d{2}T/u);
+    assert.equal(status.running, false);
+    assert.equal(clientCreations, 1);
+    await mirror.stop();
+  });
+});
+
 test("ww mirror scans Windows peer paths with the peer path flavor", async () => {
   const rootPath = "C:\\Users\\Sakura\\WorkWire";
   const docsPath = `${rootPath}\\docs`;
@@ -228,7 +268,7 @@ test("ww mirror follows a refreshed peer route and preserves simultaneous edits"
       await mirror.syncNow();
       await assert.rejects(fs.access(path.join(remoteRoot, "shared.txt")));
 
-      assert.equal((await fs.stat(statePath)).mode & 0o777, 0o600);
+      if (process.platform !== "win32") assert.equal((await fs.stat(statePath)).mode & 0o777, 0o600);
     } finally {
       await mirror.stop();
       await service.stop();

@@ -1,0 +1,69 @@
+{
+  "ok": true,
+  "checkedAt": "2026-07-20T01:18:11.534Z",
+  "durationMs": 96956,
+  "systemAgentId": "wwra_xCR5XgqeHAd2RkAzsp81bWPo",
+  "systemFileMachineId": "RQn5hi_GTBHwvC6bQmmTYg",
+  "checks": {
+    "preflight": true,
+    "fileServiceRecovery": true,
+    "recoveryAgentRecovery": true,
+    "postflight": true
+  },
+  "evidence": {
+    "preflight": {
+      "systemHost": "192.168.8.100",
+      "serviceMachineId": "RQn5hi_GTBHwvC6bQmmTYg",
+      "appVersion": "0.1.0+ww1.2a95d730b96d",
+      "agentId": "wwra_xCR5XgqeHAd2RkAzsp81bWPo",
+      "agentConnectedAt": "2026-07-20T01:01:20.773Z",
+      "agentIdentity": "NT AUTHORITY\\SYSTEM"
+    },
+    "fileService": {
+      "faultJobId": "wwj_00mrsjamzieQx-IwpoaXCQ",
+      "faultAt": "2026-07-20T01:16:39.7630282+00:00",
+      "stoppedProcessCount": 2,
+      "originalPidsRemaining": 0,
+      "recovery": {
+        "interruptionObserved": true,
+        "downAt": "2026-07-20T01:16:40.794Z",
+        "recoveredAt": "2026-07-20T01:17:09.269Z",
+        "downtimeMs": 28475,
+        "failedSamples": 17,
+        "healthySamples": 21,
+        "machineId": "RQn5hi_GTBHwvC6bQmmTYg",
+        "appVersion": "0.1.0+ww1.2a95d730b96d"
+      }
+    },
+    "recoveryAgent": {
+      "armJobId": "wwj_00mrsjbdbl-aF8VgsmYB1Y",
+      "verifyJobId": "wwj_00mrsjcla5L0pNyUWtFLzX",
+      "taskName": "WorkWire Recovery Agent",
+      "faultIdentity": "NT AUTHORITY\\SYSTEM",
+      "faultAt": "2026-07-20T01:17:18.9109135+00:00",
+      "stoppedProcessCount": 1,
+      "stableAgentId": "wwra_xCR5XgqeHAd2RkAzsp81bWPo",
+      "connectionEpochBefore": "2026-07-20T01:01:20.773Z",
+      "connectionEpochAfter": "2026-07-20T01:18:03.863Z",
+      "connectionEpochChanged": true,
+      "bootIdUnchanged": true,
+      "stateSamples": [
+        "online",
+        "stale",
+        "offline",
+        "online"
+      ],
+      "recoveryTaskState": "Running",
+      "recoveryProcessCount": 1,
+      "identity": "NT AUTHORITY\\SYSTEM"
+    },
+    "postflight": {
+      "serviceMachineId": "RQn5hi_GTBHwvC6bQmmTYg",
+      "appVersion": "0.1.0+ww1.2a95d730b96d",
+      "agentId": "wwra_xCR5XgqeHAd2RkAzsp81bWPo",
+      "agentState": "online",
+      "unrestricted": true
+    }
+  },
+  "error": null
+}

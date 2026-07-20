@@ -1,5 +1,12 @@
 # Sakura — Windows repair + BIOS/Wake-on-LAN handoff
 
+> **ARCHIVED EVIDENCE — NOT AN OPERATIONS RUNBOOK.** Addresses, credentials,
+> bootstrap commands, and open missions below describe earlier experiments and
+> may be stale. Agents must use
+> [docs/AGENT-OPERATIONS.md](../docs/AGENT-OPERATIONS.md) and
+> [windows/WINDOWS.md](./WINDOWS.md) for current state. Never copy a credential
+> from this archive into a command or report.
+
 > ## ✅ RESOLVED 2026-07-19 — read this before the rest
 >
 > The mission below is COMPLETE. Outcome and hard-won lessons:
@@ -75,9 +82,9 @@ unrecoverable brick — **do not use it.**
   (kernel 6.19.x), wired NIC **eno1**, MAC **`18:03:73:2e:3f:42`** (Intel 82579LM,
   e1000e). BIOS **A13** (2012). Dual-boots Fedora (works) + Windows (**broken**).
 
-**Sudo password for BOTH machines (prototype):** `59163476`, stored on HINOKI at
-`~/.config/workwire/recovery/prototype-sudo.env` (chmod 600). Load with
-`set -a; . <file>; set +a` then `printf '%s\n' "$WW_SUDO_PASS" | sudo -S …`.
+Prototype sudo material is stored only in HINOKI's protected recovery
+environment file. Load it without printing and pass it on stdin; no credential
+is canonical documentation.
 
 ---
 

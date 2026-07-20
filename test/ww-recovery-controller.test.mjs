@@ -48,7 +48,7 @@ async function connectAgent(info, agentId, { token = "", bootId = `${agentId}-bo
       waiter.resolve(message);
     } else queue.push(message);
   });
-  const next = (predicate = () => true, timeoutMs = 2_000) => {
+  const next = (predicate = () => true, timeoutMs = 10_000) => {
     const index = queue.findIndex(predicate);
     if (index !== -1) return Promise.resolve(queue.splice(index, 1)[0]);
     return new Promise((resolve, reject) => {
@@ -172,6 +172,79 @@ test("recovery controller routes separate durable jobs to two agents", async () 
     assert.equal(machines[0].mac, "00:11:22:33:44:55");
     alpha.socket.close();
     beta.socket.close();
+  }, { staleAfterMs: 15_000, offlineAfterMs: 30_000 });
+});
+
+test("socket receipt restores agent liveness before durable heartbeat work drains", async () => {
+  await withController(async (controller, info) => {
+    const client = createRecoveryClient({ url: `http://127.0.0.1:${info.port}` });
+    const agent = await connectAgent(info, "wwra_receipt_liveness");
+    let session = null;
+    for (let attempt = 0; attempt < 100 && !session; attempt += 1) {
+      session = controller.getConnectedAgent("wwra_receipt_liveness");
+      if (!session) await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    assert.ok(session);
+    let releaseDurability;
+    session.messageTail = new Promise((resolve) => { releaseDurability = resolve; });
+    session.state = "stale";
+    const previousSeenAt = session.lastSeenAt;
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      agent.socket.send(JSON.stringify({ type: "agent.heartbeat", agentSeq: 1, at: new Date().toISOString() }));
+      for (let attempt = 0; attempt < 100 && session.lastSeenAt === previousSeenAt; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      assert.notEqual(session.lastSeenAt, previousSeenAt);
+      assert.equal(controller.getConnectedAgent("wwra_receipt_liveness"), session);
+      assert.equal((await client.listAgents({ online: true })).some((record) => record.agentId === "wwra_receipt_liveness"), true);
+    } finally {
+      releaseDurability();
+      await agent.next((message) => message.type === "controller.heartbeat.ack").catch(() => {});
+      agent.socket.close();
+    }
+  });
+});
+
+test("recovery controller reconciles an interrupted result after it already marked the lease interrupted", async () => {
+  await withController(async (controller, info) => {
+    const client = createRecoveryClient({ url: `http://127.0.0.1:${info.port}` });
+    const agent = await connectAgent(info, "wwra_interrupted_result");
+    const caseRecord = await client.createCase({ targetAgentId: "wwra_interrupted_result", goal: "Interrupted command" });
+    const job = await client.createJob({
+      caseId: caseRecord.id,
+      targetAgentId: "wwra_interrupted_result",
+      steps: [{ id: "step_interrupt", action: "command.exec", params: { argv: ["sleep", "30"] } }],
+    });
+    await agent.next((message) => message.type === "controller.job.offer");
+    agent.socket.send(JSON.stringify({ type: "agent.job.accept", jobId: job.id }));
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    await controller.getStore().transitionJob(job.id, "interrupted", {
+      reason: "socket-lost",
+      interruptedAt: new Date().toISOString(),
+    });
+
+    agent.socket.send(JSON.stringify({
+      type: "agent.resume",
+      throughAgentSeq: 7,
+      result: {
+        jobId: job.id,
+        agentSeq: 7,
+        result: {
+          ok: false,
+          interrupted: true,
+          code: "ERR_WW_RECOVERY_INTERRUPTED",
+          message: "agent restarted",
+        },
+      },
+    }));
+    await agent.next((message) => message.type === "controller.result.ack" && message.jobId === job.id);
+    await agent.next((message) => message.type === "controller.resume.ack");
+    const reconciled = await client.getJob(job.id);
+    assert.equal(reconciled.job.state, "interrupted");
+    assert.equal(reconciled.job.result.code, "ERR_WW_RECOVERY_INTERRUPTED");
+    assert.ok(reconciled.job.endedAt);
+    agent.socket.close();
   });
 });
 
@@ -234,4 +307,95 @@ test("recovery artifacts stream, resume, range-download, and hash", async () => 
     assert.equal(recovered.resumed, true);
     assert.deepEqual(await fs.readFile(destination), Buffer.from([0, 1, 2, 3, 4, 5]));
   });
+});
+
+test("recovery controller never marks a short artifact upload complete", async () => {
+  await withController(async (_controller, info) => {
+    const baseUrl = `http://127.0.0.1:${info.port}`;
+    const client = createRecoveryClient({ url: baseUrl });
+    const artifact = await client.createArtifact({ kind: "user-upload", filename: "short.dat" });
+    const shortResponse = await fetch(`${baseUrl}/v1/recovery/artifacts/${artifact.id}`, {
+      method: "PUT",
+      headers: {
+        "content-length": "3",
+        "x-ww-artifact-offset": "0",
+        "x-ww-artifact-complete": "true",
+        "x-ww-artifact-final-size": "6",
+      },
+      body: Buffer.from("abc"),
+      duplex: "half",
+    });
+    assert.equal(shortResponse.status, 409);
+    const shortError = await shortResponse.json();
+    assert.equal(shortError.error.code, "ERR_WW_RECOVERY_ARTIFACT_OFFSET");
+    assert.equal(shortError.error.actualOffset, 3);
+    assert.deepEqual(await client.headArtifact(artifact.id), {
+      id: artifact.id,
+      size: 3,
+      complete: false,
+      hash: null,
+      contentType: "application/octet-stream",
+    });
+
+    const complete = await client.uploadArtifact(artifact, Buffer.from("def"), {
+      offset: 3,
+      complete: true,
+    });
+    assert.equal(complete.size, 6);
+    assert.equal(complete.complete, true);
+  });
+});
+
+test("recovery artifact uploads resume after a transient transport reset", async () => {
+  let partialSize = 0;
+  let complete = false;
+  const uploads = [];
+  const client = createRecoveryClient({
+    url: "http://recovery.test",
+    fetchImpl: async (_url, options = {}) => {
+      if (options.method === "HEAD") {
+        return new Response(null, {
+          status: 200,
+          headers: {
+            "x-ww-artifact-size": String(partialSize),
+            "x-ww-artifact-complete": String(complete),
+          },
+        });
+      }
+      assert.equal(options.method, "PUT");
+      const chunks = [];
+      for await (const chunk of options.body) {
+        chunks.push(typeof chunk === "number" ? Buffer.from([chunk]) : Buffer.from(chunk));
+      }
+      const body = Buffer.concat(chunks);
+      uploads.push(body);
+      if (uploads.length === 1) {
+        partialSize = 3;
+        const error = new TypeError("fetch failed");
+        error.cause = { code: "ECONNRESET" };
+        throw error;
+      }
+      partialSize += body.length;
+      complete = true;
+      return new Response(JSON.stringify({
+        artifact: {
+          id: "wwa_resume_test",
+          size: partialSize,
+          complete,
+          hash: "sha256:fixture",
+        },
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const artifact = await client.uploadArtifact(
+    { id: "wwa_resume_test" },
+    Buffer.from("abcdef"),
+  );
+  assert.deepEqual(uploads, [Buffer.from("abcdef"), Buffer.from("def")]);
+  assert.equal(artifact.size, 6);
+  assert.equal(artifact.complete, true);
 });

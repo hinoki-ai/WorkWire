@@ -1,12 +1,17 @@
 # WorkWire operations
 
+Fleet convergence and physical cross-platform proof are governed by
+[AGENT-OPERATIONS.md](./AGENT-OPERATIONS.md). It is the canonical agent-only
+runbook; historical Windows handoffs and remembered addresses are not current
+configuration.
+
 ## System model
 
 Each computer runs one authenticated HTTP filesystem service and, when opened, one sandboxed Electron desk. UDP beacons advertise the current service address and port. A paired machine is accepted only when its bearer trust, pinned machine identity, protocol version, and exact WorkWire build agree.
 
 WorkWire also contains a separate LAN recovery subsystem on ports 4852/4853. It does not reuse the file service's peer trust or filesystem boundary. Its root agents, durable cases, PXE live environment, and operational safety model are documented in [RECOVERY.md](./RECOVERY.md).
 
-The repository launcher uses the checkout itself as its portal root. A packaged installation uses `~/.local/opt/workwire/app` unless `WW_PORTAL_PATH` explicitly selects another root. Both computers must use the intended corresponding root.
+The repository launcher uses the checkout itself as its portal root. A packaged installation uses `~/.local/opt/workwire/app` unless `WW_PORTAL_PATH` explicitly selects another root. Both computers must use the intended corresponding root. HINOKI's managed service additionally pins `WW_HOME_DIR=/home/hinoki/WorkWire/.workwire` and `WW_CONFIG_DIR=/home/hinoki/WorkWire/.workwire/config`; diagnostics from another namespace are invalid fleet evidence.
 
 The desktop desk browses only the portal environment, the `Portal/` directory inside the portal root. It is created automatically on both machines, both panes are clamped to it (navigation, launch intents, and saved paths that fall outside it snap back to `Portal/`), and everything else in the root stays backend-only: reachable by the service, the mirror, and the CLI, but never shown in the frontend. User files exchanged through the desk therefore live under `Portal/` and are mirrored like any other portal content.
 
@@ -91,6 +96,14 @@ ww pair /path/to/workwire-pairing.json
 
 Pairing replaces shared trust but preserves the local machine identity.
 
+For cross-platform source convergence, `npm run dist:source` creates a manifest
+and canonical source archive. `scripts/converge-ww-peer.mjs` consumes pairing
+material from a protected file, refuses an unexpected local service identity,
+and emits only a redacted result. On Sakura,
+`scripts/converge-ww-windows.ps1` verifies the archive hashes, preserves replaced
+files in a backup, repairs the service/desktop, and consumes the remote token
+copy. Use `npm run doctor:fleet -- --managed --json` as the final redacted gate.
+
 ## Security boundary
 
 - Config and mirror state directories are mode `0700`; files containing trust material are mode `0600`.
@@ -117,8 +130,14 @@ npm run dist:linux
 
 Confirm both machines advertise the same `versions.app`, `versions.protocol`, and trust ID through `/v1/discover`. Then verify a create, edit, rename, deletion, and deliberate simultaneous-edit conflict in a disposable folder.
 
+Do not use ping as the Windows availability gate. Resolve DHCP addresses from
+live recovery inventory or network state, then require authenticated discovery,
+pinned identity, and a real remote listing.
+
 ## Limits
 
-- WorkWire does not follow or copy symbolic links.
+- WorkWire does not follow or copy symbolic links. Folder transfers skip and
+  report links without failing the remaining files; a move retains its source
+  folder when a link was skipped so the link is never lost.
 - Mirror equality uses item kind, file size, and rounded modification time; it does not hash every file on every 1.5-second scan.
 - The service is designed for two paired machines, not a multi-peer mesh or an untrusted internet.

@@ -215,7 +215,9 @@ test("served install script injects the request base URL once", () => {
   assert.equal(servedScript.split("#!/usr/bin/env bash").length, 2);
 });
 
-test("install-ww-from-lan downloads the self-contained WW bundle and runs its install hook", async () => {
+test("install-ww-from-lan downloads the self-contained WW bundle and runs its install hook", {
+  skip: process.platform === "win32" ? "The LAN shell installer targets Linux; Windows convergence has its own native installer gate." : false,
+}, async () => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "ww-lan-install-"));
 
   try {
@@ -237,7 +239,9 @@ test("install-ww-from-lan downloads the self-contained WW bundle and runs its in
   }
 });
 
-test("install-ww-from-lan aborts on checksum mismatch before replacing the staged bundle", async () => {
+test("install-ww-from-lan aborts on checksum mismatch before replacing the staged bundle", {
+  skip: process.platform === "win32" ? "The LAN shell installer targets Linux; Windows convergence has its own native installer gate." : false,
+}, async () => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "ww-lan-install-"));
 
   try {

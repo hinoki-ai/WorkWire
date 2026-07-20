@@ -1,0 +1,95 @@
+{
+  "kind": "workwire-continuity-history-benchmark",
+  "capturedAt": "2026-07-19T23:06:55.282Z",
+  "environment": {
+    "capturedAt": "2026-07-19T23:06:55.282Z",
+    "hostname": "HINOKI",
+    "platform": "linux",
+    "release": "6.18.5-200.fc43.x86_64",
+    "arch": "x64",
+    "node": "v22.22.0",
+    "cpuModel": "Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz",
+    "logicalCpuCount": 8,
+    "totalMemoryBytes": 33553924096
+  },
+  "configuration": {
+    "root": "/tmp/ww-continuity-benchmark-ic28Es",
+    "temporary": true,
+    "eventCount": 100000,
+    "inventoryCount": 100,
+    "totalRecords": 100100,
+    "repeats": 9
+  },
+  "ingest": {
+    "durationMs": 52232.377,
+    "recordsPerSecond": 1916.4
+  },
+  "reload": {
+    "durationMs": 39600.795,
+    "stats": {
+      "id": "storestats_c9f8c9ecbe12ca36e813751307af35c4",
+      "timestamp": "2026-07-19T23:06:55.283Z",
+      "schemaVersion": 1,
+      "root": "/tmp/ww-continuity-benchmark-ic28Es",
+      "eventCount": 100100,
+      "machineCount": 1,
+      "entityCount": 93,
+      "indexTerms": 100506,
+      "recoveredTailBytes": 0,
+      "initialized": true,
+      "closed": false
+    }
+  },
+  "queries": {
+    "textSearch": {
+      "samples": 9,
+      "min": 19.39,
+      "median": 20.422,
+      "p95": 23.692,
+      "max": 24.848,
+      "mean": 20.945,
+      "standardDeviation": 1.59,
+      "coefficientOfVariation": 0.076,
+      "resultCount": 1000
+    },
+    "indexedComposite": {
+      "samples": 9,
+      "min": 39.644,
+      "median": 42.273,
+      "p95": 49.749,
+      "max": 50.034,
+      "mean": 44.019,
+      "standardDeviation": 3.806,
+      "coefficientOfVariation": 0.086,
+      "resultCount": 2000
+    },
+    "timelineRange": {
+      "samples": 9,
+      "min": 66.499,
+      "median": 70.132,
+      "p95": 71.789,
+      "max": 71.789,
+      "mean": 69.18,
+      "standardDeviation": 2.237,
+      "coefficientOfVariation": 0.032,
+      "resultCount": 3601
+    },
+    "semanticDiff": {
+      "samples": 9,
+      "min": 0.284,
+      "median": 0.327,
+      "p95": 1.211,
+      "max": 1.547,
+      "mean": 0.534,
+      "standardDeviation": 0.384,
+      "coefficientOfVariation": 0.719,
+      "changed": true
+    }
+  },
+  "assertions": {
+    "beforeReloadEventCount": 100100,
+    "afterReloadEventCount": 100100,
+    "onePhysicalMachine": true,
+    "completeReload": true
+  }
+}

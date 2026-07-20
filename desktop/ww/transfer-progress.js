@@ -14,6 +14,7 @@ export function getTransferProgress(operation = {}) {
   const transferredBytes = finiteNonNegative(operation.transferredBytes);
   const transferredFiles = finiteNonNegative(operation.transferredFiles);
   const skippedFiles = finiteNonNegative(operation.skippedFiles);
+  const skippedLinks = finiteNonNegative(operation.skippedLinks);
   const processedBytes = Math.max(
     transferredBytes,
     finiteNonNegative(operation.processedBytes),
@@ -52,6 +53,7 @@ export function getTransferProgress(operation = {}) {
     processedFiles,
     ratio,
     skippedFiles,
+    skippedLinks,
     totalBytes,
     totalFiles,
     transferredBytes,

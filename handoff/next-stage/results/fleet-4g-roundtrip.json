@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "checkedAt": "2026-07-20T01:16:19.691Z",
+  "stage": "complete",
+  "fixture": {
+    "kind": "sparse-zero-file",
+    "logicalBytes": 4294967296,
+    "logicalGiB": 4,
+    "sourcePhysicalBytes": 0,
+    "sha256": "8479e43911dc45e89f934fe48d01297e16f51d17aa561d4d1c216b1ae0fcddca"
+  },
+  "source": {
+    "machineId": "t8K6zAc6chbIa3srdlFEeQ",
+    "platform": "linux",
+    "version": "0.1.0+ww1.2a95d730b96d"
+  },
+  "destination": {
+    "machineId": "RQn5hi_GTBHwvC6bQmmTYg",
+    "platform": "win32",
+    "version": "0.1.0+ww1.2a95d730b96d"
+  },
+  "moves": {
+    "hinokiToSakura": {
+      "sourceDeleted": true,
+      "destinationPath": "Portal/.ww-large-move-1784509930063-87f5f929/destination/fake-4GiB.zero",
+      "transferredBytes": 4294967296,
+      "seconds": 71.374,
+      "mibPerSecond": 57.39
+    },
+    "sakuraToHinoki": {
+      "sourceDeleted": true,
+      "destinationPath": "Portal/.ww-large-move-1784509930063-87f5f929/returned/fake-4GiB.zero",
+      "transferredBytes": 4294967296,
+      "seconds": 64.138,
+      "mibPerSecond": 63.86
+    },
+    "totalTransferredBytes": 8589934592
+  },
+  "verification": {
+    "hashPreparationSeconds": 16.321,
+    "sakura": {
+      "seconds": 68.525,
+      "mibPerSecond": 59.77
+    },
+    "hinoki": {
+      "seconds": 26.166,
+      "mibPerSecond": 156.54
+    }
+  },
+  "responsiveness": {
+    "pingSamples": 49,
+    "pingFailures": 0,
+    "maximumRoundTripMs": 291.2
+  },
+  "memory": {
+    "peakRssBytes": 142454784,
+    "peakHeapBytes": 11440488
+  },
+  "cleanupOk": true,
+  "error": null
+}

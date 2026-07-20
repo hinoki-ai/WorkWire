@@ -44,6 +44,7 @@ test("desktop recovery manager owns no renderer secret and reconnects after cont
   };
   let firstController = null;
   const manager = createDesktopRecoveryManager({
+    env: {},
     loadConfigImpl: async () => config,
     createControllerImpl(options) {
       firstController = createRecoveryController(options);
@@ -120,6 +121,78 @@ test("desktop recovery manager preserves exact argv, shell, force, and selected 
     assert.equal(submitted[0].caseId, "wwc_patient");
     assert.equal(submitted[1].steps[0].params.script, "printf 'one\\ntwo\\n'");
     assert.equal(submitted[1].force, true);
+  } finally {
+    await manager.stop();
+  }
+});
+
+test("desktop recovery manager honors the configured fleet controller without local fallback", async () => {
+  const requestedUrls = [];
+  let embeddedStarts = 0;
+  const controller = { protocol: 1, port: 4852, boot: { port: 4853 } };
+  const client = {
+    async connect() { return controller; },
+    async getInfo() { return controller; },
+    async listAgents() { return []; },
+    async listCases() { return []; },
+    async listPlaybooks() { return []; },
+  };
+  const manager = createDesktopRecoveryManager({
+    loadConfigImpl: async () => ({
+      enabled: false,
+      port: 4852,
+      token: "",
+      pxe: { enabled: false },
+      stateDir: "/tmp/recovery-fleet-client",
+      extensions: { clientUrl: "http://192.168.8.104:4852" },
+    }),
+    env: {},
+    createClientImpl(options) {
+      requestedUrls.push(options.url);
+      return client;
+    },
+    createControllerImpl() {
+      embeddedStarts += 1;
+      throw new Error("embedded controller must not start");
+    },
+    createBootManagerImpl: bootManagerStub,
+    refreshIntervalMs: 60_000,
+  });
+  try {
+    const state = await manager.start();
+    assert.equal(state.controller.connected, true);
+    assert.equal(state.controller.ownedByDesktop, false);
+    assert.deepEqual(requestedUrls, ["http://192.168.8.104:4852"]);
+    assert.equal(embeddedStarts, 0);
+  } finally {
+    await manager.stop();
+  }
+});
+
+test("desktop recovery manager refuses split brain when the explicit fleet controller is offline", async () => {
+  let embeddedStarts = 0;
+  const manager = createDesktopRecoveryManager({
+    loadConfigImpl: async () => ({
+      enabled: false,
+      port: 4852,
+      token: "",
+      pxe: { enabled: false },
+      stateDir: "/tmp/recovery-fleet-client-offline",
+      extensions: { clientUrl: "http://192.168.8.104:4852" },
+    }),
+    env: {},
+    createClientImpl: () => ({
+      async connect() { throw new Error("fleet controller offline"); },
+    }),
+    createControllerImpl() {
+      embeddedStarts += 1;
+      throw new Error("embedded controller must not start");
+    },
+    createBootManagerImpl: bootManagerStub,
+  });
+  try {
+    await assert.rejects(manager.start(), /fleet controller offline/);
+    assert.equal(embeddedStarts, 0);
   } finally {
     await manager.stop();
   }

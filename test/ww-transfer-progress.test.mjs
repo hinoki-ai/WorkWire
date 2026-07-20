@@ -33,6 +33,7 @@ test("transfer progress distinguishes handled work from bytes actually sent", ()
     transferredFiles: 1,
     transferredBytes: 1_000,
     skippedFiles: 2,
+    skippedLinks: 1,
     processedFiles: 3,
     processedBytes: 3_000,
   });
@@ -42,6 +43,7 @@ test("transfer progress distinguishes handled work from bytes actually sent", ()
   assert.equal(progress.transferredBytes, 1_000);
   assert.equal(progress.processedFiles, 3);
   assert.equal(progress.skippedFiles, 2);
+  assert.equal(progress.skippedLinks, 1);
 });
 
 test("zero-byte transfers fall back to completed file count and terminal state reaches 100%", () => {

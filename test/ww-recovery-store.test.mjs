@@ -125,3 +125,89 @@ test("recovery store rejects path traversal identifiers", async () => {
     );
   });
 });
+
+test("recovery store retries a journal snapshot captured during an append", async () => {
+  const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "ww-recovery-tail-race-"));
+  let partialReadsRemaining = 0;
+  let eventReadCount = 0;
+  const fsImpl = {
+    ...fs,
+    async readFile(filename, ...args) {
+      const raw = await fs.readFile(filename, ...args);
+      if (partialReadsRemaining > 0 && String(filename).endsWith("events.jsonl")) {
+        partialReadsRemaining -= 1;
+        eventReadCount += 1;
+        return raw.slice(0, -4);
+      }
+      if (String(filename).endsWith("events.jsonl")) eventReadCount += 1;
+      return raw;
+    },
+  };
+  const store = createRecoveryStore({ stateDir, fsImpl });
+  await store.init();
+  try {
+    await store.upsertAgent({ agentId: "wwra_tailrace", hostname: "patient" });
+    const caseRecord = await store.createCase({
+      id: "wwc_tailrace",
+      targetAgentId: "wwra_tailrace",
+    });
+    const job = await store.createJob(caseRecord.id, {
+      id: "wwj_tailrace",
+      steps: [{ id: "step_exec", action: "command.exec" }],
+    });
+    await store.appendJobEvent(job.id, {
+      type: "step.output",
+      stepId: "step_exec",
+      stream: "stdout",
+      data: "complete output",
+      encoding: "utf8",
+    });
+
+    partialReadsRemaining = 1;
+    eventReadCount = 0;
+    const events = await store.readJobEvents(job.id);
+    const outputEvent = events.find((event) => event.type === "step.output");
+    assert.equal(outputEvent?.data, "complete output");
+    assert.equal(eventReadCount, 2);
+  } finally {
+    await store.close();
+    await fs.rm(stateDir, { recursive: true, force: true });
+  }
+});
+
+test("recovery store still rejects a persistently truncated journal tail", async () => {
+  await withStore(async (store, stateDir) => {
+    await store.upsertAgent({ agentId: "wwra_torntail", hostname: "patient" });
+    const caseRecord = await store.createCase({
+      id: "wwc_torntail",
+      targetAgentId: "wwra_torntail",
+    });
+    const job = await store.createJob(caseRecord.id, {
+      id: "wwj_torntail",
+      steps: [{ id: "step_exec", action: "command.exec" }],
+    });
+    await store.appendJobEvent(job.id, {
+      type: "step.output",
+      stepId: "step_exec",
+      stream: "stdout",
+      data: "must not be hidden",
+      encoding: "utf8",
+    });
+    const eventPath = path.join(
+      stateDir,
+      "cases",
+      caseRecord.id,
+      "jobs",
+      job.id,
+      "events.jsonl",
+    );
+    const raw = await fs.readFile(eventPath, "utf8");
+    await fs.writeFile(eventPath, raw.slice(0, -4), "utf8");
+
+    await assert.rejects(
+      store.readJobEvents(job.id),
+      (error) => error?.code === "ERR_WW_RECOVERY_JOURNAL"
+        && /Malformed recovery journal/.test(error.message),
+    );
+  });
+});

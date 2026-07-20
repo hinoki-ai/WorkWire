@@ -1,0 +1,41 @@
+{
+  "ok": true,
+  "checkedAt": "2026-07-20T01:11:14.957Z",
+  "durationMs": 25845,
+  "runName": ".ww-e2e-1784509849111-a82e83f2",
+  "fixtureRoot": "Portal/.ww-e2e-1784509849111-a82e83f2",
+  "source": {
+    "version": "0.1.0+ww1.2a95d730b96d",
+    "hash": "2a95d730b96d860704d79ea1485892b09e48f5effd01d036136776ed182a141e"
+  },
+  "local": {
+    "machineId": "t8K6zAc6chbIa3srdlFEeQ",
+    "platform": "linux",
+    "version": "0.1.0+ww1.2a95d730b96d"
+  },
+  "remote": {
+    "machineId": "RQn5hi_GTBHwvC6bQmmTYg",
+    "platform": "win32",
+    "version": "0.1.0+ww1.2a95d730b96d"
+  },
+  "fixtureBytesPerDirection": 17039360,
+  "metrics": {
+    "transferredFiles": 8,
+    "transferredBytes": 34078805,
+    "conflictCopies": 1
+  },
+  "checks": {
+    "identitiesPinned": true,
+    "exactReleaseOnBoth": true,
+    "wrongTokenRejected": true,
+    "bidirectionalExactTransfers": true,
+    "remoteCrud": true,
+    "moveDeletesSource": true,
+    "renameConflictPolicy": true,
+    "mirrorConvergence": true,
+    "mirrorGenerationBarrier": true,
+    "simultaneousConflictPreserved": true,
+    "fixtureCleanup": true
+  },
+  "error": null
+}

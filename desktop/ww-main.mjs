@@ -157,6 +157,7 @@ let operationState = {
   processedFiles: 0,
   processedBytes: 0,
   skippedFiles: 0,
+  skippedLinks: 0,
   currentName: "",
   currentFileBytes: 0,
   currentFileTotalBytes: 0,
@@ -1916,6 +1917,7 @@ async function runTransfer({
     processedFiles: 0,
     processedBytes: 0,
     skippedFiles: 0,
+    skippedLinks: 0,
     currentName: "",
     currentFileBytes: 0,
     currentFileTotalBytes: 0,
@@ -2000,6 +2002,7 @@ async function runTransfer({
           processedFiles: Number(progress.result?.processedFiles) || 0,
           processedBytes,
           skippedFiles: Number(progress.result?.skippedFiles) || 0,
+          skippedLinks: Number(progress.result?.skippedLinks) || 0,
           currentName: String(progress.currentName || operationState.currentName || ""),
           currentFileBytes,
           currentFileTotalBytes,
@@ -2028,6 +2031,7 @@ async function runTransfer({
       processedFiles: result.processedFiles,
       processedBytes: result.processedBytes,
       skippedFiles: result.skippedFiles,
+      skippedLinks: result.skippedLinks,
       currentFileBytes: operationState.currentFileTotalBytes,
       bytesPerSecond: durationMs > 0
         ? (result.transferredBytes * 1_000) / durationMs
@@ -2043,9 +2047,12 @@ async function runTransfer({
       (machineImport ? [destinationSide] : [fromSide, destinationSide])
         .map((side) => refreshPane(side)),
     );
+    const skippedLinkNotice = result.skippedLinks > 0
+      ? ` ${result.skippedLinks} symbolic link${result.skippedLinks === 1 ? " was" : "s were"} skipped for safety.`
+      : "";
     pushNotification(
-      `${move ? "Moved" : "Copied"} ${result.transferredFiles} file${result.transferredFiles === 1 ? "" : "s"}.`,
-      "success",
+      `${move ? "Moved" : "Copied"} ${result.transferredFiles} file${result.transferredFiles === 1 ? "" : "s"}.${skippedLinkNotice}`,
+      result.skippedLinks > 0 ? "info" : "success",
     );
     pushActivity(move ? "Move complete" : "Copy complete", `${result.transferredFiles} file(s) into ${destinationPane.path}`, {
       level: "success",
@@ -2421,6 +2428,25 @@ function registerIpc() {
   handleTrusted("ww:recovery-wake", async (_event, payload = {}) => (
     getRecoveryManager().wake(payload)
   ));
+  handleTrusted("ww:recovery-fleet-machine", async (_event, payload = {}) => getRecoveryManager().setFleetMachine(payload));
+  handleTrusted("ww:recovery-fleet-group", async (_event, payload = {}) => getRecoveryManager().saveFleetGroup(payload));
+  handleTrusted("ww:recovery-fleet-query", async (_event, payload = {}) => getRecoveryManager().saveFleetQuery(payload));
+  handleTrusted("ww:recovery-fleet-execute", async (_event, payload = {}) => getRecoveryManager().executeFleet(payload));
+  handleTrusted("ww:recovery-fleet-retry", async (_event, runId, payload = {}) => getRecoveryManager().retryFleetFailed(runId, payload));
+  handleTrusted("ww:recovery-fleet-summary", async (_event, runId) => getRecoveryManager().fleetSummary(runId));
+  handleTrusted("ww:recovery-fleet-schedule", async (_event, payload = {}) => getRecoveryManager().saveFleetSchedule(payload));
+  handleTrusted("ww:recovery-session-open", async (_event, payload = {}) => getRecoveryManager().openSession(payload));
+  handleTrusted("ww:recovery-session-select", async (_event, sessionId = "") => getRecoveryManager().selectSession(sessionId));
+  handleTrusted("ww:recovery-session-input", async (_event, payload = {}) => getRecoveryManager().sessionInput(payload));
+  handleTrusted("ww:recovery-session-resize", async (_event, payload = {}) => getRecoveryManager().sessionResize(payload));
+  handleTrusted("ww:recovery-session-signal", async (_event, payload = {}) => getRecoveryManager().sessionSignal(payload));
+  handleTrusted("ww:recovery-session-detach", async (_event, sessionId = "") => getRecoveryManager().sessionDetach(sessionId));
+  handleTrusted("ww:recovery-session-reconnect", async (_event, sessionId = "") => getRecoveryManager().sessionReconnect(sessionId));
+  handleTrusted("ww:recovery-session-terminate", async (_event, sessionId = "") => getRecoveryManager().sessionTerminate(sessionId));
+  handleTrusted("ww:recovery-tunnel-open", async (_event, payload = {}) => getRecoveryManager().openTunnel(payload));
+  handleTrusted("ww:recovery-tunnel-close", async (_event, tunnelId = "") => getRecoveryManager().closeTunnel(tunnelId));
+  handleTrusted("ww:recovery-console-launch", async (_event, payload = {}) => getRecoveryManager().launchConsole(payload));
+  handleTrusted("ww:recovery-next-stage", async (_event, payload = {}) => getRecoveryManager().invokeNextStage(payload));
   handleTrusted("ww:recovery-pxe-status", async () => getRecoveryManager().pxeStatus());
   handleTrusted("ww:recovery-pxe-prepare", async (_event, payload = {}) => (
     getRecoveryManager().pxePrepare(payload)

@@ -128,6 +128,8 @@ test("ww renderer keeps dual-pane compare, auto-link, and keyboard behaviors wit
   assert.doesNotMatch(rendererSource, /Find Again/);
   assert.match(rendererSource, /transfer-panel-visible/);
   assert.match(rendererSource, /getTransferProgress/);
+  assert.match(rendererSource, /function formatSelectionSummary/);
+  assert.match(rendererSource, /symbolic link/);
   assert.match(rendererSource, /aria-valuetext/);
   assert.match(transferProgressSource, /processedBytes/);
   assert.match(transferProgressSource, /processedFiles/);
@@ -244,6 +246,7 @@ test("ww stylesheet defines the simplified workspace rail treatments", () => {
   assert.match(stylesSource, /\.restore-drawer/);
   assert.match(stylesSource, /\.rail-panel-transfer-status/);
   assert.match(stylesSource, /\.transfer-current/);
+  assert.match(stylesSource, /overflow-wrap: anywhere/);
   assert.match(stylesSource, /\.progress-indeterminate/);
   assert.match(stylesSource, /prefers-reduced-motion/);
   assert.match(stylesSource, /\.rail-panel-send/);

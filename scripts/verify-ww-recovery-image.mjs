@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import fsSync from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { isWwMirrorConflictBasename } from "../lib/ww-fs.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -34,13 +35,33 @@ for (const required of ["vmlinuz", "initrd.img", "filesystem.squashfs"]) {
 }
 
 let buildInfo;
+let squashfsEntries;
 try {
-  const result = await execFileAsync("unsquashfs", ["-cat", path.join(directory, "filesystem.squashfs"), "etc/workwire-recovery-build.json"], {
-    maxBuffer: 16 * 1024 * 1024,
-  });
-  buildInfo = JSON.parse(result.stdout);
+  const squashfsPath = path.join(directory, "filesystem.squashfs");
+  const [buildInfoResult, listingResult] = await Promise.all([
+    execFileAsync("unsquashfs", ["-cat", squashfsPath, "etc/workwire-recovery-build.json"], {
+      maxBuffer: 16 * 1024 * 1024,
+    }),
+    execFileAsync("unsquashfs", ["-l", squashfsPath], {
+      maxBuffer: 64 * 1024 * 1024,
+    }),
+  ]);
+  buildInfo = JSON.parse(buildInfoResult.stdout);
+  squashfsEntries = listingResult.stdout.split(/\r?\n/u).map((entry) => entry.trim()).filter(Boolean);
 } catch (error) {
   throw new Error(`Unable to verify the recovery SquashFS build manifest with unsquashfs: ${error.message}`);
+}
+const conflictEntry = squashfsEntries.find((entry) => entry.split("/").some(isWwMirrorConflictBasename));
+if (conflictEntry) throw new Error(`Recovery SquashFS contains WW conflict artifact ${conflictEntry}.`);
+for (const required of [
+  "opt/workwire/agent/lib/recovery/ww-recovery-agent.mjs",
+  "opt/workwire/agent/lib/recovery/ww-recovery-atomic.mjs",
+  "opt/workwire/node/bin/node",
+  "etc/systemd/system/workwire-recovery-agent.service",
+]) {
+  if (!squashfsEntries.some((entry) => entry.endsWith(required))) {
+    throw new Error(`Recovery SquashFS is missing runtime surface ${required}.`);
+  }
 }
 if (Number(buildInfo.recoveryProtocol) !== 1) throw new Error(`SquashFS recovery protocol ${buildInfo.recoveryProtocol} is unsupported.`);
 if (!String(buildInfo.nodeVersion || "").startsWith("22.")) throw new Error(`SquashFS Node runtime is not pinned to Node 22: ${buildInfo.nodeVersion}.`);
@@ -70,6 +91,8 @@ process.stdout.write(`${JSON.stringify({
   protocol: manifest.recoveryProtocol,
   node: buildInfo.nodeVersion,
   initrdInspector: initrdTool,
+  squashfsEntries: squashfsEntries.length,
+  conflictArtifacts: 0,
   optionalMissing: buildInfo.optionalMissing,
   assets: manifest.assets,
 }, null, 2)}\n`);

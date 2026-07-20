@@ -12,3 +12,8 @@ runtime/
 
 # Build output (recovery images, Windows agent bundle, packaged binaries)
 artifacts/
+
+# WW mirror conflict copies are preserved local convergence evidence, never
+# source inputs. Runtime and release builders enforce the same exclusion.
+* (WW conflict *)*
+WW conflict *

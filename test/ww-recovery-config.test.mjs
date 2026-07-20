@@ -62,7 +62,7 @@ test("recovery config applies every environment override and normalizes invalid 
   assert.equal(normalized.bootPort, 6002);
   assert.equal(normalized.advertisedHost, "10.1.2.3");
   assert.equal(normalized.token, "");
-  assert.equal(normalized.stateDir, "/tmp/ww-recovery-custom");
+  assert.equal(normalized.stateDir, path.resolve(env.WW_RECOVERY_STATE_DIR));
   assert.deepEqual(normalized.planner.command, ["planner", "--jsonl"]);
   assert.equal(normalized.planner.enabled, true);
   assert.deepEqual(normalized.extensions, { example: true });

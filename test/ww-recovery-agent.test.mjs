@@ -33,7 +33,9 @@ function fakeInventory(identity = {}) {
   };
 }
 
-async function waitFor(predicate, timeoutMs = 5_000) {
+const TERMINAL_JOB_STATES = new Set(["succeeded", "failed", "canceled", "interrupted", "abandoned"]);
+
+async function waitFor(predicate, timeoutMs = 15_000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const value = await predicate();
@@ -43,13 +45,13 @@ async function waitFor(predicate, timeoutMs = 5_000) {
   throw new Error("Timed out waiting for recovery condition.");
 }
 
-test("recovery root nerve executes argv and Bash with streamed durable output", async () => {
+test("recovery root nerve executes argv and the native unrestricted shell with streamed durable output", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "ww-recovery-agent-"));
   const controllerState = path.join(root, "controller");
   const agentState = path.join(root, "agent");
   const port = await unusedPort();
   const controller = createRecoveryController({
-    config: { stateDir: controllerState, host: "127.0.0.1", port, bootHost: "127.0.0.1", bootPort: 0, heartbeatMs: 100, staleAfterMs: 500, offlineAfterMs: 1_000 },
+    config: { stateDir: controllerState, host: "127.0.0.1", port, bootHost: "127.0.0.1", bootPort: 0, heartbeatMs: 100, staleAfterMs: 5_000, offlineAfterMs: 15_000 },
   });
   const info = await controller.start();
   const client = createRecoveryClient({ url: `http://127.0.0.1:${port}` });
@@ -79,26 +81,36 @@ test("recovery root nerve executes argv and Bash with streamed durable output", 
       steps: [{
         id: "step_exec",
         action: "command.exec",
-        timeoutMs: 5_000,
-        params: { argv: ["node", "-e", "process.stdout.write('argv-out'); process.stderr.write('argv-err')"] },
+        timeoutMs: 15_000,
+        params: { argv: [process.execPath, "-e", "process.stdout.write('argv-out'); process.stderr.write('argv-err')"] },
       }],
     });
     const completedExec = await waitFor(async () => {
       const value = await client.getJob(execJob.id);
-      return value.job.state === "succeeded" ? value : null;
+      return TERMINAL_JOB_STATES.has(value.job.state) ? value : null;
     });
+    assert.equal(completedExec.job.state, "succeeded", JSON.stringify(completedExec.job.result));
     assert.ok(completedExec.events.some((event) => event.type === "step.output" && event.stream === "stdout" && event.data === "argv-out"));
     assert.ok(completedExec.events.some((event) => event.type === "step.output" && event.stream === "stderr" && event.data === "argv-err"));
 
     const shellJob = await client.createJob({
       caseId: caseRecord.id,
       targetAgentId: "wwra_localtest",
-      steps: [{ id: "step_shell", action: "shell.exec", params: { script: "printf 'shell-one\\n'; printf 'shell-two\\n'" } }],
+      steps: [{
+        id: "step_shell",
+        action: "shell.exec",
+        params: {
+          script: process.platform === "win32"
+            ? "[Console]::Write(\"shell-one`nshell-two`n\")"
+            : "printf 'shell-one\\n'; printf 'shell-two\\n'",
+        },
+      }],
     });
     const completedShell = await waitFor(async () => {
       const value = await client.getJob(shellJob.id);
-      return value.job.state === "succeeded" ? value : null;
+      return TERMINAL_JOB_STATES.has(value.job.state) ? value : null;
     });
+    assert.equal(completedShell.job.state, "succeeded", JSON.stringify(completedShell.job.result));
     assert.ok(completedShell.events.some((event) => event.type === "step.output" && event.data.includes("shell-one")));
     assert.equal(agent.getState().identity.agentId, "wwra_localtest");
     assert.equal(agent.getState().connected, true);
@@ -148,6 +160,7 @@ test("recovery agent keeps identity and reconnects after controller restart", as
 
 test("running agent work survives controller blackout and reconciles its durable result", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "ww-recovery-blackout-"));
+  const releasePath = path.join(root, "release-blackout-job");
   const port = await unusedPort();
   const config = { stateDir: path.join(root, "controller"), host: "127.0.0.1", port, bootHost: "127.0.0.1", bootPort: 0, heartbeatMs: 100, staleAfterMs: 400, offlineAfterMs: 800 };
   let controller = createRecoveryController({ config });
@@ -174,13 +187,21 @@ test("running agent work survives controller blackout and reconciles its durable
       steps: [{
         id: "step_blackout",
         action: "command.exec",
-        timeoutMs: 5_000,
-        params: { argv: ["node", "-e", "setTimeout(() => process.stdout.write('blackout-complete'), 700)"] },
+        timeoutMs: 15_000,
+        params: {
+          argv: [
+            process.execPath,
+            "-e",
+            "const fs=require('node:fs');const p=process.argv[1];const poll=()=>fs.existsSync(p)?process.stdout.write('blackout-complete'):setTimeout(poll,20);poll()",
+            releasePath,
+          ],
+        },
       }],
     });
     await waitFor(async () => (await client.getJob(job.id)).job.state === "running");
     await controller.stop();
     await waitFor(() => agent.getState().connected === false);
+    await fs.writeFile(releasePath, "release\n");
 
     controller = createRecoveryController({ config });
     await controller.start();
@@ -188,7 +209,7 @@ test("running agent work survives controller blackout and reconciles its durable
     const completed = await waitFor(async () => {
       const value = await client.getJob(job.id);
       return value.job.state === "succeeded" ? value : null;
-    }, 6_000);
+    }, 15_000);
     assert.equal(completed.job.reconciledAfterReconnect, true);
     assert.ok(completed.events.some((event) => event.type === "step.output" && event.data === "blackout-complete"));
     assert.equal(agent.getState().identity.agentId, "wwra_blackout");

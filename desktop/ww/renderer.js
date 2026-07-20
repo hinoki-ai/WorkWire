@@ -712,6 +712,20 @@ function selectedEntryStats(side) {
   };
 }
 
+function formatSelectionSummary(selection) {
+  const kinds = [
+    selection.directories > 0
+      ? `${selection.directories} folder${selection.directories === 1 ? "" : "s"}`
+      : "",
+    selection.files > 0
+      ? `${selection.files} file${selection.files === 1 ? "" : "s"}`
+      : "",
+  ].filter(Boolean);
+  return kinds.length > 0
+    ? `${kinds.join(" + ")} selected`
+    : `${selection.count} item${selection.count === 1 ? "" : "s"} selected`;
+}
+
 function setSelection(side, paths = []) {
   uiState.selections[side] = new Set(paths);
   renderPane(side);
@@ -913,7 +927,7 @@ function renderPane(side) {
       : `${totalEntries} item${totalEntries === 1 ? "" : "s"}${pane?.listing?.parentPath ? "" : " · root"}`;
   }
   selectionMetaElement.textContent = selection.count > 0
-    ? `${selection.count} selected · ${entries.length}/${totalEntries} shown · ${formatBytes(selection.bytes)}`
+    ? `${formatSelectionSummary(selection)} · ${entries.length}/${totalEntries} shown · ${formatBytes(selection.bytes)}`
     : `${entries.length}/${totalEntries} shown`;
 
   renderSearchDrawer(side);
@@ -1010,6 +1024,7 @@ function transferPanelState(operation = {}) {
 function transferTitle(operation = {}) {
   if (operation.stage === "error") return "Transfer failed";
   if (operation.stage === "complete") {
+    if (Number(operation.skippedLinks) > 0) return "Completed with skips";
     return operation.kind === "move" ? "Move complete" : "All done";
   }
   if (operation.stage === "starting" || operation.stage === "planning") {
@@ -1028,6 +1043,13 @@ function transferCurrentText(operation, progress) {
     return formatUserFacingError(new Error(operation.error || "Transfer failed."));
   }
   if (operation.stage === "complete") {
+    if (progress.skippedLinks > 0) {
+      const linkLabel = `${progress.skippedLinks} symbolic link${progress.skippedLinks === 1 ? " was" : "s were"}`;
+      if (progress.transferredFiles === 0) {
+        return `No files needed copying. ${linkLabel} skipped for safety.`;
+      }
+      return `Files arrived. ${linkLabel} skipped for safety.`;
+    }
     if (progress.skippedFiles > 0 && progress.transferredFiles === 0) {
       return "Everything selected was already there.";
     }
@@ -1065,8 +1087,10 @@ function renderOperation() {
   const direction = transferDirectionLabel(operation);
   const currentText = transferCurrentText(operation, progress);
   const hasSkippedFiles = progress.skippedFiles > 0;
+  const hasSkippedLinks = progress.skippedLinks > 0;
 
   refs.transferPanel.dataset.state = panelState;
+  refs.transferPanel.dataset.warnings = String(hasSkippedLinks);
   const machineImport = operation.fromSide === "machine" || operation.fromSide === "remote-machine";
   refs.transferPanel.dataset.direction = operation.fromSide === "remote"
     ? "reverse"
@@ -1084,7 +1108,7 @@ function renderOperation() {
 
   if (panelState === "idle") {
     refs.operationMeta.textContent = "No active file transfers.";
-  } else if (hasSkippedFiles) {
+  } else if (hasSkippedFiles || hasSkippedLinks) {
     refs.operationMeta.textContent = `${formatBytes(progress.transferredBytes)} sent`;
   } else if (progress.totalBytes > 0) {
     refs.operationMeta.textContent = `${formatBytes(progress.transferredBytes)} of ${formatBytes(progress.totalBytes)}`;
@@ -1103,10 +1127,12 @@ function renderOperation() {
 
   if (progress.totalFiles > 0) {
     refs.operationFiles.textContent = operation.stage === "complete" || operation.stage === "error"
-      ? `${progress.transferredFiles} sent${progress.skippedFiles > 0 ? ` · ${progress.skippedFiles} skipped` : ""}`
+      ? `${progress.transferredFiles} sent${progress.skippedFiles > 0 ? ` · ${progress.skippedFiles} files skipped` : ""}${progress.skippedLinks > 0 ? ` · ${progress.skippedLinks} links skipped` : ""}`
       : `${Math.min(progress.processedFiles, progress.totalFiles)} of ${progress.totalFiles} files`;
   } else {
-    refs.operationFiles.textContent = operation.active ? "Preparing files…" : "No files";
+    refs.operationFiles.textContent = operation.active
+      ? "Preparing files…"
+      : progress.skippedLinks > 0 ? `${progress.skippedLinks} links skipped` : "No files";
   }
 
   if (operation.active) {

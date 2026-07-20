@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+copy_tree_without_ww_conflicts() {
+  local source_tree="$1"
+  local target_tree="$2"
+  local conflict_path=""
+  mkdir -p -- "$target_tree"
+  tar \
+    --exclude='* (WW conflict *)*' \
+    --exclude='WW conflict *' \
+    --exclude='*/WW conflict *' \
+    -C "$source_tree" -cf - . | tar -C "$target_tree" -xf -
+  conflict_path="$(find "$target_tree" \( -name '* (WW conflict *)*' -o -name 'WW conflict *' \) -print -quit)"
+  if [[ -n "$conflict_path" ]]; then
+    printf 'Refusing recovery-host runtime containing WW conflict artifact: %s\n' "$conflict_path" >&2
+    exit 6
+  fi
+}
+
 command_name="${1:-install}"
 shift || true
 interface_name=""
@@ -93,7 +110,7 @@ fi
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 install -d -m 0755 "$install_root/lib" "$install_root/scripts" "$unit_dropin_dir"
 rm -rf -- "$install_root/lib/recovery"
-cp -a -- "$repo_root/lib/recovery" "$install_root/lib/recovery"
+copy_tree_without_ww_conflicts "$repo_root/lib/recovery" "$install_root/lib/recovery"
 for module in ww-network.mjs ww-config-store.mjs ww-fs.mjs; do
   install -m 0644 "$repo_root/lib/$module" "$install_root/lib/$module"
 done

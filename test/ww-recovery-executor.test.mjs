@@ -7,7 +7,7 @@ test("recovery executor preserves argv, force, output streams, and nonzero statu
   const executor = createRecoveryExecutor();
   const events = [];
   const result = await executor.execArgv({
-    file: "node",
+    file: process.execPath,
     args: ["-e", "process.stdout.write('out'); process.stderr.write('err'); process.exit(7)"],
     force: true,
     onEvent: (event) => events.push(event),
@@ -21,11 +21,13 @@ test("recovery executor preserves argv, force, output streams, and nonzero statu
   assert.equal(events.filter((event) => event.type === "output" && event.stream === "stdout").map(decodeOutputChunk).join(""), "out");
 });
 
-test("recovery executor supports unrestricted multiline Bash and binary stdout", async () => {
+test("recovery executor supports unrestricted multiline native shell and binary stdout", async () => {
   const executor = createRecoveryExecutor();
   const chunks = [];
   const result = await executor.execShell({
-    script: "printf 'line one\\n'; printf '\\377\\000'",
+    script: process.platform === "win32"
+      ? "$b=[byte[]](108,105,110,101,32,111,110,101,10,255,0);[Console]::OpenStandardOutput().Write($b,0,$b.Length)"
+      : "printf 'line one\\n'; printf '\\377\\000'",
     timeoutMs: 0,
     onEvent(event) {
       if (event.type === "output" && event.stream === "stdout") chunks.push(decodeOutputChunk(event));
@@ -38,7 +40,7 @@ test("recovery executor supports unrestricted multiline Bash and binary stdout",
 test("recovery executor enforces timeout and cancels a process group", async () => {
   const executor = createRecoveryExecutor({ cancelGraceMs: 50 });
   const result = await executor.execArgv({
-    file: "node",
+    file: process.execPath,
     args: ["-e", "setInterval(() => {}, 1000)"],
     timeoutMs: 40,
   });
@@ -47,7 +49,7 @@ test("recovery executor enforces timeout and cancels a process group", async () 
 
   let executionId = "";
   const running = executor.execArgv({
-    file: "node",
+    file: process.execPath,
     args: ["-e", "setInterval(() => {}, 1000)"],
     timeoutMs: 0,
     onEvent(event) {

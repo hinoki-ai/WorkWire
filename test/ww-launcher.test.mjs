@@ -477,8 +477,8 @@ test("ww launcher refuses to attach to a local background service on the wrong p
 
     assert.equal(result, null);
     assert.equal(launched, false);
-    assert.match(stderrOutput, /using \/srv\/old-root/i);
-    assert.match(stderrOutput, /expects \/srv\/workwire\/app/i);
+    assert.ok(stderrOutput.includes(path.resolve("/srv/old-root")));
+    assert.ok(stderrOutput.includes(path.resolve("/srv/workwire/app")));
   } finally {
     process.exitCode = previousExitCode;
   }
@@ -621,6 +621,8 @@ test("ww serve keeps the background service running while it opens the desktop a
 
   assert.equal(result?.serviceInfo?.name, "Desk Box");
   assert.equal(mirrorOptions?.expectedRemoteRootPath, "C:\\Users\\Sakura\\WorkWire");
+  assert.equal(typeof mirrorOptions?.isReadyToSync, "function");
+  assert.equal(mirrorOptions.isReadyToSync(), true);
   assert.equal(typeof capturedLaunchRequest, "function");
   assert.equal(beaconAnnouncement?.name, "Desk Box");
   assert.equal(beaconAnnouncement?.port, 4851);

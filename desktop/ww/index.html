@@ -224,6 +224,35 @@
           </section>
         </section>
 
+        <section class="recovery-panel recovery-commander" aria-labelledby="recovery-commander-title">
+          <header class="recovery-panel-header">
+            <div>
+              <span class="recovery-eyebrow">Fleet commander</span>
+              <h2 id="recovery-commander-title">Targets and rollout</h2>
+            </div>
+            <button id="recovery-command-palette-open" class="button button-small" type="button" title="Open command palette (Ctrl+K)">⌘ Operations</button>
+          </header>
+          <div id="recovery-fleet-targets" class="recovery-fleet-targets" role="group" aria-label="Fleet targets"></div>
+          <div class="recovery-command-grid">
+            <label class="recovery-field"><span>Group</span><select id="recovery-fleet-group"><option value="">Selected machines</option></select></label>
+            <label class="recovery-field"><span>Live query</span><input id="recovery-fleet-query" type="text" placeholder="state=online and labels.rack=red"></label>
+            <label class="recovery-field"><span>Rollout</span><select id="recovery-fleet-rollout"><option value="all-at-once">All at once</option><option value="bounded" selected>Bounded</option><option value="canary">Canary then rest</option></select></label>
+            <label class="recovery-field"><span>Concurrency</span><input id="recovery-fleet-concurrency" type="number" min="1" value="4"></label>
+          </div>
+          <label class="recovery-field"><span>Exact fleet argv (JSON array or tokens)</span><input id="recovery-fleet-command" type="text" placeholder='["uname","-a"]' spellcheck="false"></label>
+          <div class="recovery-button-row">
+            <button id="recovery-fleet-execute" class="button button-copy" type="button">Execute fleet</button>
+            <button id="recovery-fleet-inventory" class="button" type="button">Refresh health</button>
+          </div>
+          <div id="recovery-fleet-results" class="recovery-fleet-results" aria-live="polite"></div>
+          <details class="recovery-utility-card">
+            <summary>Restart-safe schedule</summary>
+            <label class="recovery-field"><span>Schedule JSON</span><textarea id="recovery-schedule-spec" rows="4" spellcheck="false">{"name":"one shot","at":"","missed":"run-once"}</textarea></label>
+            <button id="recovery-schedule-save" class="button button-small" type="button">Save schedule</button>
+            <div id="recovery-schedule-list" class="recovery-event-list"></div>
+          </details>
+        </section>
+
         <section class="recovery-panel recovery-target" aria-labelledby="recovery-target-title">
           <header class="recovery-panel-header">
             <div>
@@ -378,7 +407,56 @@
             </label>
           </section>
         </section>
+
+        <section class="recovery-panel recovery-interactive" aria-labelledby="recovery-interactive-title">
+          <header class="recovery-panel-header">
+            <div><span class="recovery-eyebrow">Interactive control</span><h2 id="recovery-interactive-title">Terminal, tunnel, console</h2></div>
+            <button id="recovery-session-open" class="button button-copy" type="button">New terminal</button>
+          </header>
+          <label class="recovery-field"><span>Working directory</span><input id="recovery-session-cwd" type="text" placeholder="/root"></label>
+          <div id="recovery-session-tabs" class="recovery-console-tabs" role="tablist" aria-label="Interactive terminals"></div>
+          <pre id="recovery-session-output" class="recovery-output recovery-terminal-output" aria-live="polite"></pre>
+          <label class="recovery-field"><span>Terminal input</span><textarea id="recovery-session-input" rows="3" spellcheck="false" placeholder="Type exact stdin…"></textarea></label>
+          <div class="recovery-button-row">
+            <button id="recovery-session-send" class="button button-copy" type="button">Send stdin</button>
+            <button id="recovery-session-interrupt" class="button" type="button">Ctrl+C</button>
+            <button id="recovery-session-detach" class="button" type="button">Detach</button>
+            <button id="recovery-session-reconnect" class="button" type="button">Reconnect</button>
+            <button id="recovery-session-terminate" class="button" type="button">Terminate</button>
+          </div>
+          <div class="recovery-command-grid recovery-tunnel-controls">
+            <label class="recovery-field"><span>Target host</span><input id="recovery-tunnel-host" type="text" value="127.0.0.1"></label>
+            <label class="recovery-field"><span>Target port</span><input id="recovery-tunnel-port" type="number" min="1" max="65535"></label>
+            <button id="recovery-tunnel-open" class="button button-small" type="button">Open TCP tunnel</button>
+          </div>
+          <div id="recovery-tunnel-list" class="recovery-event-list"></div>
+          <div class="recovery-command-grid recovery-console-launcher">
+            <label class="recovery-field"><span>Console</span><select id="recovery-console-adapter"><option value="ssh">SSH</option></select></label>
+            <label class="recovery-field"><span>Target</span><input id="recovery-console-target" type="text" placeholder="host or URL"></label>
+            <button id="recovery-console-open" class="button button-small" type="button">Open strongest adapter</button>
+          </div>
+        </section>
+
+        <section class="recovery-panel recovery-intelligence" aria-labelledby="recovery-intelligence-title">
+          <header class="recovery-panel-header">
+            <div><span class="recovery-eyebrow">Evidence-driven autonomy</span><h2 id="recovery-intelligence-title">Plan graph and lane evidence</h2></div>
+            <button id="recovery-manual-takeover" class="button button-small" type="button">Manual takeover</button>
+          </header>
+          <div id="recovery-plan-graph" class="recovery-plan-graph">No autonomous plan graph has been recorded.</div>
+          <div id="recovery-proof-summary" class="recovery-inventory-summary">Final repair proof is required; exit zero alone is insufficient.</div>
+          <label class="recovery-field recovery-lane-input"><span>Lane operation JSON</span><textarea id="recovery-next-stage-input" rows="4" spellcheck="false" placeholder='{"machineId":"…", "folderId":"…", "imageId":"…", "jobId":"…"}'>{}</textarea></label>
+          <div id="recovery-next-stage-panels" class="recovery-next-stage-panels"></div>
+          <pre id="recovery-next-stage-output" class="recovery-session-output">Lane results appear here with their exact returned records.</pre>
+        </section>
       </main>
+
+      <div id="recovery-command-palette" class="recovery-command-palette" hidden role="dialog" aria-modal="true" aria-label="Recovery command palette">
+        <section class="recovery-command-palette-panel">
+          <label class="recovery-field"><span>Every real operation</span><input id="recovery-command-palette-query" type="search" placeholder="fleet, terminal, snapshot, image, salvage…" autocomplete="off"></label>
+          <div id="recovery-command-palette-results" class="recovery-command-palette-results" role="listbox"></div>
+          <button id="recovery-command-palette-close" class="button button-small" type="button">Close</button>
+        </section>
+      </div>
 
       <div id="explorer-layer" class="explorer-layer" hidden>
         <section class="explorer-panel" role="dialog" aria-modal="true" aria-labelledby="explorer-title">

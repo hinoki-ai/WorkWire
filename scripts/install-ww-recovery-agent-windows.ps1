@@ -20,6 +20,11 @@ $workwireRoot = Join-Path $programData "WorkWire"
 $installRoot = Join-Path $workwireRoot "recovery-agent"
 $configPath = Join-Path $workwireRoot "recovery-agent.json"
 $stateDir = Join-Path $workwireRoot "recovery-state"
+$nextRoot = Join-Path $workwireRoot ("recovery-agent.next." + [guid]::NewGuid().ToString("N"))
+$backupRoot = Join-Path $workwireRoot ("recovery-agent.previous." + (Get-Date -Format "yyyyMMdd-HHmmss") + "." + [guid]::NewGuid().ToString("N").Substring(0, 8))
+$updateTaskName = "WorkWire Recovery Agent Update"
+$updateScript = Join-Path $workwireRoot "complete-recovery-agent-update.ps1"
+$updateResult = Join-Path $workwireRoot "last-recovery-agent-update.json"
 
 function Assert-Administrator {
   $identity = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
@@ -70,18 +75,19 @@ if (-not $NodePath -or -not (Test-Path $NodePath)) {
 $nodeMajor = [int](& $NodePath -p "process.versions.node.split('.')[0]")
 if ($nodeMajor -lt 22) { throw "Node.js 22 or newer is required; found $(& $NodePath --version)." }
 
-# Stage the agent files from the bundle (lib\ and node_modules\ws next to this script).
-# Remove existing trees first: Copy-Item -Recurse nests the source INSIDE an
-# existing destination directory instead of overwriting it.
-New-Item -ItemType Directory -Force -Path $installRoot, $stateDir | Out-Null
-Remove-Item -Recurse -Force -ErrorAction SilentlyContinue (Join-Path $installRoot "lib"), (Join-Path $installRoot "node_modules")
-Copy-Item -Recurse -Force (Join-Path $scriptRoot "lib") (Join-Path $installRoot "lib")
-New-Item -ItemType Directory -Force -Path (Join-Path $installRoot "node_modules") | Out-Null
-Copy-Item -Recurse -Force (Join-Path $scriptRoot "node_modules\ws") (Join-Path $installRoot "node_modules\ws")
-Copy-Item -Force (Join-Path $scriptRoot "package.json") (Join-Path $installRoot "package.json")
-if ($NodePath -ne (Join-Path $installRoot "node.exe")) {
-  Copy-Item -Force $NodePath (Join-Path $installRoot "node.exe")
+# Fully stage beside the live runtime. Windows locks a running node.exe, so an
+# in-place copy is not a valid self-update strategy.
+New-Item -ItemType Directory -Force -Path $nextRoot, $stateDir | Out-Null
+Copy-Item -Recurse -Force (Join-Path $scriptRoot "lib") (Join-Path $nextRoot "lib")
+New-Item -ItemType Directory -Force -Path (Join-Path $nextRoot "node_modules") | Out-Null
+Copy-Item -Recurse -Force (Join-Path $scriptRoot "node_modules\ws") (Join-Path $nextRoot "node_modules\ws")
+Copy-Item -Force (Join-Path $scriptRoot "package.json") (Join-Path $nextRoot "package.json")
+Copy-Item -Force $NodePath (Join-Path $nextRoot "node.exe")
+$completerSource = Join-Path $scriptRoot "complete-ww-recovery-agent-update-windows.ps1"
+if (-not (Test-Path -LiteralPath $completerSource -PathType Leaf)) {
+  throw "The bundle is missing complete-ww-recovery-agent-update-windows.ps1."
 }
+Copy-Item -Force $completerSource $updateScript
 
 # Write the agent configuration read by resolveRecoveryAgentOptions on win32.
 $config = [ordered]@{ controllerUrl = $Controller; token = $Token; mode = "installed" }
@@ -89,20 +95,29 @@ $config = [ordered]@{ controllerUrl = $Controller; token = $Token; mode = "insta
 # adds one, which the agent's JSON reader must never see.
 [System.IO.File]::WriteAllText($configPath, ($config | ConvertTo-Json), (New-Object System.Text.UTF8Encoding $false))
 
-# Register a SYSTEM scheduled task: start at boot, restart forever if the process dies.
-# Hibernate/resume keeps the process alive; the agent's own reconnect loop restores the socket.
-$agentEntry = Join-Path $installRoot "lib\recovery\ww-recovery-agent.mjs"
-$action = New-ScheduledTaskAction -Execute (Join-Path $installRoot "node.exe") -Argument ('"{0}"' -f $agentEntry) -WorkingDirectory $installRoot
-$trigger = New-ScheduledTaskTrigger -AtStartup
+# Stopping an agent scheduled task also terminates its entire Task Scheduler job,
+# including child PowerShell processes. Delegate the swap to a separate SYSTEM
+# task so the updater survives stopping the agent that invoked this installer.
+$updateArguments = @(
+  "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+  "-File", ('"{0}"' -f $updateScript),
+  "-NextRoot", ('"{0}"' -f $nextRoot),
+  "-InstallRoot", ('"{0}"' -f $installRoot),
+  "-BackupRoot", ('"{0}"' -f $backupRoot),
+  "-ResultPath", ('"{0}"' -f $updateResult),
+  "-TaskName", ('"{0}"' -f $taskName),
+  "-DelaySeconds", "5"
+) -join " "
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $updateArguments -WorkingDirectory $workwireRoot
+$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(5)
 $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet `
   -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd `
-  -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) `
-  -ExecutionTimeLimit (New-TimeSpan -Seconds 0) `
-  -MultipleInstances IgnoreNew
-Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings | Out-Null
-Start-ScheduledTask -TaskName $taskName
+  -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -MultipleInstances IgnoreNew
+Unregister-ScheduledTask -TaskName $updateTaskName -Confirm:$false -ErrorAction SilentlyContinue
+Register-ScheduledTask -TaskName $updateTaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings | Out-Null
+Start-ScheduledTask -TaskName $updateTaskName
 
-Write-Output "WorkWire recovery agent installed and started toward $Controller."
-Write-Output "State dir: $stateDir  Config: $configPath  Task: '$taskName' (SYSTEM, at startup, auto-restart)."
+Write-Output "WorkWire recovery-agent update staged for the independent SYSTEM updater task."
+Write-Output "Controller: $Controller  State: $stateDir  Result: $updateResult"
+Write-Output "The updater preserves the previous runtime at $backupRoot and rolls back on failure."
