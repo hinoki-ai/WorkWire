@@ -1,0 +1,32 @@
+{
+  "release": "0.1.0+ww1.6276a73ad450",
+  "checkedAt": "2026-07-20T03:16:32Z",
+  "gates": {
+    "npmTest": {
+      "passed": 292,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 20789.51,
+      "at": "2026-07-20T03:13:05Z"
+    },
+    "fleetE2e": {
+      "ok": true,
+      "durationMs": 28040,
+      "transferredFiles": 8,
+      "transferredBytes": 34078805,
+      "identitiesPinned": true,
+      "exactReleaseOnBoth": true,
+      "at": "2026-07-20T03:13:34Z"
+    },
+    "fleetDoctor": {
+      "ok": true,
+      "pairingTokenConverged": true,
+      "peerIdentityPinned": true,
+      "localRunningCurrentSource": true,
+      "remoteRunningCurrentSource": true,
+      "rootAgentOnline": true,
+      "systemAgentOnline": true,
+      "at": "2026-07-20T03:16:32Z"
+    }
+  }
+}
