@@ -1,0 +1,15 @@
+{
+  "benchmark": "small-file-fleet",
+  "at": "2026-07-20T02:25:31.647Z",
+  "release": "0.1.0+ww1.2a95d730b96d",
+  "files": 500,
+  "fileBytes": 1024,
+  "loopback": {
+    "files": 500,
+    "bytes": 512000,
+    "milliseconds": 6359.46,
+    "filesPerSecond": 78.62,
+    "verified": true
+  },
+  "ok": true
+}
