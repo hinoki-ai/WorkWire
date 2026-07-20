@@ -1,4 +1,4 @@
-# P3 final — Almighty Autonomous Fleet Commander
+# P3 final — Agentic Archon command capability
 
 > Historical P3 lane-closure record. Post-P3 fleet hardening, native Windows
 > totals, clean-image hashes, physical two-machine results, and final release
@@ -8,7 +8,13 @@ Completed 2026-07-19 (America/Santiago).
 
 ## Outcome
 
-P3 is software-complete. WorkWire now has one restart-safe recovery command nerve for multi-machine fleet work, genuinely interactive sessions, proof-driven autonomous recovery, strict optional continuity/sync/imaging/salvage integration, a high-density Electron cockpit, and truthful Linux/Windows/ARM64 capability reporting. Existing raw argv, unrestricted shell, typed destructive actions, device-identity checks, `force: true`, Files, and Recovery behavior remain available.
+P3 is software-complete. WorkWire, the Agentic Archon, now has one
+restart-safe command nerve for multi-machine work, genuinely interactive
+sessions, proof-driven autonomous recovery, strict optional
+continuity/sync/imaging/salvage integration, a high-density Electron cockpit,
+and truthful Linux/Windows/ARM64 capability reporting. Existing raw argv,
+unrestricted shell, typed destructive actions, device-identity checks,
+`force: true`, Files, and Recovery behavior remain available.
 
 ## Exact capabilities delivered
 

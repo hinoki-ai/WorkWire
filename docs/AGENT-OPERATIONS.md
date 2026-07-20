@@ -1,5 +1,9 @@
 # WorkWire agent operations contract
 
+WorkWire is the Agentic Archon: a local-first authority over operator-owned
+machines, exercised through trusted privileged agents. This contract governs
+the agent capabilities and evidence used to exercise that authority.
+
 This is an agent-to-agent execution contract, not a human tutorial. Autonomous
 agents consume it directly from the live repository and emit machine-readable
 evidence. Do not substitute remembered IP addresses, browser downloads,

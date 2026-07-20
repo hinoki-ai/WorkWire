@@ -2,7 +2,7 @@
   "name": "workwire",
   "productName": "WorkWire",
   "version": "0.1.0",
-  "description": "Self-contained WorkWire two-machine file desk and LAN recovery portal.",
+  "description": "WorkWire, the local-first Agentic Archon for operator-owned machines.",
   "desktopName": "workwire.desktop",
   "main": "desktop/ww-runtime.cjs",
   "type": "module",

@@ -1,4 +1,4 @@
-# P3 progress — Almighty Autonomous Fleet Commander
+# P3 progress — Agentic Archon command capability
 
 Updated 2026-07-19 (America/Santiago).
 

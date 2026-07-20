@@ -1,6 +1,16 @@
-# WorkWire
+# WorkWire — the Agentic Archon
 
-WorkWire keeps Linux and Windows roots synchronized over a trusted LAN and provides a two-pane Electron desk, durable continuity/vault services, high-performance sync and imaging engines, and a root/SYSTEM recovery command plane.
+WorkWire is the Agentic Archon: a local-first authority for operator-owned
+machines, exercised through trusted privileged agents on the LAN. It exposes
+the capabilities needed to act on those machines—filesystem access, file
+operations, synchronization, continuity, imaging, provisioning, salvage,
+shell execution, recovery, and fleet control—from one system.
+
+The historical file desk was the capability WorkWire grew from. It remains
+useful, but it is not the product identity.
+
+For the investor-facing, evidence-grounded product and technology profile, see
+[workwire.md](./workwire.md).
 
 The repository root is the development portal. WorkWire mirrors ordinary files and source changes while reserving local control/build trees such as `.workwire/`, `.git/`, `link/`, `dist/`, `runtime/`, and `node_modules/`. The desktop desk shows only the portal environment (`Portal/` inside the root); the rest of the root is backend-only and never appears in the frontend.
 

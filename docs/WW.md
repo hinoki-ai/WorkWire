@@ -1,13 +1,23 @@
-# WorkWire operations
+# WorkWire Archon operations
 
 Fleet convergence and physical cross-platform proof are governed by
 [AGENT-OPERATIONS.md](./AGENT-OPERATIONS.md). It is the canonical agent-only
 runbook; historical Windows handoffs and remembered addresses are not current
 configuration.
 
-## System model
+## Archon system model
 
-Each computer runs one authenticated HTTP filesystem service and, when opened, one sandboxed Electron desk. UDP beacons advertise the current service address and port. A paired machine is accepted only when its bearer trust, pinned machine identity, protocol version, and exact WorkWire build agree.
+WorkWire is the Agentic Archon: a local-first authority over operator-owned
+machines on a trusted LAN. Privileged agents expose filesystem, execution,
+recovery, continuity, imaging, provisioning, and fleet capabilities. The
+human or autonomous operator chooses the action; WorkWire supplies the
+machinery and records what happened.
+
+The original file desk is one Archon capability. Each computer runs one
+authenticated HTTP filesystem service and, when opened, one sandboxed Electron
+desk. UDP beacons advertise the current service address and port. A paired
+machine is accepted only when its bearer trust, pinned machine identity,
+protocol version, and exact WorkWire build agree.
 
 WorkWire also contains a separate LAN recovery subsystem on ports 4852/4853. It does not reuse the file service's peer trust or filesystem boundary. Its root agents, durable cases, PXE live environment, and operational safety model are documented in [RECOVERY.md](./RECOVERY.md).
 

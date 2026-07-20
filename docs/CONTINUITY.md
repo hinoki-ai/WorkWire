@@ -1,6 +1,11 @@
-# WorkWire machine continuity and recovery vault
+# WorkWire Archon continuity and recovery vault
 
-WorkWire Continuity provides one durable historical model of a machine and a local, content-addressed recovery repository. It is an offline-first library. The implementation does not require a database server, network service, cloud account, or encryption key.
+The Agentic Archon maintains one durable historical model of each governed
+machine and a local, content-addressed recovery repository. Continuity and the
+recovery vault are capabilities of WorkWire’s local-first authority, not a
+separate recovery product. They are offline-first libraries: the
+implementation does not require a database server, network service, cloud
+account, or encryption key.
 
 The public module is `lib/continuity/index.mjs`. It exports exactly:
 

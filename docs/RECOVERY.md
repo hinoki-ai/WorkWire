@@ -1,11 +1,16 @@
-# WorkWire LAN recovery portal
+# WorkWire Archon recovery capability
 
 For the live HINOKI/Sakura fleet topology, autonomous convergence, privilege
 parity proofs, and shutdown gate, follow
-[AGENT-OPERATIONS.md](./AGENT-OPERATIONS.md). This document defines the general
-recovery product surface.
+[AGENT-OPERATIONS.md](./AGENT-OPERATIONS.md). This document defines the
+recovery capability of the Agentic Archon.
 
-WorkWire Recovery is a parallel, root-capable control plane for operator-owned machines on a private wired LAN. It does not replace or weaken the paired file desk: file synchronization remains on port 4851, while recovery uses its own controller, identities, durable state, and protocol on ports 4852 and 4853.
+WorkWire is the Agentic Archon: a local-first authority over operator-owned
+machines on a private wired LAN. Recovery is one expression of that authority,
+not a separate product. It is a root-capable control plane exercised through
+privileged agents. The original paired file desk remains another capability:
+file synchronization stays on port 4851, while recovery uses its own
+controller, identities, durable state, and protocol on ports 4852 and 4853.
 
 The recovery plane can discover installed or PXE-live agents, collect hardware and storage inventory, run unrestricted argv or Bash as the agent's actual user (normally root), execute typed disk/filesystem/boot actions, move resumable artifacts, wake machines, and drive an autonomous case loop. Do not expose these ports through an internet router.
 

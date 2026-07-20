@@ -668,6 +668,17 @@ export async function runServeCommand({
     });
   }
 
+  // createWwService can safely move to an open port if the configured port is
+  // occupied. Persist that effective port before the desktop or peer beacon
+  // uses the service, otherwise the next local attach keeps probing the dead
+  // configured port and appears to hang in the waiting state.
+  if (serviceInfo?.port && Number(serviceInfo.port) !== Number(config.service.port)) {
+    config = await updateWwConfig((current) => {
+      current.service.port = serviceInfo.port;
+      return current;
+    });
+  }
+
   recoveryCompanionWatchdog = createRecoveryCompanionWatchdogImpl({
     platform: processImpl.platform || process.platform,
     log: serviceLog,

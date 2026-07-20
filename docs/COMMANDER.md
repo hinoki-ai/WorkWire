@@ -1,6 +1,12 @@
-# WorkWire fleet commander
+# WorkWire Archon command
 
-The recovery commander is WorkWire's agent-driven, LAN-first control plane for many machines. It adds durable fleet rollouts, interactive terminals and tunnels, evidence-driven autonomous recovery, and optional continuity/sync/imaging/salvage lanes to the existing Files and Recovery workspaces. Raw argv, unrestricted shell, typed destructive actions, `force: true`, and direct takeover remain available.
+WorkWire is the Agentic Archon: a local-first authority over operator-owned
+machines through trusted privileged agents. This command surface exercises that
+authority across many machines with durable fleet rollouts, interactive
+terminals and tunnels, evidence-driven autonomous recovery, and continuity,
+sync, imaging, and salvage capabilities. The historical file desk remains one
+capability alongside these command surfaces. Raw argv, unrestricted shell,
+typed destructive actions, `force: true`, and direct takeover remain available.
 
 Keep the controller and agent setup from [RECOVERY.md](./RECOVERY.md). Recovery ports belong on a private lab network, not an internet-facing interface.
 
@@ -162,7 +168,7 @@ Manual takeover stops the autonomous loop without narrowing operator power. The 
 Open the existing WorkWire desktop and select Recovery (`Ctrl/Cmd+2`). The high-density cockpit provides:
 
 - Machine switcher with connectivity, health, active work, last boot, labels, and selected-target inventory.
-- Multi-select fleet commander with group/live-query selection, rollout/concurrency, exact argv, live per-target state, retry, health refresh, and schedules.
+- Multi-select Archon command with group/live-query selection, rollout/concurrency, exact argv, live per-target state, retry, health refresh, and schedules.
 - Jobs, exact output, canonical event timeline, artifacts, typed actions, playbooks, unrestricted argv/Bash, Wake-on-LAN, and PXE controls from the existing Recovery workspace.
 - Terminal tabs with stdin, interrupt, detach, reconnect, terminate, target-local tunnels, and strongest-installed console launch.
 - Autonomous plan graph, current hypothesis/action, proofs, alternatives, raw evidence, stop/resume, and unrestricted manual takeover.

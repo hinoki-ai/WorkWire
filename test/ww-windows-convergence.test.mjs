@@ -11,6 +11,10 @@ test("Windows source convergence encodes fleet, clock, task, and exact-source in
   assert.match(source, /RealTimeIsUniversal/);
   assert.match(source, /RepetitionInterval \(New-TimeSpan -Minutes 1\)/);
   assert.match(source, /Wait-ForFileService/);
+  assert.match(source, /WorkWire LAN Beacon/);
+  assert.match(source, /-Protocol UDP -LocalPort 9001-9002 -Profile Any/);
+  assert.match(source, /-Protocol TCP -LocalPort 4851 -Profile Any/);
+  assert.match(source, /Set-NetFirewallRule -Enabled True -Action Allow -Profile Any/);
   assert.match(source, /file-service-maintenance\.lock/);
   assert.match(source, /Remove-Item -LiteralPath \$maintenanceMarker/);
   assert.match(source, /backupRoot/);

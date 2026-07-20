@@ -70,7 +70,7 @@
   "extraMetadata": {
     "name": "workwire",
     "productName": "WorkWire",
-    "description": "Self-contained WorkWire two-machine file desk and LAN recovery portal.",
+    "description": "WorkWire, the local-first Agentic Archon for operator-owned machines.",
     "desktopName": "workwire.desktop",
     "main": "desktop/ww-runtime.cjs"
   },

@@ -1,6 +1,13 @@
-# WorkWire data powerhouse
+# WorkWire Archon data capabilities
 
-WorkWire’s data plane now has three independent engines: content-aware folder synchronization, managed disk imaging/deployment, and priority-first filesystem salvage. They use ordinary Node streams and filesystem primitives, keep their control records as inspectable JSON, and accept injected adapters only where raw devices, native inspection tools, remote machine execution, or the optional recovery vault are involved.
+The Agentic Archon exposes data capabilities through three independent
+engines: content-aware folder synchronization, managed disk
+imaging/deployment, and priority-first filesystem salvage. They use ordinary
+Node streams and filesystem primitives, keep their control records as
+inspectable JSON, and accept injected adapters only where raw devices, native
+inspection tools, remote machine execution, or the optional recovery vault are
+involved. These are capabilities of WorkWire’s authority over operator-owned
+machines, not separate product identities.
 
 No engine selects a host disk implicitly. Imaging restore requires a concrete target path or a target returned by the injected executor. Salvage opens its source read-only and never renames, deletes, writes, or updates source metadata.
 

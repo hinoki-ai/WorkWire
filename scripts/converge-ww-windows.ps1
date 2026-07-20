@@ -242,7 +242,16 @@ try {
   $existingRule = Get-NetFirewallRule -DisplayName "WorkWire File Service" -ErrorAction SilentlyContinue
   if (-not $existingRule) {
     New-NetFirewallRule -DisplayName "WorkWire File Service" -Direction Inbound -Action Allow `
-      -Protocol TCP -LocalPort 4851 -Profile Private | Out-Null
+      -Protocol TCP -LocalPort 4851 -Profile Any | Out-Null
+  } else {
+    $existingRule | Set-NetFirewallRule -Enabled True -Action Allow -Profile Any
+  }
+  $beaconRule = Get-NetFirewallRule -DisplayName "WorkWire LAN Beacon" -ErrorAction SilentlyContinue
+  if (-not $beaconRule) {
+    New-NetFirewallRule -DisplayName "WorkWire LAN Beacon" -Direction Inbound -Action Allow `
+      -Protocol UDP -LocalPort 9001-9002 -Profile Any | Out-Null
+  } else {
+    $beaconRule | Set-NetFirewallRule -Enabled True -Action Allow -Profile Any
   }
   Register-ServeTask
   $discover = Wait-ForFileService

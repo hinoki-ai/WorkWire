@@ -1,4 +1,4 @@
-# WorkWire Autonomous LAN Recovery Portal
+# WorkWire Agentic Archon — recovery capability handoff
 
 ## Execution TODO and autonomous-agent handoff
 
@@ -8,7 +8,11 @@ Workspace: /home/hinoki/WorkWire
 Host baseline: Fedora Linux 43, x86_64, Node 22.22.0, Podman 5.7.1, dnsmasq 2.91  
 Existing test baseline: 106/106 passing with npm test  
 
-This document is the controlling implementation handoff for the next coding agent. It turns WorkWire from a two-computer file desk into an unrestricted LAN recovery portal capable of booting, inspecting, controlling, and repairing other operator-owned computers.
+This document is the controlling implementation handoff for the next coding
+agent. It specifies the recovery capability of WorkWire, the local-first
+Agentic Archon. Recovery extends the Archon’s authority over operator-owned
+computers with boot, inspection, control, and repair operations; it does not
+replace the historical file desk or redefine WorkWire as a recovery product.
 
 ## Handoff contract
 
@@ -2620,4 +2624,9 @@ Selection rule: implement only one ranked item at a time after operator
 approval, using recovery-agent transport, verify-before-execute archives, and
 postcondition proof.
 
-WorkWire Recovery is a root-capable laboratory instrument. Its job is to give the operator and autonomous planner complete reach into owned machines over the LAN, including the ability to make irreversible changes. Engineer it for exact identity, observable commands, durable state, interruption recovery, and unrestricted escape hatches. Do not reduce its capability to make it resemble a consumer help wizard.
+The recovery capability is a root-capable laboratory instrument within the
+Agentic Archon. Its job is to give the operator and autonomous planner complete
+reach into owned machines over the LAN, including the ability to make
+irreversible changes. Engineer it for exact identity, observable commands,
+durable state, interruption recovery, and unrestricted escape hatches. Do not
+reduce its capability to make it resemble a consumer help wizard.

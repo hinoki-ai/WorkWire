@@ -1,4 +1,4 @@
-# P1 final — omniscient memory and recovery vault
+# P1 final — Archon continuity and recovery vault
 
 Completed 2026-07-19.
 
