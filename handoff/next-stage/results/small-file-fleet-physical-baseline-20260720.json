@@ -1,0 +1,23 @@
+{
+  "benchmark": "small-file-fleet",
+  "at": "2026-07-20T02:34:27.686Z",
+  "mode": "legacy-serialized",
+  "files": 500,
+  "fileBytes": 1024,
+  "loopback": {
+    "files": 500,
+    "bytes": 512000,
+    "milliseconds": 4910.64,
+    "filesPerSecond": 101.82,
+    "verified": true
+  },
+  "peer": {
+    "files": 500,
+    "bytes": 512000,
+    "milliseconds": 6623.77,
+    "filesPerSecond": 75.49,
+    "verified": true,
+    "host": "192.168.8.100"
+  },
+  "ok": true
+}
