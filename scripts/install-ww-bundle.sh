@@ -151,6 +151,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=${BIN_DIR}/ww serve
+Environment=UV_THREADPOOL_SIZE=32
 UMask=0077
 Restart=on-failure
 RestartSec=2

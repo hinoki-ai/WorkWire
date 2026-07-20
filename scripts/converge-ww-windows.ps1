@@ -188,7 +188,11 @@ function Repair-DesktopInstall {
 
 function Register-ServeTask {
   $entry = Join-Path $PortalRoot "ww.mjs"
-  $action = New-ScheduledTaskAction -Execute $NodePath -Argument ('"{0}" serve' -f $entry) -WorkingDirectory $PortalRoot
+  # Tiny-file batches issue many independent filesystem operations.  Set the
+  # Node pool before process start so NTFS opens/writes can overlap instead of
+  # being serialized through Node's four-worker default.
+  $command = 'set UV_THREADPOOL_SIZE=32&&"{0}" "{1}" serve' -f $NodePath, $entry
+  $action = New-ScheduledTaskAction -Execute $env:ComSpec -Argument ('/d /s /c "{0}"' -f $command) -WorkingDirectory $PortalRoot
   $logon = New-ScheduledTaskTrigger -AtLogOn -User $UserName
   $watchdog = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(5) `
     -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 3650)
