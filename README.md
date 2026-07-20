@@ -34,3 +34,30 @@ Recovery quick check:
 ww recovery controller status
 ww recovery agents
 ```
+
+## Verification and performance
+
+For a managed Linux/Windows fleet, run the redacted health gate after a
+deployment:
+
+```bash
+npm run doctor:fleet -- --json
+```
+
+The physical acceptance lanes are available separately when both paired
+machines are online: `npm run test:fleet-e2e`, `npm run test:fleet-4g`,
+`npm run test:fleet-recovery`, `npm run test:fleet-watchdogs`, and
+`npm run test:fleet-windows`. Their required environment, ordering, and
+evidence rules are defined in [docs/AGENT-OPERATIONS.md](./docs/AGENT-OPERATIONS.md).
+
+Run the local performance gate with:
+
+```bash
+npm run perf:all
+# short smoke run
+npm run perf:all -- --quick
+```
+
+It writes fresh measurements under `performance-results/latest`. The qualified
+baseline, budgets, and interpretation notes are in
+[docs/PERFORMANCE-GATE.md](./docs/PERFORMANCE-GATE.md).
