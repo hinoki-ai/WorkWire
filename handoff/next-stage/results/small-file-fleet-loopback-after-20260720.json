@@ -1,0 +1,15 @@
+{
+  "benchmark": "small-file-fleet",
+  "at": "2026-07-20T02:34:05.624Z",
+  "mode": "small-file-batch-v1",
+  "files": 500,
+  "fileBytes": 1024,
+  "loopback": {
+    "files": 500,
+    "bytes": 512000,
+    "milliseconds": 311.57,
+    "filesPerSecond": 1604.76,
+    "verified": true
+  },
+  "ok": true
+}
