@@ -1,0 +1,29 @@
+{
+  "benchmark": "small-file-fleet",
+  "fixture": {
+    "files": 500,
+    "fileBytes": 1024,
+    "bytes": 512000
+  },
+  "mode": "ww-small-file-batch-v1",
+  "release": "0.1.0+ww1.6276a73ad450",
+  "baseline": {
+    "loopbackFilesPerSecond": 101.82,
+    "hinokiToSakuraFilesPerSecond": 75.49,
+    "mode": "legacy-single-file"
+  },
+  "after": {
+    "loopbackFilesPerSecond": [2302.6, 2099.43, 2705.32],
+    "hinokiToSakuraFilesPerSecond": [1612.81, 1797.81, 1417.66],
+    "hinokiToSakuraMeanFilesPerSecond": 1609.43,
+    "hinokiToSakuraMedianFilesPerSecond": 1612.81,
+    "hinokiToSakuraSpeedup": 21.32,
+    "verified": true
+  },
+  "target": {
+    "filesPerSecond": 1500,
+    "metByPhysicalMedian": true,
+    "metByPhysicalMean": true
+  },
+  "at": "2026-07-20T03:07:57Z"
+}
