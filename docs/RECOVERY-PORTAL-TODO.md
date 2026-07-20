@@ -2587,4 +2587,37 @@ Existing work preservation
 
 ## Final principle
 
+## Future raw-control multipliers
+
+Proposed 2026-07-20. These are ranked by reach removed per implementation day.
+They are not approved implementation work yet.
+
+- [ ] **1. Auto-discovery and auto-enroll** — 4–6 days; reach 10/10. Sweep
+  mDNS/ARP/DHCP observations, wake eligible hosts, offer PXE recovery, install
+  the recovery agent, then pin the resulting stable identity. Keep the
+  token-plus-peer-identity convergence contract; never turn discovery into
+  anonymous enrollment.
+- [ ] **2. Bare-metal clone and deploy** — 2–4 days; reach 9/10. Turn the
+  existing imaging lane into one source image → canary → bounded fleet rollout
+  with hash proof, named backups, and rollback source retention.
+- [ ] **3. Live discovered-machine fleet exec** — 2 days; reach 8/10. Extend
+  fleet execution from registered agents to the live discovery inventory, with
+  an explicit bootstrap/enroll action for machines that have no agent yet.
+- [ ] **4. Persistent roaming reverse tunnels** — 2–3 days; reach 8/10. Let
+  laptops maintain an outbound recovery route to HINOKI while retaining stable
+  agent identity and controller proof.
+- [ ] **5. One-command remote console launch** — 1–2 days; reach 7/10. Launch
+  the discovered RDP/VNC/SPICE route from the cockpit without manual client
+  selection or address copying.
+- [ ] **6. GPU, sensor, and power continuity entities** — 2–3 days; reach
+  6/10. Add telemetry as queryable machine-graph entities, preserving unknown
+  readings as unknown rather than inventing health.
+- [ ] **7. Fleet panic macro** — 1 day; reach 6/10. One HINOKI command for
+  bounded hibernate/wake/reimage/rollback-source actions. Sakura's power path
+  is hibernate only (`shutdown /h`); never S5-shutdown it.
+
+Selection rule: implement only one ranked item at a time after operator
+approval, using recovery-agent transport, verify-before-execute archives, and
+postcondition proof.
+
 WorkWire Recovery is a root-capable laboratory instrument. Its job is to give the operator and autonomous planner complete reach into owned machines over the LAN, including the ability to make irreversible changes. Engineer it for exact identity, observable commands, durable state, interruption recovery, and unrestricted escape hatches. Do not reduce its capability to make it resemble a consumer help wizard.
