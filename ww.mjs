@@ -229,8 +229,9 @@ function getWwTerminalFormatter(output, terminalTitle = "SERVICE") {
 function writeWwLog(output, message = "", { terminalTitle = "" } = {}) {
   const line = sanitiseWwTerminalText(message || "");
   let rendered = line;
+  let formatter = null;
   if (terminalTitle) {
-    const formatter = getWwTerminalFormatter(output, terminalTitle);
+    formatter = getWwTerminalFormatter(output, terminalTitle);
     if (formatter) {
       formatter.stopAnimation();
       rendered = formatter.format(line);
@@ -238,6 +239,10 @@ function writeWwLog(output, message = "", { terminalTitle = "" } = {}) {
   }
   output.write(`${rendered}\n`);
   appendWwLogLine(line);
+  // Leave the operator with a live status glyph instead of a frozen panel.
+  // The formatter remains TTY-only, so redirected/service-managed logs stay
+  // byte-for-byte plain and never retain animation timers.
+  formatter?.animate("asterisk", { label: `${formatter.machine} standing by` });
 }
 
 function resolveLocalWwServiceHost(host = "") {

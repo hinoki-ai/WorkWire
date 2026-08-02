@@ -67,6 +67,19 @@ test("WorkWire panels remain width-safe at 80 and 120 columns", () => {
   }
 });
 
+test("WorkWire panels stay symmetrically centered on odd terminal widths", () => {
+  const formatter = createWwTerminalFormatter({
+    stream: captureStream({ columns: 127 }),
+    title: "HINOKI",
+    version: "0.1.0",
+    env: { TERM: "xterm-256color" },
+  });
+  const rows = stripAnsi(formatter.format("WW service ready for HINOKI")).split("\n");
+  assert.equal(formatter.innerWidth, 119);
+  assert.equal(rows[0].indexOf("╔"), 4);
+  assert.equal(rows[0].indexOf("╗"), 122);
+});
+
 test("Unicode rendering uses stable box and lifecycle glyphs", () => {
   const formatter = createWwTerminalFormatter({
     stream: captureStream({ columns: 80 }),
