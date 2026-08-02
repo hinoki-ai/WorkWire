@@ -59,6 +59,54 @@ test("Windows recovery agent restarts the exact file task after bounded probe fa
   assert.equal(watchdog.getStatus().consecutiveFailures, 0);
 });
 
+test("Windows file-service watchdog stops restarting when restarts never restore health", async () => {
+  let restarts = 0;
+  const messages = [];
+  const watchdog = createWindowsFileServiceWatchdog({
+    platform: "win32",
+    failureThreshold: 1,
+    restartCooldownMs: 0,
+    maxIneffectiveRestarts: 3,
+    async maintenanceImpl() { return { active: false }; },
+    async probeImpl() { throw new Error("port 4851 timed out"); }, // never becomes healthy
+    async restartImpl() { restarts += 1; return { ok: true, action: "restarted", state: "Running" }; },
+    log(message) { messages.push(message); },
+  });
+
+  for (let i = 0; i < 10; i += 1) await watchdog.probeNow();
+
+  assert.equal(restarts, 3, "must stop restarting after the ineffective-restart cap");
+  assert.equal(watchdog.getStatus().holding, true);
+  assert.ok(messages.some((message) => /paused/i.test(message)), "must log the pause");
+});
+
+test("Windows file-service watchdog resumes after a healthy probe clears the hold", async () => {
+  let restarts = 0;
+  let healthy = false;
+  const watchdog = createWindowsFileServiceWatchdog({
+    platform: "win32",
+    failureThreshold: 1,
+    restartCooldownMs: 0,
+    maxIneffectiveRestarts: 2,
+    async maintenanceImpl() { return { active: false }; },
+    async probeImpl() {
+      if (healthy) return { ok: true, action: "healthy", machineId: "m" };
+      throw new Error("down");
+    },
+    async restartImpl() { restarts += 1; return { ok: true, action: "restarted", state: "Running" }; },
+    log() {},
+  });
+
+  for (let i = 0; i < 5; i += 1) await watchdog.probeNow();
+  assert.equal(watchdog.getStatus().holding, true);
+  assert.equal(restarts, 2);
+
+  healthy = true;
+  await watchdog.probeNow();
+  assert.equal(watchdog.getStatus().holding, false, "a healthy probe clears the hold");
+  assert.equal(watchdog.getStatus().restartsSinceHealthy, 0);
+});
+
 test("Windows file-service restart uses only the exact scheduled task", async () => {
   let invocation = null;
   const result = await restartWindowsFileServiceTask({

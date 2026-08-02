@@ -1,0 +1,15 @@
+{
+  "id": "windows-ntfs-access-v1",
+  "title": "Windows and NTFS partition access",
+  "inputs": ["ntfsDeviceId", "ntfsPath", "mountPath", "bcdPath"],
+  "steps": [
+    { "id": "inventory", "action": "inventory.collect", "params": { "raw": true } },
+    { "id": "identify", "action": "filesystem.identify", "params": { "deviceId": "${input.ntfsDeviceId}", "path": "${input.ntfsPath}" } },
+    { "id": "ntfs-check", "action": "filesystem.check", "params": { "deviceId": "${input.ntfsDeviceId}", "path": "${input.ntfsPath}", "filesystemType": "ntfs" } },
+    { "id": "mount-read-only", "action": "filesystem.mount", "params": { "path": "${input.ntfsPath}", "target": "${input.mountPath}", "filesystemType": "ntfs3", "options": "ro" } },
+    { "id": "bcd", "action": "boot.windows.bcd.inspect", "params": { "bcdPath": "${input.bcdPath}" } },
+    { "id": "unmount", "action": "filesystem.unmount", "params": { "target": "${input.mountPath}" } }
+  ],
+  "verification": ["Priority files copy or read successfully", "NTFS metadata result is preserved", "Linux ntfsfix limitation versus Windows chkdsk is recorded"],
+  "plannerHints": ["Use read-only mount before ntfsfix when data extraction is the priority"]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "linux-boot-repair-v1",
+  "title": "Linux root filesystem and boot repair",
+  "goal": "Recover Linux on ${input.rootPath} and restore boot",
+  "matches": { "operatingSystem": "linux" },
+  "inputs": ["rootDeviceId", "rootPath", "rootMount", "efiPath", "distribution"],
+  "steps": [
+    { "id": "inventory-before", "action": "inventory.collect", "params": { "raw": true } },
+    { "id": "smart-before", "action": "disk.smart.read", "params": { "deviceId": "${input.diskDeviceId}" } },
+    { "id": "table-backup", "action": "disk.table.backup", "params": { "deviceId": "${input.diskDeviceId}" } },
+    { "id": "filesystem-check", "action": "filesystem.check", "params": { "deviceId": "${input.rootDeviceId}", "path": "${input.rootPath}", "filesystemType": "${input.filesystemType}" } },
+    { "id": "filesystem-repair", "action": "filesystem.repair", "params": { "deviceId": "${input.rootDeviceId}", "path": "${input.rootPath}", "filesystemType": "${input.filesystemType}" }, "force": true },
+    { "id": "mount-system", "action": "boot.mount-system", "params": { "rootPath": "${input.rootPath}", "efiPath": "${input.efiPath}", "target": "${input.rootMount}" } },
+    { "id": "mount-pseudo", "action": "boot.mount-pseudo", "params": { "root": "${input.rootMount}" } },
+    { "id": "fstab", "action": "boot.fstab.inspect", "params": { "root": "${input.rootMount}" } },
+    { "id": "initramfs", "action": "boot.initramfs.rebuild", "params": { "root": "${input.rootMount}", "distribution": "${input.distribution}" } },
+    { "id": "grub-config", "action": "boot.grub.regenerate-config", "params": { "root": "${input.rootMount}" } },
+    { "id": "cleanup", "action": "boot.cleanup-mounts", "params": { "root": "${input.rootMount}" } },
+    { "id": "check-after", "action": "filesystem.check", "params": { "deviceId": "${input.rootDeviceId}", "path": "${input.rootPath}", "filesystemType": "${input.filesystemType}" } }
+  ],
+  "verification": ["Filesystem check is clean", "fstab UUIDs resolve", "initramfs and bootloader configuration exist"],
+  "plannerHints": ["Mount read-only first when diagnosis is still incomplete", "Use distribution-native boot tools inside chroot"]
+}

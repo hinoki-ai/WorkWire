@@ -36,7 +36,7 @@ npm run dist:linux
 npm run ww:lan-installer
 ```
 
-The supported commands are `workwire` and `ww`. Autonomous fleet agents start with [docs/AGENT-OPERATIONS.md](./docs/AGENT-OPERATIONS.md). See [docs/WW.md](./docs/WW.md) for file-desk architecture and [docs/RECOVERY.md](./docs/RECOVERY.md) for the root/SYSTEM recovery plane. [docs/CONTINUITY.md](./docs/CONTINUITY.md), [docs/POWERHOUSE.md](./docs/POWERHOUSE.md), and [docs/COMMANDER.md](./docs/COMMANDER.md) specify the P1–P3 capability surfaces.
+The supported commands are `workwire` and `ww`. Autonomous fleet agents start with [docs/AGENT-OPERATIONS.md](./docs/AGENT-OPERATIONS.md). See [docs/WW.md](./docs/WW.md) for file-desk architecture and [docs/RECOVERY.md](./docs/RECOVERY.md) for the root/SYSTEM recovery plane. [docs/CONTINUITY.md](./docs/CONTINUITY.md), [docs/POWERHOUSE.md](./docs/POWERHOUSE.md), and [docs/COMMANDER.md](./docs/COMMANDER.md) specify the P1–P3 capability surfaces. The complete documentation map — authority order and the status of every file — is [docs/README.md](./docs/README.md).
 
 Recovery quick check:
 

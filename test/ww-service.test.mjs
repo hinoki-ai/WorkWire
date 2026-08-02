@@ -681,7 +681,7 @@ test("ww service recovers from a configured port collision by rebinding to an op
     const secondaryInfo = await secondary.start();
 
     assert.notEqual(secondaryInfo.port, primaryInfo.port);
-    assert.match(logs.join("\n"), /port \d+ is busy; retrying on an open port/i);
+    assert.match(logs.join("\n"), /port \d+ stayed busy after \d+ retries; drifting to an open port/i);
 
     const client = createRemoteWwClient({
       host: "127.0.0.1",

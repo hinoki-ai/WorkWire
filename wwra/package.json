@@ -1,0 +1,68 @@
+{
+  "name": "workwire",
+  "productName": "WorkWire",
+  "version": "0.1.0",
+  "description": "Self-contained WorkWire two-machine file desk and LAN recovery portal.",
+  "desktopName": "workwire.desktop",
+  "main": "desktop/ww-runtime.cjs",
+  "type": "module",
+  "license": "UNLICENSED",
+  "author": "hinoki",
+  "private": true,
+  "bin": {
+    "ww": "./ww.mjs",
+    "workwire": "./ww.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "bash ./scripts/ww",
+    "ww": "bash ./scripts/ww",
+    "serve": "bash ./scripts/ww serve",
+    "install": "node ./scripts/install-ww.mjs",
+    "ww:install": "node ./scripts/install-ww.mjs",
+    "autostart": "node ./scripts/install-ww-autostart.mjs",
+    "ww:autostart": "node ./scripts/install-ww-autostart.mjs",
+    "dist:linux": "node ./scripts/package-ww-linux.mjs",
+    "ww:lan-installer": "node ./scripts/serve-ww-lan-installer.mjs",
+    "recovery:controller": "node ./ww.mjs recovery controller start --foreground",
+    "recovery:agent": "node ./ww.mjs recovery agent run",
+    "recovery:host-install": "bash ./scripts/install-ww-recovery-host.sh install",
+    "recovery:agent-install": "bash ./scripts/install-ww-recovery-agent.sh install",
+    "recovery:image-build": "bash ./scripts/build-ww-recovery-image.sh",
+    "recovery:image-verify": "bash ./scripts/verify-ww-recovery-image.sh",
+    "recovery:test:qemu": "node ./scripts/test-ww-recovery-qemu.mjs",
+    "perf:portal": "node --expose-gc ./scripts/performance/portal-search-benchmark.mjs",
+    "perf:portal:electron": "node ./scripts/performance/electron-portal-benchmark.mjs",
+    "perf:filesystem": "node --expose-gc ./scripts/performance/filesystem-benchmark.mjs",
+    "perf:service": "node --expose-gc ./scripts/performance/service-stress-benchmark.mjs",
+    "perf:reconnect": "node --expose-gc ./scripts/performance/service-stress-benchmark.mjs --reconnect-only",
+    "perf:transfer": "node --expose-gc ./scripts/performance/transfer-benchmark.mjs",
+    "perf:store": "node ./scripts/performance/recovery-scope-report.mjs --component=event-store",
+    "perf:output": "node ./scripts/performance/recovery-scope-report.mjs --component=command-output",
+    "perf:artifact": "node --expose-gc ./scripts/performance/transfer-benchmark.mjs",
+    "perf:inventory": "node ./scripts/performance/recovery-scope-report.mjs --component=inventory",
+    "perf:soak": "node --expose-gc ./scripts/performance/lifecycle-soak.mjs",
+    "perf:scope": "node ./scripts/performance/recovery-scope-report.mjs",
+    "perf:all": "node ./scripts/performance/run-all.mjs"
+  },
+  "files": [
+    "ww.mjs",
+    "desktop/**/*",
+    "lib/**/*",
+    "scripts/**/*",
+    "recovery/**/*",
+    "README.md",
+    "docs/**/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "electron": "^43.1.1",
+    "electron-builder": "^26.8.1",
+    "jsdom": "^29.0.2"
+  },
+  "dependencies": {
+    "ws": "^8.21.1"
+  }
+}

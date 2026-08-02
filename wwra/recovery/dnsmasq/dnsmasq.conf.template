@@ -1,0 +1,16 @@
+# Rendered by WorkWire Recovery. The router remains the DHCP address server.
+port=0
+interface={{INTERFACE}}
+bind-dynamic
+log-dhcp
+log-facility={{LOG_PATH}}
+dhcp-range={{NETWORK}},proxy,{{NETMASK}}
+enable-tftp
+tftp-root={{TFTP_ROOT}}
+dhcp-match=set:bios,option:client-arch,0
+dhcp-match=set:efi-x64,option:client-arch,7
+dhcp-match=set:efi-x64,option:client-arch,9
+dhcp-userclass=set:ipxe,iPXE
+dhcp-boot=tag:ipxe,{{BOOT_IPXE_URL}}
+dhcp-boot=tag:bios,undionly.kpxe
+dhcp-boot=tag:efi-x64,ipxe.efi

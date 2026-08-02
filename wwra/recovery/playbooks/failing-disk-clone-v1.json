@@ -1,0 +1,14 @@
+{
+  "id": "failing-disk-clone-v1",
+  "title": "Physically failing disk clone",
+  "inputs": ["sourceDeviceId", "destinationDeviceId", "destinationPath", "mapfilePath"],
+  "steps": [
+    { "id": "inventory-before", "action": "inventory.collect", "params": { "raw": true } },
+    { "id": "source-health", "action": "disk.smart.read", "params": { "deviceId": "${input.sourceDeviceId}" } },
+    { "id": "source-table", "action": "disk.table.backup", "params": { "deviceId": "${input.sourceDeviceId}" } },
+    { "id": "clone", "action": "disk.clone", "params": { "sourceDeviceId": "${input.sourceDeviceId}", "destinationDeviceId": "${input.destinationDeviceId}", "destinationPath": "${input.destinationPath}", "mapfilePath": "${input.mapfilePath}", "passes": [{ "args": ["--force", "--no-scrape"] }, { "args": ["--force", "--direct", "--retry-passes=3"] }] }, "force": true },
+    { "id": "destination-inventory", "action": "inventory.collect", "params": { "raw": true } }
+  ],
+  "verification": ["ddrescue mapfile is retained", "Destination fingerprint and size match the planned target", "Recovered files or requested hashes verify"],
+  "plannerHints": ["Repair the clone rather than the failing source unless the goal explicitly says otherwise"]
+}

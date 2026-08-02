@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pursue WorkWire Goals"
+  short_description: "Carry WorkWire work to verified completion"
+  default_prompt: "Use $pursue-workwire-goals to carry this WorkWire task from reconnaissance through verified completion without unnecessary questions."

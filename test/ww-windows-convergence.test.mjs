@@ -21,6 +21,28 @@ test("Windows source convergence encodes fleet, clock, task, and exact-source in
   assert.doesNotMatch(source, /Hn6LCSaWC1bA3uxAU8Tus/u);
 });
 
+test("Windows cmd.exe service launch preserves the shared terminal grammar", async () => {
+  const [windowsSource, launcherSource, serviceSource] = await Promise.all([
+    fs.readFile(new URL("../scripts/converge-ww-windows.ps1", import.meta.url), "utf8"),
+    fs.readFile(new URL("../ww.mjs", import.meta.url), "utf8"),
+    fs.readFile(new URL("../lib/ww-service.mjs", import.meta.url), "utf8"),
+  ]);
+  assert.match(windowsSource, /-Execute \$env:ComSpec/);
+  assert.match(windowsSource, /\/d \/s \/c/);
+  assert.match(windowsSource, /chcp 65001>nul/);
+  assert.match(windowsSource, /WorkWire - \{0\} Service/);
+  assert.match(windowsSource, /\$consoleTitle/);
+  assert.match(windowsSource, /"\{2\}" serve/);
+  for (const line of [
+    "WW service ready for",
+    "Config:",
+    "Portal:",
+  ]) {
+    assert.match(launcherSource, new RegExp(line.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.match(serviceSource, /WW service listening on/);
+});
+
 test("Windows recovery-agent installer delegates its staged swap to an independent SYSTEM task", async () => {
   const source = await fs.readFile(new URL("../scripts/install-ww-recovery-agent-windows.ps1", import.meta.url), "utf8");
   const completer = await fs.readFile(new URL("../scripts/complete-ww-recovery-agent-update-windows.ps1", import.meta.url), "utf8");

@@ -1,0 +1,22 @@
+#!ipxe
+set controller {{CONTROLLER_URL}}
+set boot {{BOOT_URL}}
+menu WorkWire Recovery
+item recovery WorkWire Recovery
+item recovery_nomodeset WorkWire Recovery (nomodeset)
+item local Local boot
+item shell iPXE shell
+choose --default recovery --timeout 4000 target || goto local
+goto ${target}
+:recovery
+kernel ${boot}/v1/recovery/boot/live/vmlinuz boot=live components ip=dhcp fetch=${boot}/v1/recovery/boot/live/filesystem.squashfs ww.controller=${controller} ww.mode=pxe ww.mac=${net0/mac} ww.uuid=${uuid}
+initrd ${boot}/v1/recovery/boot/live/initrd.img
+boot
+:recovery_nomodeset
+kernel ${boot}/v1/recovery/boot/live/vmlinuz boot=live components ip=dhcp nomodeset fetch=${boot}/v1/recovery/boot/live/filesystem.squashfs ww.controller=${controller} ww.mode=pxe
+initrd ${boot}/v1/recovery/boot/live/initrd.img
+boot
+:local
+exit
+:shell
+shell

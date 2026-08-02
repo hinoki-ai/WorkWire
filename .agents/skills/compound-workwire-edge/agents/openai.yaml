@@ -1,0 +1,4 @@
+interface:
+  display_name: "Compound WorkWire Edge"
+  short_description: "Choose WorkWire's highest-leverage move"
+  default_prompt: "Use $compound-workwire-edge to choose the strongest evidence-backed WorkWire initiative and define its proof contract."

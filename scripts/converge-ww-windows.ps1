@@ -191,7 +191,11 @@ function Register-ServeTask {
   # Tiny-file batches issue many independent filesystem operations.  Set the
   # Node pool before process start so NTFS opens/writes can overlap instead of
   # being serialized through Node's four-worker default.
-  $command = 'set UV_THREADPOOL_SIZE=32&&"{0}" "{1}" serve' -f $NodePath, $entry
+  # Keep the interactive cmd.exe service console readable: UTF-8 makes the
+  # shared Unicode panel render correctly, and the title identifies the peer
+  # instead of leaving the window labelled only "cmd.exe".
+  $consoleTitle = "WorkWire - {0} Service" -f ($UserName -replace '[^A-Za-z0-9 _-]', '')
+  $command = 'chcp 65001>nul&&title {0}&&set UV_THREADPOOL_SIZE=32&&"{1}" "{2}" serve' -f $consoleTitle, $NodePath, $entry
   $action = New-ScheduledTaskAction -Execute $env:ComSpec -Argument ('/d /s /c "{0}"' -f $command) -WorkingDirectory $PortalRoot
   $logon = New-ScheduledTaskTrigger -AtLogOn -User $UserName
   $watchdog = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(5) `

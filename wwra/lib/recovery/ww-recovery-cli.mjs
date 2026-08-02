@@ -1,0 +1,540 @@
+import fsSync from "node:fs";
+import fs from "node:fs/promises";
+import path from "node:path";
+import process from "node:process";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { decodeOutputChunk } from "./ww-recovery-protocol.mjs";
+import { loadRecoveryConfig, normalizeRecoveryConfig } from "./ww-recovery-config.mjs";
+import { createRecoveryController } from "./ww-recovery-controller.mjs";
+import { createRecoveryClient } from "./ww-recovery-client.mjs";
+import { createRecoveryAgent, resolveRecoveryAgentOptions } from "./ww-recovery-agent.mjs";
+
+const TERMINAL_JOB_STATES = new Set(["succeeded", "failed", "canceled", "interrupted", "abandoned"]);
+const BOOLEAN_FLAGS = new Set([
+  "json", "online", "refresh", "raw", "force", "autonomous", "events", "foreground",
+  "stdin", "wait", "reuse-rootfs", "all", "help",
+]);
+
+export const WW_RECOVERY_HELP_TEXT = `Usage:
+  ww recovery controller start [--host H] [--port P] [--foreground]
+  ww recovery controller status [--json]
+  ww recovery controller stop
+  ww recovery agent run --controller URL [--id ID] [--name NAME] [--mode installed|pxe]
+  ww recovery agent install --controller URL [--token TOKEN]
+  ww recovery agent status | uninstall
+  ww recovery agents [--online] [--json]
+  ww recovery inspect AGENT [--refresh] [--raw] [--json]
+  ww recovery wait AGENT [--timeout MS]
+  ww recovery case create AGENT --goal TEXT [--autonomous] [--json]
+  ww recovery case list [--agent AGENT] [--json]
+  ww recovery case show CASE [--events] [--json]
+  ww recovery case run CASE | stop CASE | follow CASE
+  ww recovery exec AGENT [--timeout MS] [--force] -- COMMAND ARG...
+  ww recovery shell AGENT [--timeout MS] [--force] -- SCRIPT
+  ww recovery shell AGENT --file SCRIPT_FILE | --stdin
+  ww recovery cancel JOB | retry JOB | follow JOB
+  ww recovery put AGENT LOCAL_PATH REMOTE_PATH
+  ww recovery get AGENT REMOTE_PATH LOCAL_PATH
+  ww recovery artifacts CASE [--json]
+  ww recovery wake MAC [--broadcast ADDRESS] [--port 9]
+  ww recovery pxe install|prepare|start|status|stop [--interface IFACE]
+  ww recovery pxe arm|local MAC
+  ww recovery image build|verify
+  ww recovery playbook list | show ID | run ID AGENT --inputs JSON
+`;
+
+export function parseRecoveryArgv(argv = []) {
+  const args = [...argv];
+  const separator = args.indexOf("--");
+  const before = separator === -1 ? args : args.slice(0, separator);
+  const passthrough = separator === -1 ? [] : args.slice(separator + 1);
+  const command = String(before.shift() || "help");
+  const subcommands = new Set(["controller", "agent", "case", "pxe", "image", "playbook"]);
+  const subcommand = subcommands.has(command) ? String(before.shift() || "") : "";
+  const flags = {};
+  const positionals = [];
+  while (before.length > 0) {
+    const token = before.shift();
+    if (!token.startsWith("--")) {
+      positionals.push(token);
+      continue;
+    }
+    const equalIndex = token.indexOf("=");
+    if (equalIndex !== -1) {
+      flags[token.slice(2, equalIndex)] = token.slice(equalIndex + 1);
+      continue;
+    }
+    const key = token.slice(2);
+    if (BOOLEAN_FLAGS.has(key) || !before[0] || before[0].startsWith("--")) flags[key] = true;
+    else flags[key] = before.shift();
+  }
+  return { command, subcommand, flags, positionals, passthrough };
+}
+
+function number(value, fallback = 0) {
+  const result = Number(value);
+  return Number.isFinite(result) && result >= 0 ? result : fallback;
+}
+
+function outputJson(stdout, value) {
+  stdout.write(`${JSON.stringify(value)}\n`);
+}
+
+function outputResult(stdout, value, json, human) {
+  if (json) outputJson(stdout, value);
+  else if (human) stdout.write(`${human}\n`);
+  return value;
+}
+
+function formatBytes(value) {
+  const bytes = Number(value) || 0;
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KiB", "MiB", "GiB", "TiB", "PiB"];
+  let amount = bytes;
+  let index = -1;
+  do { amount /= 1024; index += 1; } while (amount >= 1024 && index < units.length - 1);
+  return `${amount.toFixed(amount >= 10 ? 1 : 2)} ${units[index]}`;
+}
+
+function printInventory(stdout, agent, inventory) {
+  stdout.write(`${agent.hostname || agent.agentId} (${agent.agentId}) ${agent.state || "unknown"}\n`);
+  stdout.write("DEVICE                         SIZE       TYPE   FILESYSTEM  MOUNT\n");
+  for (const device of inventory?.block?.devices || []) {
+    stdout.write(`${String(device.canonicalPath || device.path || "").padEnd(30)} ${formatBytes(device.size).padEnd(10)} ${String(device.type || "").padEnd(6)} ${String(device.filesystemType || "-").padEnd(11)} ${(device.mountpoints || []).join(",") || "-"}\n`);
+    stdout.write(`  id ${device.deviceId || "unavailable"}${device.model || device.serial ? ` · ${device.model || ""} ${device.serial || ""}`.trimEnd() : ""}\n`);
+  }
+  const warnings = [
+    ...(inventory?.health?.smart || []).filter((item) => item.passed === false || item.pendingSectors || item.uncorrectableSectors),
+    ...(inventory?.health?.nvme || []).filter((item) => item.criticalWarning || item.mediaErrors),
+  ];
+  if (warnings.length) stdout.write(`Health warnings: ${JSON.stringify(warnings)}\n`);
+  if (inventory?.errors?.length) stdout.write(`Inventory gaps: ${inventory.errors.length}\n`);
+}
+
+async function readAll(stream) {
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function defaultControllerUrl(config, env = process.env) {
+  return String(env.WW_RECOVERY_CONTROLLER_URL || `http://127.0.0.1:${config.port}`);
+}
+
+async function waitForAgent(client, agentId, timeoutMs) {
+  const started = Date.now();
+  while (timeoutMs === 0 || Date.now() - started < timeoutMs) {
+    const agent = (await client.listAgents()).find((candidate) => candidate.agentId === agentId);
+    if (agent?.state === "online" && agent.connected !== false) return agent;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  const error = new Error(`Timed out waiting for recovery agent ${agentId}.`);
+  error.code = "ERR_WW_RECOVERY_TIMEOUT";
+  throw error;
+}
+
+async function followJob(client, jobId, {
+  stdout,
+  stderr,
+  json = false,
+  streamOutput = true,
+  pollMs = 100,
+  signal,
+  processImpl = process,
+} = {}) {
+  let after = 0;
+  const emitted = new Set();
+  while (true) {
+    if (signal?.aborted) {
+      await client.cancelJob(jobId).catch(() => {});
+      processImpl.exitCode = 130;
+      throw signal.reason || new Error("Interrupted.");
+    }
+    const payload = await client.getJob(jobId, { after });
+    for (const event of payload.events || []) {
+      if (emitted.has(event.seq)) continue;
+      emitted.add(event.seq);
+      after = Math.max(after, Number(event.seq) || 0);
+      if (json) outputJson(stdout, event);
+      else if (event.type === "step.output" && streamOutput) {
+        const destination = event.stream === "stderr" ? stderr : stdout;
+        destination.write(decodeOutputChunk(event));
+      } else if (["step.started", "step.failed", "job.failed", "job.interrupted"].includes(event.type)) {
+        stderr.write(`[${event.type}] ${event.stepId || event.reason || ""}\n`);
+      }
+    }
+    if (TERMINAL_JOB_STATES.has(payload.job.state)) {
+      const remoteExitCode = payload.job.result?.steps?.at(-1)?.result?.exitCode
+        ?? payload.job.result?.steps?.at(-1)?.result?.result?.exitCode
+        ?? payload.job.result?.exitCode;
+      if (payload.job.state === "succeeded") processImpl.exitCode = 0;
+      else if (Number.isInteger(remoteExitCode) && remoteExitCode > 0 && remoteExitCode <= 125) processImpl.exitCode = remoteExitCode;
+      else processImpl.exitCode = 5;
+      return payload.job;
+    }
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+}
+
+async function runInstallerScript(scriptName, args, { baseDir, spawnImpl, stdout, stderr }) {
+  const filename = path.join(baseDir, "scripts", scriptName);
+  return new Promise((resolve, reject) => {
+    const child = spawnImpl(filename, args, { stdio: ["inherit", "pipe", "pipe"] });
+    child.stdout?.pipe(stdout);
+    child.stderr?.pipe(stderr);
+    child.once("error", reject);
+    child.once("close", (code) => code === 0 ? resolve({ ok: true, exitCode: 0 }) : reject(Object.assign(new Error(`${scriptName} exited ${code}.`), { exitCode: code })));
+  });
+}
+
+export async function runRecoveryCli({
+  argv = [],
+  stdout = process.stdout,
+  stderr = process.stderr,
+  stdin = process.stdin,
+  env = process.env,
+  processImpl = process,
+  fsImpl = fs,
+  spawnImpl = spawn,
+  loadConfigImpl = loadRecoveryConfig,
+  createClientImpl = createRecoveryClient,
+  createControllerImpl = createRecoveryController,
+  createAgentImpl = createRecoveryAgent,
+  resolveAgentOptionsImpl = resolveRecoveryAgentOptions,
+  baseDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".."),
+  keepAlive = true,
+} = {}) {
+  const parsed = parseRecoveryArgv(argv);
+  if (parsed.command === "help" || parsed.flags.help) {
+    stdout.write(WW_RECOVERY_HELP_TEXT);
+    return { ok: true };
+  }
+  const config = await loadConfigImpl();
+  const controllerUrl = String(parsed.flags.controller || defaultControllerUrl(config, env));
+  const client = createClientImpl({ url: controllerUrl, token: parsed.flags.token ?? config.token });
+  const json = parsed.flags.json === true;
+
+  if (parsed.command === "controller") {
+    if (parsed.subcommand === "start") {
+      const activeConfig = normalizeRecoveryConfig({
+        ...config,
+        host: parsed.flags.host || config.host,
+        port: parsed.flags.port === undefined ? config.port : number(parsed.flags.port, config.port),
+        bootHost: parsed.flags["boot-host"] || config.bootHost,
+        bootPort: parsed.flags["boot-port"] === undefined ? config.bootPort : number(parsed.flags["boot-port"], config.bootPort),
+      }, config, { env: {} });
+      const controller = createControllerImpl({ config: activeConfig, log: (message) => stderr.write(`${message}\n`) });
+      const info = await controller.start();
+      await fsImpl.mkdir(activeConfig.stateDir, { recursive: true });
+      await fsImpl.writeFile(path.join(activeConfig.stateDir, "controller.pid"), `${processImpl.pid || process.pid}\n`, { mode: 0o600 });
+      outputResult(stdout, { ok: true, controller: info }, json, `Recovery controller listening at ${info.url} (boot ${info.boot.url})`);
+      const shutdown = async () => {
+        await controller.stop();
+        await fsImpl.rm(path.join(activeConfig.stateDir, "controller.pid"), { force: true });
+      };
+      if (!keepAlive) return { controller, info, shutdown };
+      processImpl.once?.("SIGINT", async () => { await shutdown(); processImpl.exit?.(0); });
+      processImpl.once?.("SIGTERM", async () => { await shutdown(); processImpl.exit?.(0); });
+      return new Promise(() => {});
+    }
+    if (parsed.subcommand === "status") {
+      const info = await client.getInfo();
+      return outputResult(stdout, { ok: true, controller: info }, json, `Recovery controller ONLINE at ${info.url}; ${info.agentsOnline} agent(s)`);
+    }
+    if (parsed.subcommand === "stop") {
+      const pidPath = path.join(config.stateDir, "controller.pid");
+      const pid = Number(String(await fsImpl.readFile(pidPath, "utf8")).trim());
+      if (!Number.isInteger(pid) || pid <= 1) throw new Error(`Invalid recovery controller PID in ${pidPath}.`);
+      process.kill(pid, "SIGTERM");
+      return outputResult(stdout, { ok: true, pid }, json, `Stopping recovery controller PID ${pid}`);
+    }
+  }
+
+  if (parsed.command === "agent") {
+    if (parsed.subcommand === "run") {
+      const options = await resolveAgentOptionsImpl({
+        cli: {
+          controller: parsed.flags.controller,
+          token: parsed.flags.token,
+          id: parsed.flags.id,
+          name: parsed.flags.name,
+          mode: parsed.flags.mode,
+          stateDir: parsed.flags["state-dir"],
+        },
+        env,
+        fsImpl,
+      });
+      if (!options.controllerUrl) throw new Error("Recovery agent --controller URL is required.");
+      const agent = createAgentImpl(options);
+      if (!keepAlive) return { agent, connection: await agent.start() };
+      processImpl.once?.("SIGINT", async () => { await agent.stop("signal"); processImpl.exit?.(0); });
+      processImpl.once?.("SIGTERM", async () => { await agent.stop("signal"); processImpl.exit?.(0); });
+      return agent.run();
+    }
+    if (parsed.subcommand === "install") {
+      return runInstallerScript("install-ww-recovery-agent.sh", ["install", "--controller", String(parsed.flags.controller || ""), ...(parsed.flags.token !== undefined ? ["--token", String(parsed.flags.token)] : [])], { baseDir, spawnImpl, stdout, stderr });
+    }
+    if (["status", "uninstall"].includes(parsed.subcommand)) {
+      return runInstallerScript("install-ww-recovery-agent.sh", [parsed.subcommand], { baseDir, spawnImpl, stdout, stderr });
+    }
+  }
+
+  if (parsed.command === "agents") {
+    const agents = await client.listAgents({ online: parsed.flags.online === true });
+    if (json) outputJson(stdout, { ok: true, agents });
+    else {
+      for (const agent of agents) stdout.write(`${String(agent.state || "offline").toUpperCase().padEnd(7)} ${String(agent.hostname || agent.agentId).padEnd(24)} ${agent.agentId} ${agent.addresses?.map((item) => item.address).filter(Boolean).join(",") || ""}\n`);
+    }
+    return agents;
+  }
+
+  if (parsed.command === "inspect") {
+    const agentId = String(parsed.positionals[0] || "");
+    if (!agentId) throw new Error("Recovery inspect requires AGENT.");
+    if (parsed.flags.refresh) await client.requestInventory(agentId, { wait: true, timeoutMs: number(parsed.flags.timeout, 120_000) });
+    const result = await client.getAgent(agentId);
+    if (json || parsed.flags.raw) outputJson(stdout, { ok: true, ...result });
+    else printInventory(stdout, result.agent, result.inventory);
+    return result;
+  }
+
+  if (parsed.command === "wait") {
+    const agentId = String(parsed.positionals[0] || "");
+    if (!agentId) throw new Error("Recovery wait requires AGENT.");
+    const agent = await waitForAgent(client, agentId, number(parsed.flags.timeout, 30_000));
+    return outputResult(stdout, { ok: true, agent }, json, `${agent.hostname || agent.agentId} is online`);
+  }
+
+  if (parsed.command === "case") {
+    if (parsed.subcommand === "create") {
+      const agentId = String(parsed.positionals[0] || "");
+      const goal = String(parsed.flags.goal || "");
+      if (!agentId || !goal) throw new Error("Recovery case create requires AGENT and --goal TEXT.");
+      const caseRecord = await client.createCase({
+        targetAgentId: agentId,
+        goal,
+        autonomous: parsed.flags.autonomous === true,
+        mode: parsed.flags.autonomous ? "autonomous-unrestricted" : "unrestricted",
+      });
+      return outputResult(stdout, { ok: true, case: caseRecord }, json, `${caseRecord.id} · ${caseRecord.goal}`);
+    }
+    if (parsed.subcommand === "list") {
+      const cases = await client.listCases({ agentId: parsed.flags.agent || "" });
+      if (json) outputJson(stdout, { ok: true, cases });
+      else for (const item of cases) stdout.write(`${item.state.padEnd(10)} ${item.id} ${item.targetAgentId} ${item.goal}\n`);
+      return cases;
+    }
+    const caseId = String(parsed.positionals[0] || "");
+    if (!caseId) throw new Error(`Recovery case ${parsed.subcommand} requires CASE.`);
+    if (parsed.subcommand === "show") {
+      const result = await client.getCase(caseId);
+      if (parsed.flags.events) result.events = await client.listEvents(caseId);
+      if (json) outputJson(stdout, { ok: true, ...result });
+      else stdout.write(`${result.case.id}\nState: ${result.case.state}\nTarget: ${result.case.targetAgentId}\nGoal: ${result.case.goal}\nJobs: ${result.jobs.length}\nArtifacts: ${result.artifacts.length}\n`);
+      return result;
+    }
+    if (parsed.subcommand === "run") {
+      const result = await client.runCase(caseId);
+      return outputResult(stdout, result, json, `Recovery case ${caseId} started`);
+    }
+    if (parsed.subcommand === "stop") {
+      const result = await client.stopCase(caseId);
+      return outputResult(stdout, result, json, `Recovery case ${caseId} stopped`);
+    }
+    if (parsed.subcommand === "follow") {
+      const existing = await client.listEvents(caseId);
+      for (const event of existing) json ? outputJson(stdout, event) : stdout.write(`[${event.seq}] ${event.type}\n`);
+      const subscription = client.subscribeEvents(caseId, {
+        after: existing.at(-1)?.seq || 0,
+        onEvent(event) { json ? outputJson(stdout, event) : stdout.write(`[${event.seq}] ${event.type}\n`); },
+        onError(error) { stderr.write(`${error.message}\n`); },
+      });
+      return keepAlive ? subscription.done : subscription;
+    }
+  }
+
+  if (["exec", "shell"].includes(parsed.command)) {
+    const agentId = String(parsed.positionals[0] || "");
+    if (!agentId) throw new Error(`Recovery ${parsed.command} requires AGENT.`);
+    let action;
+    let params;
+    if (parsed.command === "exec") {
+      if (parsed.passthrough.length === 0) throw new Error("Recovery exec requires -- COMMAND ARG...");
+      action = "command.exec";
+      params = { argv: [...parsed.passthrough] };
+      if (!json) stderr.write(`Recovery exec ${agentId}: ${JSON.stringify(parsed.passthrough)}\n`);
+    } else {
+      action = "shell.exec";
+      let script = parsed.passthrough.join(" ");
+      if (parsed.flags.file) script = await fsImpl.readFile(path.resolve(String(parsed.flags.file)), "utf8");
+      if (parsed.flags.stdin) script = await readAll(stdin);
+      if (!script) throw new Error("Recovery shell requires -- SCRIPT, --file, or --stdin.");
+      params = { script };
+      if (!json) stderr.write(`Recovery shell ${agentId}: ${script.length} bytes\n`);
+    }
+    const job = await client.createJob({
+      targetAgentId: agentId,
+      goal: `${parsed.command} on ${agentId}`,
+      mode: "unrestricted",
+      force: parsed.flags.force === true,
+      steps: [{
+        id: `${parsed.command}_1`,
+        action,
+        params,
+        timeoutMs: number(parsed.flags.timeout, 120_000),
+        force: parsed.flags.force === true,
+      }],
+    });
+    const abortController = new AbortController();
+    let interrupted = false;
+    const interrupt = () => {
+      if (interrupted) processImpl.exit?.(130);
+      interrupted = true;
+      abortController.abort(new Error("Interrupted."));
+    };
+    processImpl.once?.("SIGINT", interrupt);
+    try {
+      const result = await followJob(client, job.id, {
+        stdout,
+        stderr,
+        json: false,
+        streamOutput: !json,
+        signal: abortController.signal,
+        processImpl,
+      });
+      if (json) outputJson(stdout, { ok: result.state === "succeeded", job: result });
+      else stderr.write(`\nRecovery job ${result.id}: ${result.state}\n`);
+      return result;
+    } finally {
+      processImpl.off?.("SIGINT", interrupt);
+    }
+  }
+
+  if (["cancel", "retry", "follow"].includes(parsed.command)) {
+    const jobId = String(parsed.positionals[0] || "");
+    if (!jobId) throw new Error(`Recovery ${parsed.command} requires JOB.`);
+    if (parsed.command === "cancel") {
+      const job = await client.cancelJob(jobId);
+      return outputResult(stdout, { ok: true, job }, json, `${job.id}: ${job.state}`);
+    }
+    if (parsed.command === "retry") {
+      const job = await client.retryJob(jobId);
+      return outputResult(stdout, { ok: true, job }, json, `${job.id}: queued attempt ${job.attempt + 1}`);
+    }
+    return followJob(client, jobId, { stdout, stderr, json, processImpl });
+  }
+
+  if (parsed.command === "put") {
+    const [agentId, localPath, remotePath] = parsed.positionals;
+    if (!agentId || !localPath || !remotePath) throw new Error("Recovery put requires AGENT LOCAL_PATH REMOTE_PATH.");
+    const artifact = await client.uploadArtifact({ kind: "user-upload", filename: path.basename(localPath) }, path.resolve(localPath));
+    const job = await client.createJob({
+      targetAgentId: agentId,
+      goal: `Put ${localPath} at ${remotePath}`,
+      steps: [{ id: "put_1", action: "artifact.download", params: { artifactId: artifact.id, path: remotePath } }],
+    });
+    const completed = await followJob(client, job.id, { stdout, stderr, json: false, streamOutput: !json, processImpl });
+    if (json) outputJson(stdout, { ok: completed.state === "succeeded", job: completed });
+    return completed;
+  }
+
+  if (parsed.command === "get") {
+    const [agentId, remotePath, localPath] = parsed.positionals;
+    if (!agentId || !remotePath || !localPath) throw new Error("Recovery get requires AGENT REMOTE_PATH LOCAL_PATH.");
+    const job = await client.createJob({
+      targetAgentId: agentId,
+      goal: `Get ${remotePath}`,
+      steps: [{ id: "get_1", action: "artifact.upload", params: { path: remotePath, kind: "user-upload" } }],
+    });
+    const completed = await followJob(client, job.id, { stdout, stderr, json: false, streamOutput: !json, processImpl });
+    const artifact = completed.result?.steps?.[0]?.artifact || completed.result?.steps?.[0]?.result?.artifact;
+    if (!artifact?.id) throw new Error("Recovery get job did not return an artifact.");
+    const downloaded = await client.downloadArtifact(artifact.id, { destinationPath: path.resolve(localPath) });
+    if (json) outputJson(stdout, { ok: true, job: completed, artifact, download: downloaded });
+    return downloaded;
+  }
+
+  if (parsed.command === "artifacts") {
+    const caseId = String(parsed.positionals[0] || "");
+    if (!caseId) throw new Error("Recovery artifacts requires CASE.");
+    const result = await client.listArtifacts({ caseId });
+    if (json) outputJson(stdout, result);
+    else for (const artifact of result.artifacts) stdout.write(`${artifact.complete ? "COMPLETE" : "PARTIAL ".trim()} ${artifact.id} ${formatBytes(artifact.size)} ${artifact.kind} ${artifact.filename}\n`);
+    return result;
+  }
+
+  if (parsed.command === "wake") {
+    const mac = String(parsed.positionals[0] || "");
+    if (!mac) throw new Error("Recovery wake requires MAC.");
+    const result = await client.wake({ mac, broadcast: parsed.flags.broadcast, port: number(parsed.flags.port, 9), burst: number(parsed.flags.burst, 3) });
+    return outputResult(stdout, { ok: true, wake: result }, json, result.packetSent ? `Wake packets sent to ${result.mac}; waiting for agent check-in is separate.` : `No Wake packet could be sent to ${result.mac}.`);
+  }
+
+  if (parsed.command === "pxe") {
+    if (parsed.subcommand === "install") return runInstallerScript("install-ww-recovery-host.sh", ["install", ...(parsed.flags.interface ? ["--interface", String(parsed.flags.interface)] : [])], { baseDir, spawnImpl, stdout, stderr });
+    const script = path.join(baseDir, "scripts", "run-ww-pxe.mjs");
+    const policyArgs = ["arm", "local"].includes(parsed.subcommand)
+      ? [String(parsed.positionals[0] || "")]
+      : [];
+    if (["arm", "local"].includes(parsed.subcommand) && !policyArgs[0]) {
+      throw new Error(`Recovery PXE ${parsed.subcommand} requires MAC.`);
+    }
+    return new Promise((resolve, reject) => {
+      const child = spawnImpl(process.execPath, [script, parsed.subcommand, ...policyArgs, ...(parsed.flags.interface ? ["--interface", String(parsed.flags.interface)] : [])], { stdio: ["inherit", "pipe", "pipe"] });
+      child.stdout?.pipe(stdout);
+      child.stderr?.pipe(stderr);
+      child.once("error", reject);
+      child.once("close", (code) => code === 0 ? resolve({ ok: true }) : reject(new Error(`PXE ${parsed.subcommand} exited ${code}.`)));
+    });
+  }
+
+  if (parsed.command === "image") {
+    const script = parsed.subcommand === "build" ? "build-ww-recovery-image.sh" : "verify-ww-recovery-image.sh";
+    return runInstallerScript(script, parsed.flags["reuse-rootfs"] ? ["--reuse-rootfs"] : [], { baseDir, spawnImpl, stdout, stderr });
+  }
+
+  if (parsed.command === "playbook") {
+    const playbooks = await client.listPlaybooks();
+    if (parsed.subcommand === "list") {
+      if (json) outputJson(stdout, { ok: true, playbooks });
+      else for (const playbook of playbooks) stdout.write(`${playbook.id}\t${playbook.title}\n`);
+      return playbooks;
+    }
+    const playbookId = String(parsed.positionals[0] || "");
+    const playbook = playbooks.find((candidate) => candidate.id === playbookId);
+    if (!playbook) throw new Error(`Recovery playbook ${playbookId || "<missing>"} was not found.`);
+    if (parsed.subcommand === "show") return outputResult(stdout, { ok: true, playbook }, json, JSON.stringify(playbook, null, 2));
+    if (parsed.subcommand === "run") {
+      const agentId = String(parsed.positionals[1] || "");
+      if (!agentId) throw new Error("Recovery playbook run requires ID and AGENT.");
+      let inputs = {};
+      if (parsed.flags.inputs) inputs = JSON.parse(String(parsed.flags.inputs));
+      const agent = await client.getAgent(agentId);
+      const plan = await client.expandPlaybook(playbookId, {
+        inventory: agent.inventory || {},
+        inputs,
+        force: parsed.flags.force === true,
+      });
+      if (!json) stdout.write(`${JSON.stringify(plan, null, 2)}\n`);
+      const caseRecord = await client.createCase({ targetAgentId: agentId, goal: plan.goal, mode: "unrestricted" });
+      const job = await client.createJob({
+        caseId: caseRecord.id,
+        targetAgentId: agentId,
+        goal: plan.goal,
+        force: parsed.flags.force === true,
+        steps: plan.steps,
+      });
+      const result = await followJob(client, job.id, { stdout, stderr, json: false, streamOutput: !json, processImpl });
+      const completed = { case: caseRecord, plan, job: result };
+      if (json) outputJson(stdout, { ok: result.state === "succeeded", ...completed });
+      return completed;
+    }
+  }
+
+  stderr.write(`Unknown recovery command.\n${WW_RECOVERY_HELP_TEXT}`);
+  processImpl.exitCode = 2;
+  return null;
+}
+
+export { followJob, printInventory, waitForAgent };

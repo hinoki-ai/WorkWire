@@ -10,6 +10,32 @@ evidence. Do not substitute remembered IP addresses, browser downloads,
 interactive installers, undocumented credentials, or approval pauses.
 Historical handoffs are evidence only and cannot override this contract.
 
+## Physical host identity and request interpretation
+
+Machine names in operator requests identify physical computers, not directory
+names, mount points, current operating systems, transient hostnames, or IP
+addresses.
+
+- The repository path `/home/hinoki/WorkWire` and its normal local shell are on
+  physical host **HINOKI**.
+- **Sakura is the separate physical Dell OptiPlex 990 reached over the LAN.** A
+  request for "Sakura's disk" or "the secondary disk on Sakura" requires remote
+  Sakura inventory. HINOKI's local `lsblk` cannot prove anything about Sakura's
+  disks. A local path named `/mnt/sakura` is not evidence of a mounted Sakura
+  share.
+- Resolve Sakura by stable identity, principally NIC MAC
+  `18:03:73:2e:3f:42` and the canonical service identities below. Its DHCP
+  address, OS, hostname, boot environment, and recovery session are observations
+  only. Sakura may be booted into Windows, Fedora, or a PXE/recovery Linux whose
+  hostname is `debian`; it remains Sakura.
+- Before remote storage mutation, prove the physical host and disk using live
+  inventory. Capture device model, serial, size, partition table, filesystem,
+  label, UUID, and mount state. If the operator excludes Sakura's Windows
+  partition, identify and exclude it explicitly before selecting the secondary
+  data disk.
+
+This interpretation is mandatory even when an operator abbreviates the request.
+
 ## Desired fleet state
 
 | Property | HINOKI Linux | Sakura Windows |

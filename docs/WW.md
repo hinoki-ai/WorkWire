@@ -151,3 +151,11 @@ pinned identity, and a real remote listing.
   folder when a link was skipped so the link is never lost.
 - Mirror equality uses item kind, file size, and rounded modification time; it does not hash every file on every 1.5-second scan.
 - The service is designed for two paired machines, not a multi-peer mesh or an untrusted internet.
+
+## Large-file transfer rule
+
+Never transfer large files through the slow controller artifact path. For wired
+peer transfers, use the direct LAN stream/sync path, with resumable chunks and
+destination verification. The controller is for coordination and job metadata;
+it is not the data plane. If the direct peer path is unavailable, stop and fix
+the peer connection rather than falling back to a controller-mediated transfer.

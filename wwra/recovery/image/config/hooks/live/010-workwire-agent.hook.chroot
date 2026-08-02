@@ -1,0 +1,44 @@
+#!/bin/sh
+set -eu
+
+mkdir -p /mnt/workwire /run/workwire-recovery /root/.ssh
+chmod 0700 /run/workwire-recovery /root/.ssh
+systemctl enable workwire-recovery-agent.service
+systemctl enable ssh.service || systemctl enable sshd.service || true
+systemctl enable NetworkManager.service || true
+systemctl mask swap.target || true
+
+recovery_password="${WW_RECOVERY_ROOT_PASSWORD:-workwire}"
+printf 'root:%s\n' "$recovery_password" | chpasswd
+sed -ri 's/^#?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config
+if grep -q '^#\?PasswordAuthentication ' /etc/ssh/sshd_config; then
+  sed -ri 's/^#?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+else
+  printf '%s\n' 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
+fi
+
+# Discovery is welcome, but patient storage activation remains an explicit
+# portal job. Raw mdadm/vgchange/swapon commands continue to work normally.
+mkdir -p /etc/mdadm /etc/lvm
+printf '%s\n' 'AUTO -all' >> /etc/mdadm/mdadm.conf
+cat > /etc/lvm/lvm.conf <<'EOF'
+activation {
+    auto_activation_volume_list = [ ]
+}
+global {
+    event_activation = 0
+}
+EOF
+
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
+EOF
+
+cat > /etc/profile.d/workwire-recovery.sh <<'EOF'
+if [ "$(tty 2>/dev/null || true)" = "/dev/tty1" ]; then
+  printf '\nWorkWire Recovery console (root). Run ww-recovery-status for status.\n'
+fi
+EOF

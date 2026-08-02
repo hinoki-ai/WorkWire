@@ -84,6 +84,76 @@ test("ww release activation waits for a stable source and exact peer convergence
   assert.equal(activator.getStatus().activated, true);
 });
 
+test("ww release activation stops thrashing when the source never converges", async () => {
+  let now = 1_000;
+  const history = [];       // stands in for the persisted activation-history file
+  const activations = [];
+  const settleMs = 500;
+  // Each real activation restarts the process, so model each restart as a fresh
+  // activator instance that shares the persisted history.
+  function spawnLifetime(counter) {
+    return createWwReleaseActivator({
+      runningHash: "running",
+      settleMs,
+      thrashLimit: 3,
+      thrashWindowMs: 10 * 60_000,
+      thrashRecoverMs: 5 * 60_000,
+      nowImpl: () => now,
+      // Every lifetime sees a brand-new candidate hash: a churning source.
+      readReleaseInfoImpl: async () => ({ hash: `candidate-${counter}`, version: `0.1.0+ww1.candidate-${counter}` }),
+      isReadyToActivate: async () => true,
+      onActivationRequired: async (release) => activations.push(release.hash),
+      loadActivationHistoryImpl: () => history.slice(),
+      recordActivationImpl: (_path, entry) => history.push(entry),
+    });
+  }
+
+  let holdObserved = false;
+  for (let i = 0; i < 6; i += 1) {
+    const activator = spawnLifetime(i);
+    await activator.checkNow();       // observe the new candidate
+    now += settleMs + 1;             // let it settle past settleMs
+    await activator.checkNow();       // attempt activation (or hold)
+    if (activator.getStatus().holding) holdObserved = true;
+    now += 1_000;                    // wall time passes before the next restart
+  }
+
+  assert.equal(activations.length, 3, "activator must stop after the thrash limit");
+  assert.equal(holdObserved, true, "activator must enter the hold state");
+});
+
+test("ww release activation resumes once a churning source finally settles", async () => {
+  let now = 1_000;
+  const history = [
+    { ts: 0, hash: "a" }, { ts: 10, hash: "b" }, { ts: 20, hash: "c" },
+  ]; // already at the thrash limit within the window
+  const activations = [];
+  const settleMs = 500;
+  const recoverMs = 5 * 60_000;
+  const activator = createWwReleaseActivator({
+    runningHash: "running",
+    settleMs,
+    thrashLimit: 3,
+    thrashWindowMs: 10 * 60_000,
+    thrashRecoverMs: recoverMs,
+    nowImpl: () => now,
+    readReleaseInfoImpl: async () => ({ hash: "settled", version: "0.1.0+ww1.settled" }),
+    isReadyToActivate: async () => true,
+    onActivationRequired: async (release) => activations.push(release.hash),
+    loadActivationHistoryImpl: () => history.slice(),
+    recordActivationImpl: (_path, entry) => history.push(entry),
+  });
+
+  await activator.checkNow();            // register "settled" candidate
+  now += settleMs + 1;
+  assert.equal(await activator.checkNow(), false, "still held right after settle");
+  assert.equal(activator.getStatus().holding, true);
+
+  now += recoverMs;                      // candidate stays stable long enough
+  assert.equal(await activator.checkNow(), true, "a durably stable source overrides the hold");
+  assert.deepEqual(activations, ["settled"]);
+});
+
 test("ww update status distinguishes the running release from staged source bytes", () => {
   const status = buildWwUpdateStatus({
     hash: "staged-hash",

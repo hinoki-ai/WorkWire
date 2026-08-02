@@ -33,9 +33,20 @@ async function listSourceFiles() {
   const { stdout } = await execFileAsync("git", [
     "ls-files", "-z", "--cached", "--others", "--exclude-standard",
   ], { cwd: repoRoot, encoding: "buffer", maxBuffer: 64 * 1024 * 1024 });
-  return [...new Set(stdout.toString("utf8").split("\0").filter(Boolean).map(safeRelative))]
+  const candidates = [...new Set(stdout.toString("utf8").split("\0").filter(Boolean).map(safeRelative))]
     .filter((relative) => !relative.split("/").some(isWwMirrorConflictBasename))
     .sort((left, right) => left.localeCompare(right));
+  const files = [];
+  for (const relative of candidates) {
+    try {
+      await fs.lstat(path.join(repoRoot, relative));
+      files.push(relative);
+    } catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
+  }
+  return files;
 }
 
 async function copyEntry(relative) {

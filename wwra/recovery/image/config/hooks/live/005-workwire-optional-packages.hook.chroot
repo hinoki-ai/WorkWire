@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+missing_file=/etc/workwire-recovery-optional-missing.txt
+: > "$missing_file"
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+for package_name in \
+  firmware-linux firmware-linux-nonfree firmware-iwlwifi firmware-realtek firmware-atheros \
+  f2fs-tools thin-provisioning-tools multipath-tools dracut sshfs chntpw cabextract \
+  qemu-utils debootstrap systemd-container
+do
+  if dpkg-query -W -f='${Status}' "$package_name" 2>/dev/null | grep -q 'install ok installed'; then
+    continue
+  fi
+  if ! apt-get install -y --no-install-recommends --no-remove "$package_name"; then
+    printf '%s\n' "$package_name" >> "$missing_file"
+  fi
+done
+apt-get clean
+rm -rf /var/lib/apt/lists/*

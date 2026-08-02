@@ -1,0 +1,4 @@
+interface:
+  display_name: "Red-Team WorkWire Truth"
+  short_description: "Break WorkWire assumptions before reality does"
+  default_prompt: "Use $red-team-workwire-truth to attack this WorkWire claim, prove its failure boundaries, and repair verified defects when authorized."

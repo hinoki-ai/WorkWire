@@ -37,6 +37,10 @@ import {
   createWwReleaseActivator,
 } from "./lib/ww-update.mjs";
 import {
+  createWwTerminalFormatter,
+  sanitiseWwTerminalText,
+} from "./lib/ww-terminal.mjs";
+import {
   buildLinuxLaunchEnv,
   ensureLinuxWwDesktopEntry,
   LINUX_WW_DESKTOP_ENTRY_NAME,
@@ -206,9 +210,33 @@ function appendWwLogLine(message = "") {
   } catch {}
 }
 
-function writeWwLog(output, message = "") {
-  const line = String(message || "");
-  output.write(`${line}\n`);
+const wwTerminalFormatters = new WeakMap();
+
+function getWwTerminalFormatter(output, terminalTitle = "SERVICE") {
+  if (!output || typeof output !== "object" || !output.isTTY) return null;
+  let formatter = wwTerminalFormatters.get(output);
+  if (!formatter) {
+    formatter = createWwTerminalFormatter({
+      stream: output,
+      title: terminalTitle,
+      version: WW_APP_VERSION,
+    });
+    wwTerminalFormatters.set(output, formatter);
+  }
+  return formatter;
+}
+
+function writeWwLog(output, message = "", { terminalTitle = "" } = {}) {
+  const line = sanitiseWwTerminalText(message || "");
+  let rendered = line;
+  if (terminalTitle) {
+    const formatter = getWwTerminalFormatter(output, terminalTitle);
+    if (formatter) {
+      formatter.stopAnimation();
+      rendered = formatter.format(line);
+    }
+  }
+  output.write(`${rendered}\n`);
   appendWwLogLine(line);
 }
 
@@ -544,6 +572,7 @@ export async function runServeCommand({
   keepAlive = true,
 } = {}) {
   let config = await loadWwConfigImpl();
+  const terminalTitle = String(flags.name || config?.service?.name || "SERVICE").trim() || "SERVICE";
   let desktopLaunchPending = false;
   let service = null;
   let mirror = null;
@@ -554,7 +583,10 @@ export async function runServeCommand({
   let recoveryCompanionWatchdog = null;
   let shutdownPromise = null;
   let peerUpdatePromise = Promise.resolve();
-  const serviceLog = (message = "") => writeWwLog(stdout, message);
+  const terminalFormatter = getWwTerminalFormatter(stdout, terminalTitle);
+  terminalFormatter?.bindAnimationSignals(processImpl);
+  terminalFormatter?.animate("startup", { label: "WW service starting" });
+  const serviceLog = (message = "") => writeWwLog(stdout, message, { terminalTitle });
   const peerHasStagedRelease = async (releaseInfo = {}) => {
     const peerMachineId = String(config.peer.machineId || "").trim();
     const peerHost = String(config.peer.host || "").trim();
@@ -620,7 +652,7 @@ export async function runServeCommand({
         child?.unref?.();
         appendWwLogLine(`[WW] Requested local WorkWire desk launch for ${peerValue}`);
       } catch (error) {
-        writeWwLog(stderr, `Unable to launch WorkWire desktop: ${error.message}`);
+        writeWwLog(stderr, `Unable to launch WorkWire desktop: ${error.message}`, { terminalTitle });
         processImpl.exitCode = 1;
       } finally {
         setTimeoutImpl(() => {
@@ -656,7 +688,8 @@ export async function runServeCommand({
   try {
     serviceInfo = await service.start();
   } catch (error) {
-    writeWwLog(stderr, error.message);
+    terminalFormatter?.stopAnimation();
+    writeWwLog(stderr, error.message, { terminalTitle });
     processImpl.exitCode = 1;
     return null;
   }
@@ -698,7 +731,7 @@ export async function runServeCommand({
         serviceLog(`Recovery boot server: ${recoveryInfo.boot.url}`);
       }
     } catch (error) {
-      writeWwLog(stderr, `Recovery controller unavailable: ${error.message}`);
+      writeWwLog(stderr, `Recovery controller unavailable: ${error.message}`, { terminalTitle });
       recoveryController = null;
     }
   }
@@ -800,6 +833,7 @@ export async function runServeCommand({
       return shutdownPromise;
     }
     shutdownPromise = (async () => {
+      terminalFormatter?.stopAnimation();
       releaseActivator?.stop();
       await peerUpdatePromise.catch(() => {});
       await mirror?.stop().catch(() => {});
@@ -815,6 +849,9 @@ export async function runServeCommand({
   releaseActivator = createWwReleaseActivatorImpl({
     log: serviceLog,
     isReadyToActivate: peerHasStagedRelease,
+    // Persisted so the thrash guard survives the restarts it is meant to bound
+    // (each activation restarts this process); lives in .workwire, never shipped.
+    historyPath: path.join(path.dirname(WW_CONFIG_PATH), "ww-activation-history.jsonl"),
     onActivationRequired: async (releaseInfo) => {
       serviceLog(`WorkWire activating ${releaseInfo.version} on this paired PC.`);
       await shutdown(75);
