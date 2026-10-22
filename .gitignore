@@ -17,3 +17,12 @@ artifacts/
 # source inputs. Runtime and release builders enforce the same exclusion.
 * (WW conflict *)*
 WW conflict *
+
+# Private local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx

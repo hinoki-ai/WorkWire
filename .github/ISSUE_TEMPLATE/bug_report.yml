@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible WorkWire problem
+body:
+  - type: markdown
+    attributes:
+      value: "For security vulnerabilities, use the private reporting link instead. Remove secrets and private paths from all examples."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: WorkWire commit or release, OS, Node version, and installation method.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Use disposable files and include expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs or screenshots
