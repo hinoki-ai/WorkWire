@@ -15,6 +15,11 @@ on a trusted LAN; do not expose the services directly to the internet.
 - [Report a bug or request a feature](https://github.com/hinoki-ai/WorkWire/issues/new/choose)
 - [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
 
+CI is configured, but hosted runs are currently blocked by a GitHub account
+billing restriction. The initial preview passed 292 local tests using existing
+dependencies; a clean hosted installation has not yet been verified. Dependency
+security alerts remain open; see the release notes before trying this preview.
+
 ## Try from source
 
 Use Linux with Git, Node.js 22 or newer, and npm. Windows recovery-agent
