@@ -47,6 +47,7 @@
     "scripts/write-ww-recovery-build-seed.mjs",
     "scripts/write-ww-recovery-manifest.mjs",
     "package.json",
+    "LICENSE",
     "!recovery/image/.build/**/*",
     "!recovery/image/binary/**/*",
     "!recovery/image/chroot/**/*",

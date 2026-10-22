@@ -71,3 +71,8 @@ npm run perf:all -- --quick
 It writes fresh measurements under `performance-results/latest`. The qualified
 baseline, budgets, and interpretation notes are in
 [docs/PERFORMANCE-GATE.md](./docs/PERFORMANCE-GATE.md).
+
+## License
+
+WorkWire is open source under the [MIT License](./LICENSE). Third-party
+dependencies retain their own licenses.

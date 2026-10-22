@@ -6,7 +6,7 @@
   "desktopName": "workwire.desktop",
   "main": "desktop/ww-runtime.cjs",
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "hinoki",
   "private": true,
   "bin": {
@@ -61,6 +61,7 @@
     "scripts/**/*",
     "recovery/**/*",
     "README.md",
+    "LICENSE",
     "docs/**/*"
   ],
   "engines": {
